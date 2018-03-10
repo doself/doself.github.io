@@ -78,12 +78,10 @@
 
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="模拟器检测," />
 
 
 
-
-  
 
 
   <link rel="alternate" href="/atom.xml" title="Shell In Ghost" type="application/atom+xml" />
@@ -93,17 +91,21 @@
 
 
 
-<meta name="description" content="About Me  会点Android，研究过IOS，学过Web，玩了些智能设备，搞过移动安全的菜鸡一枚.">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Shell In Ghost">
-<meta property="og:url" content="http://yoursite.com/about/index.html">
+<meta name="description" content="ARM和X86目前，绝大部分手机都是基于ARM架构，其他CPU架构给忽略不计，模拟器全部运行在PC的X86架构上。因此，可以利用ARM与X86的区别来判断是否为真机。从上图我们可以看出，在CPU和内存之间，可以存在几级Cache，这里是L1和L2。Cache的作用是加速，把特定地址的数据值缓存起来，这样就不用到低速的内存中去取了。其中，ARM采用的是将指令存储与数据存储分开的哈佛架构，L1 Cac">
+<meta name="keywords" content="模拟器检测">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于Cache的Android模拟器检测">
+<meta property="og:url" content="http://yoursite.com/2018/03/10/基于Cache的模拟器检测/index.html">
 <meta property="og:site_name" content="Shell In Ghost">
-<meta property="og:description" content="About Me  会点Android，研究过IOS，学过Web，玩了些智能设备，搞过移动安全的菜鸡一枚.">
+<meta property="og:description" content="ARM和X86目前，绝大部分手机都是基于ARM架构，其他CPU架构给忽略不计，模拟器全部运行在PC的X86架构上。因此，可以利用ARM与X86的区别来判断是否为真机。从上图我们可以看出，在CPU和内存之间，可以存在几级Cache，这里是L1和L2。Cache的作用是加速，把特定地址的数据值缓存起来，这样就不用到低速的内存中去取了。其中，ARM采用的是将指令存储与数据存储分开的哈佛架构，L1 Cac">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-01-28T08:01:03.991Z">
+<meta property="og:image" content="http://p5czuvxhw.bkt.clouddn.com/1.png">
+<meta property="og:image" content="http://p5czuvxhw.bkt.clouddn.com/2.png">
+<meta property="og:updated_time" content="2018-03-10T05:54:17.603Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Shell In Ghost">
-<meta name="twitter:description" content="About Me  会点Android，研究过IOS，学过Web，玩了些智能设备，搞过移动安全的菜鸡一枚.">
+<meta name="twitter:title" content="基于Cache的Android模拟器检测">
+<meta name="twitter:description" content="ARM和X86目前，绝大部分手机都是基于ARM架构，其他CPU架构给忽略不计，模拟器全部运行在PC的X86架构上。因此，可以利用ARM与X86的区别来判断是否为真机。从上图我们可以看出，在CPU和内存之间，可以存在几级Cache，这里是L1和L2。Cache的作用是加速，把特定地址的数据值缓存起来，这样就不用到低速的内存中去取了。其中，ARM采用的是将指令存储与数据存储分开的哈佛架构，L1 Cac">
+<meta name="twitter:image" content="http://p5czuvxhw.bkt.clouddn.com/1.png">
 
 
 
@@ -133,13 +135,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/about/"/>
+  <link rel="canonical" href="http://yoursite.com/2018/03/10/基于Cache的模拟器检测/"/>
 
 
 
 
 
-  <title> | Shell In Ghost</title>
+  <title>基于Cache的Android模拟器检测 | Shell In Ghost</title>
   
 
 
@@ -298,37 +300,202 @@
 
   <div id="posts" class="posts-expand">
     
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/10/基于Cache的模拟器检测/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="WireGhost">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Shell In Ghost">
+    </span>
+
     
-    
-    <div class="post-block page">
       <header class="post-header">
 
-	<h1 class="post-title" itemprop="name headline"></h1>
-
-
-
-</header>
-
-      
-      
-      
-      <div class="post-body">
         
         
-          <p><font size="5"><strong>About Me</strong></font></p>
-<blockquote>
-<p>会点Android，研究过IOS，学过Web，玩了些智能设备，搞过移动安全的菜鸡一枚.</p>
-</blockquote>
-
+          <h1 class="post-title" itemprop="name headline">基于Cache的Android模拟器检测</h1>
         
-      </div>
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-10T12:53:28+08:00">
+                2018-03-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android/" itemprop="url" rel="index">
+                    <span itemprop="name">Android</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
       
       
+
+      
+        <h2 id="ARM和X86"><a href="#ARM和X86" class="headerlink" title="ARM和X86"></a>ARM和X86</h2><p>目前，绝大部分手机都是基于ARM架构，其他CPU架构给忽略不计，模拟器全部运行在PC的X86架构上。因此，可以利用ARM与X86的区别来判断是否为真机。<br><img src="http://p5czuvxhw.bkt.clouddn.com/1.png" alt="ELF"><br>从上图我们可以看出，在CPU和内存之间，可以存在几级Cache，这里是L1和L2。Cache的作用是加速，把特定地址的数据值缓存起来，这样就不用到低速的内存中去取了。其中，ARM采用的是将指令存储与数据存储分开的哈佛架构，L1 Cache（一级缓存）被分成了平行的两块，即I-Cache（指令缓存）和D-Cache（数据缓存），而X86采用的是将指令存储和数据存储合并在一起的冯•诺伊曼结构，L1 Cache是连续的一块缓存。<br>因此，如果我们通过读写地址指令的方式对一段可执行代码进行动态修改，那么在执行的时候，X86架构上的指令缓存会被同步修改，而对ARM架构而言，这种数据读写操作修改的只是D-Cahce中的内容，此时I-Cache中的指令并不会被更新。</p>
+<h2 id="设计思路"><a href="#设计思路" class="headerlink" title="设计思路"></a>设计思路</h2><p>先看下思路的流程图：<br><img src="http://p5czuvxhw.bkt.clouddn.com/2.png" alt="ELF"><br>左边的是真机上发生的情况，右边是模拟器发生的情况，下面详述一下操作过程。<br>&gt;</p>
+<ol>
+<li>先执行一个地址上的指令，假设就是address这个地址。那么对于真机，指令将会写到I-Cache，而模拟器则会直接写到一整块Cache上;  </li>
+<li>向address写入一个新指令。注意，这就有区别了，真机上的新指令会写入D-Cache，而在模拟器直接写到Cache;  </li>
+<li>执行address的指令。此时在真机上，会从I-Cache读指令，也就是会执行第一步的指令。模拟器直接从Cache上读指令，会执行第二步的新指令。  </li>
+</ol>
+<p>实际操作中，我们发现存在真机上的指令Cache被洗掉的情况，但总的来说这种可能性还是比较低的，可以通过对市面上的大量机型做多次重复实验，并统计它的大盘分布..</p>
+<h2 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h2><h3 id="测试代码"><a href="#测试代码" class="headerlink" title="测试代码"></a>测试代码</h3><h4 id="ARM32"><a href="#ARM32" class="headerlink" title="ARM32"></a>ARM32</h4><p>以下实现代码是测试代码的核心，主要就是将第8行地址的指令add r4, r4, #1，在运行中动态替换为第5行的指令add r6, r6, #1，这里的目标是ARM-V7架构的，要注意它采用的是三级流水，PC寄存器的值等于当前程序执行位置加8，代码如下：<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">#!cpp</span><br><span class="line">__asm __volatile (</span><br><span class="line">  <span class="number">1</span>    STMFD  SP!,&#123;R4-R7,LR&#125;</span><br><span class="line">  <span class="number">2</span>    MOV  R6, #<span class="number">0</span>            <span class="comment">//为r6赋初值</span></span><br><span class="line">  <span class="number">3</span>    MOV  R7, PC            <span class="comment">//PC指向第5行指令所在位置</span></span><br><span class="line">  <span class="number">4</span>    MOV  R4, #<span class="number">0</span></span><br><span class="line">  <span class="number">5</span>    ADD  R6, R6, #<span class="number">1</span>        <span class="comment">//用来覆盖$address的“新指令”</span></span><br><span class="line">  <span class="number">6</span>    LDR  R5, [R7]</span><br><span class="line">  <span class="number">7</span>    code:</span><br><span class="line">  <span class="number">8</span>    ADD  R4, R4, #<span class="number">1</span>        <span class="comment">//这就是$address，是对r4加1</span></span><br><span class="line">  <span class="number">9</span>    MOV  R7, PC            <span class="comment">//9~11行的作用就是把第5行的指令写到第8行</span></span><br><span class="line">  <span class="number">10</span>   SUB  R7, R7, #<span class="number">0xC</span></span><br><span class="line">  <span class="number">11</span>   STR  R5, [R7]</span><br><span class="line">  <span class="number">12</span>   CMP  R4, #<span class="number">2</span>            <span class="comment">//控制循环次数</span></span><br><span class="line">  <span class="number">13</span>   BGE  out</span><br><span class="line">  <span class="number">14</span>   CMP  R6, #<span class="number">2</span>            <span class="comment">//控制循环次数</span></span><br><span class="line">  <span class="number">15</span>   BGE  out               <span class="comment">//不满足循环次数，则调回去</span></span><br><span class="line">  <span class="number">16</span>   B    code</span><br><span class="line">  <span class="number">17</span>   out:</span><br><span class="line">  <span class="number">18</span>   MOV  R0, R4            <span class="comment">//把r4的值作为返回值</span></span><br><span class="line">  <span class="number">19</span>   LDMFD SP!,&#123;R4-R7,PC&#125;</span><br><span class="line">);</span><br></pre></td></tr></table></figure></p>
+<h4 id="ARM64"><a href="#ARM64" class="headerlink" title="ARM64"></a>ARM64</h4><p>考虑到在64位的真机上可能会存在兼容性问题，需要针对arm64-v8a架构重新设计一段代码，原理同上。另外，由于arm64指令集中没有PC寄存器，这里选择用ADR指令做为替代方案。。<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">#!cpp</span><br><span class="line">__asm __volatile (</span><br><span class="line">  <span class="number">1</span>    SUB SP, SP, #<span class="number">0x30</span>       <span class="comment">//开辟栈空间</span></span><br><span class="line">  <span class="number">2</span>    STR X9, [SP, #<span class="number">8</span>]</span><br><span class="line">  <span class="number">3</span>    STR X10, [SP, #<span class="number">0x10</span>]</span><br><span class="line">  <span class="number">4</span>    STR X11, [SP, #<span class="number">0x18</span>]</span><br><span class="line">  <span class="number">5</span>    STR X12, [SP, #<span class="number">0x20</span>]</span><br><span class="line">  <span class="number">6</span>    MOV X10, #<span class="number">0</span></span><br><span class="line">  <span class="number">7</span>    _start:</span><br><span class="line">  <span class="number">8</span>    ADR X11, _start         <span class="comment">//adr伪指令，自动取_start的地址（相对于PC的），并存放到x11寄存器中</span></span><br><span class="line">  <span class="number">9</span>    ADD X11, X11, #<span class="number">12</span>      <span class="comment">//x11加12，指向第11行指令</span></span><br><span class="line">  <span class="number">10</span>   MOV X12, #<span class="number">0</span>            <span class="comment">//为x12赋初值</span></span><br><span class="line">  <span class="number">11</span>   ADD X10, X10, #<span class="number">1</span>       <span class="comment">//用来覆盖$address的"新指令"</span></span><br><span class="line">  <span class="number">12</span>   LDR X9, [X11]</span><br><span class="line">  <span class="number">13</span>   code:</span><br><span class="line">  <span class="number">14</span>   ADD X12, X12, #<span class="number">1</span>       <span class="comment">//这就是$address，是对x12加1</span></span><br><span class="line">  <span class="number">15</span>   ADR X11, code          <span class="comment">//adr伪指令，自动取code的地址（相对于PC的，即第14行指令</span></span><br><span class="line">  <span class="number">16</span>   STR X9, [X11]</span><br><span class="line">  <span class="number">17</span>   CMP X12, #<span class="number">2</span>            <span class="comment">//控制循环次数</span></span><br><span class="line">  <span class="number">18</span>   BGE out                <span class="comment">//跳出循环</span></span><br><span class="line">  <span class="number">19</span>   CMP X10, #<span class="number">2</span>            <span class="comment">//控制循环次数</span></span><br><span class="line">  <span class="number">20</span>   BGE out                <span class="comment">//跳出循环</span></span><br><span class="line">  <span class="number">21</span>   B   code               <span class="comment">//指定次数内的循环调回去</span></span><br><span class="line">  <span class="number">22</span>   out:</span><br><span class="line">  <span class="number">23</span>   MOV W0, W12            <span class="comment">//取低32位值作为返回值</span></span><br><span class="line">  <span class="number">24</span>   LDR X9, [SP, #<span class="number">8</span>]</span><br><span class="line">  <span class="number">25</span>   LDR X10, [SP, #<span class="number">0x10</span>]</span><br><span class="line">  <span class="number">26</span>   LDR X11, [SP, #<span class="number">0x18</span>]</span><br><span class="line">  <span class="number">27</span>   LDR X12, [SP, #<span class="number">0x20</span>]</span><br><span class="line">  <span class="number">28</span>   ADD SP, SP, #<span class="number">0x30</span>      <span class="comment">//出栈，恢复栈空间</span></span><br><span class="line">  <span class="number">29</span>   RET</span><br><span class="line">);</span><br></pre></td></tr></table></figure></p>
+<h3 id="申请权限"><a href="#申请权限" class="headerlink" title="申请权限"></a>申请权限</h3><p>这里会遇到个问题，就是我们是没有写代码段的权限的，所以需要将上面的汇编代码翻译成相应的机器码，再申请一块内存，将可执行代码段拷贝过去并执行。值得注意的是，如果用mmap映射会有bug，在真机上只能执行一次，第二次崩溃，可以通过如下方式解决：<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PAGE_START(addr) (~(getpagesize() - 1) &amp; (addr))</span></span><br><span class="line"><span class="keyword">void</span> *exec = <span class="built_in">malloc</span>(<span class="number">0x1000</span>);</span><br><span class="line"><span class="keyword">char</span> code[] = <span class="string">"\xF0\x40\x2D\xE9\x00\x60\xA0\xE3\x0F\x70\xA0\xE1\x00\x40\xA0\xE3"</span></span><br><span class="line">              <span class="string">"\x01\x60\x86\xE2\x00\x50\x97\xE5\x01\x40\x84\xE2\x0F\x70\xA0\xE1"</span></span><br><span class="line">              <span class="string">"\x0C\x70\x47\xE2\x00\x50\x87\xE5\x02\x00\x54\xE3\x02\x00\x00\xAA"</span></span><br><span class="line">              <span class="string">"\x02\x00\x56\xE3\x00\x00\x00\xAA\xF6\xFF\xFF\xEA\x04\x00\xA0\xE1"</span></span><br><span class="line">              <span class="string">"\xF0\x80\xBD\xE8"</span>;</span><br><span class="line"><span class="keyword">void</span> *page_start_addr = (<span class="keyword">void</span> *)PAGE_START((<span class="keyword">uint32_t</span>)exec);</span><br><span class="line"><span class="built_in">memcpy</span>(exec, code, <span class="keyword">sizeof</span>(code)+<span class="number">1</span>);</span><br><span class="line">mprotect(page_start_addr, getpagesize(), PROT);</span><br><span class="line">LOGI(<span class="string">"magic_addr = %x"</span>, exec);</span><br><span class="line">asmcheck = exec;</span><br><span class="line">status = asmcheck();</span><br></pre></td></tr></table></figure></p>
+<h3 id="验证方式"><a href="#验证方式" class="headerlink" title="验证方式"></a>验证方式</h3><p>如果返回值等于2，说明执行的是旧指令，是arm架构；如果返回值等于1，说明执行的是新指令，是x86架构。最后，由于真机上存在I-Cache被洗掉的情况，也可能返回1，故需要通过多次循环执行对返回的结果进行统计，越靠近1~1000这个范围值的左侧，越可能是真机，反之应是模拟器。</p>
+<h2 id="备注"><a href="#备注" class="headerlink" title="备注"></a>备注</h2><p>最后，为了防止在真机上出现崩溃，最好还是单独开一个进程服务，通过进程间通信实现模拟器鉴别的查询。。</p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><ol>
+<li><a href="https://bbs.pediy.com/thread-208471.htm" target="_blank" rel="noopener">基于cache的模拟器检测</a></li>
+<li><a href="http://www.vuln.cn/6766" target="_blank" rel="noopener">利用cache特性检测Android模拟器</a></li>
+</ol>
+
       
     </div>
     
     
     
+
+    
+
+    
+
+    
+
+    <div>
+      
+        
+<div style="text-align:center;color: #ccc;font-size:14px;">
+------ 本文结束 ------</div>
+<br/>
+<div style="border: 1px solid black">
+<div style="margin-left:10px">
+<span style="font-weight:blod">版权声明</span>
+<img src="/images/my_copyright.png" >
+<br/>
+<p style="font-size: 10px;line-height: 30px"><a href="https://www.wireghost.cn" style="color:#258FC6">Shell In Ghost</a> by <a href="https://www.wireghost.cn" style="color:#258FC6">Jiang Jie</a> is licensed under a <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" style="color:#258FC6">Creative Commons BY-NC-ND 4.0 International License</a>.<br/>
+由<a href="https://www.wireghost.cn" style="color:#258FC6">蒋杰</a>创作并维护的<a href="https://www.wireghost.cn" style="color:#258FC6">Shell In Ghost</a>博客采用<a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" style="color:#258FC6">创作共用保留署名-非商业-禁止演绎4.0国际许可证</a>。<br/>
+本文首发于<a href="https://www.wireghost.cn" style="color:#258FC6">Shell In Ghost</a> 博客（ <a href="https://www.wireghost.cn" style="color:#258FC6">https://www.wireghost.cn</a> ），版权所有，侵权必究。</p>
+</div>
+</div>
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/模拟器检测/" rel="tag"># 模拟器检测</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/02/26/Android下的Elf文件结构详解/" rel="next" title="Android下的Elf文件结构详解">
+                <i class="fa fa-chevron-left"></i> Android下的Elf文件结构详解
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
   </div>
 
 
@@ -366,8 +533,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -460,6 +636,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#ARM和X86"><span class="nav-number">1.</span> <span class="nav-text">ARM和X86</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#设计思路"><span class="nav-number">2.</span> <span class="nav-text">设计思路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#具体实现"><span class="nav-number">3.</span> <span class="nav-text">具体实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#测试代码"><span class="nav-number">3.1.</span> <span class="nav-text">测试代码</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ARM32"><span class="nav-number">3.1.1.</span> <span class="nav-text">ARM32</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ARM64"><span class="nav-number">3.1.2.</span> <span class="nav-text">ARM64</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#申请权限"><span class="nav-number">3.2.</span> <span class="nav-text">申请权限</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#验证方式"><span class="nav-number">3.3.</span> <span class="nav-text">验证方式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#备注"><span class="nav-number">4.</span> <span class="nav-text">备注</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考链接"><span class="nav-number">5.</span> <span class="nav-text">参考链接</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       

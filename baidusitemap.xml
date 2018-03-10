@@ -4,8 +4,28 @@
 
     
   <url>
+    <loc>http://yoursite.com/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/</loc>
+    <lastmod>2018-03-10T05:54:17.603Z</lastmod>
+    <data>
+        <display>
+        <title>基于Cache的Android模拟器检测</title>
+        <pubTime>2018-03-10T04:53:28.000Z</pubTime>
+        
+        <tag>模拟器检测</tag>
+         
+         
+           
+             
+              <breadCrumb title="Android" url="http://yoursite.com/categories/Android/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
     <loc>http://yoursite.com/2018/02/26/Android%E4%B8%8B%E7%9A%84Elf%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84%E8%AF%A6%E8%A7%A3/</loc>
-    <lastmod>2018-02-28T12:07:06.511Z</lastmod>
+    <lastmod>2018-02-28T12:13:14.395Z</lastmod>
     <data>
         <display>
         <title>Android下的Elf文件结构详解</title>
