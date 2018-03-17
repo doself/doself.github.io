@@ -78,7 +78,7 @@
 
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="直播人气,业务安全," />
 
 
 
@@ -91,16 +91,28 @@
 
 
 
-<meta name="description" content="即便停下脚步，也只是一片荒芜">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Shell In Ghost">
-<meta property="og:url" content="http://yoursite.com/index.html">
+<meta name="description" content="前端时间因工作业务需要，简单还原了下六间房的刷人气场景，这里主要对相关过程做下梳理，并尝试提出一些检出建议。。 破解登录协议用Fiddler对六间房的登录环节进行抓包，发现上传过程中对密码做了加密处理。在谷歌浏览器开发者模式下，检索”password”关键字，并通过JS调试定位到相应的加密函数：其中，servertime和nonce都是由服务器返回，这里我们只需要拷贝那段加密用的JS代码，通过Py">
+<meta name="keywords" content="直播人气,业务安全">
+<meta property="og:type" content="article">
+<meta property="og:title" content="六间房登录进房协议分析">
+<meta property="og:url" content="http://yoursite.com/2018/03/10/六间房登录进房协议分析/index.html">
 <meta property="og:site_name" content="Shell In Ghost">
-<meta property="og:description" content="即便停下脚步，也只是一片荒芜">
+<meta property="og:description" content="前端时间因工作业务需要，简单还原了下六间房的刷人气场景，这里主要对相关过程做下梳理，并尝试提出一些检出建议。。 破解登录协议用Fiddler对六间房的登录环节进行抓包，发现上传过程中对密码做了加密处理。在谷歌浏览器开发者模式下，检索”password”关键字，并通过JS调试定位到相应的加密函数：其中，servertime和nonce都是由服务器返回，这里我们只需要拷贝那段加密用的JS代码，通过Py">
 <meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://p5fhovz22.bkt.clouddn.com/01.jpg">
+<meta property="og:image" content="http://p5fhovz22.bkt.clouddn.com/03.jpg">
+<meta property="og:image" content="http://p5fhovz22.bkt.clouddn.com/02.jpg">
+<meta property="og:image" content="http://p5fhovz22.bkt.clouddn.com/04.jpg">
+<meta property="og:image" content="http://p5fhovz22.bkt.clouddn.com/05.jpg">
+<meta property="og:image" content="http://p5fhovz22.bkt.clouddn.com/06.jpg">
+<meta property="og:image" content="http://p5fhovz22.bkt.clouddn.com/7.jpg">
+<meta property="og:image" content="http://p5fhovz22.bkt.clouddn.com/09.jpg">
+<meta property="og:image" content="http://p5fhovz22.bkt.clouddn.com/11.jpg">
+<meta property="og:updated_time" content="2018-03-17T13:02:24.986Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Shell In Ghost">
-<meta name="twitter:description" content="即便停下脚步，也只是一片荒芜">
+<meta name="twitter:title" content="六间房登录进房协议分析">
+<meta name="twitter:description" content="前端时间因工作业务需要，简单还原了下六间房的刷人气场景，这里主要对相关过程做下梳理，并尝试提出一些检出建议。。 破解登录协议用Fiddler对六间房的登录环节进行抓包，发现上传过程中对密码做了加密处理。在谷歌浏览器开发者模式下，检索”password”关键字，并通过JS调试定位到相应的加密函数：其中，servertime和nonce都是由服务器返回，这里我们只需要拷贝那段加密用的JS代码，通过Py">
+<meta name="twitter:image" content="http://p5fhovz22.bkt.clouddn.com/01.jpg">
 
 
 
@@ -130,13 +142,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/"/>
+  <link rel="canonical" href="http://yoursite.com/2018/03/10/六间房登录进房协议分析/"/>
 
 
 
 
 
-  <title>Shell In Ghost</title>
+  <title>六间房登录进房协议分析 | Shell In Ghost</title>
   
 
 
@@ -155,8 +167,7 @@
     
   
 
-  <div class="container sidebar-position-left 
-  page-home">
+  <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -293,9 +304,9 @@
         <div class="content-wrap">
           <div id="content" class="content">
             
-  <section id="posts" class="posts-expand">
+
+  <div id="posts" class="posts-expand">
     
-      
 
   
 
@@ -325,9 +336,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/03/10/六间房登录进房协议分析/" itemprop="url">六间房登录进房协议分析</a></h1>
+          <h1 class="post-title" itemprop="name headline">六间房登录进房协议分析</h1>
         
 
         <div class="post-meta">
@@ -399,19 +408,11 @@
       
 
       
-        
-          
-          前端时间因工作业务需要，简单还原了下六间房的刷人气场景，这里主要对相关过程做下梳理，并尝试提出一些检出建议。。
-破解登录协议用Fiddler对六间房的登录环节进行抓包，发现上传过程中对密码做了加密处理。在谷歌浏览器开发者模式下，检索”password”关键字，并通过JS调试定位到相应的加密函数：其中
-          ...
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2018/03/10/六间房登录进房协议分析/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
+        <p>前端时间因工作业务需要，简单还原了下六间房的刷人气场景，这里主要对相关过程做下梳理，并尝试提出一些检出建议。。</p>
+<h2 id="破解登录协议"><a href="#破解登录协议" class="headerlink" title="破解登录协议"></a>破解登录协议</h2><p>用Fiddler对六间房的登录环节进行抓包，发现上传过程中对密码做了加密处理。<br><img src="http://p5fhovz22.bkt.clouddn.com/01.jpg" alt="登录网络包">在谷歌浏览器开发者模式下，检索”password”关键字，并通过JS调试定位到相应的加密函数：<img src="http://p5fhovz22.bkt.clouddn.com/03.jpg" alt="JS调试"><img src="http://p5fhovz22.bkt.clouddn.com/02.jpg" alt="JS调试"><img src="http://p5fhovz22.bkt.clouddn.com/04.jpg" alt="JS调试">其中，servertime和nonce都是由<a href="https://passport.6.cn/sso/prelogin.php?username=用户名&amp;domain=www.6.cn&amp;c=1&amp;_=时间戳" target="_blank" rel="noopener">服务器</a>返回，这里我们只需要拷贝那段加密用的JS代码，通过Python调用JS获取加密后的数据，并模拟后续对应的<a href="https://passport.6.cn/sso/login.php?username=用户名&amp;domain=www.6.cn" target="_blank" rel="noopener">post请求</a>，即可成功登录。。<br><img src="http://p5fhovz22.bkt.clouddn.com/05.jpg" alt="登录网络包"><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">encode_pwd</span><span class="params">(self, pswd, st, nc)</span>:</span></span><br><span class="line">    f = open(<span class="string">"./sha.js"</span>, <span class="string">'r'</span>)</span><br><span class="line">    line = f.readline()</span><br><span class="line">    htmlstr = <span class="string">''</span></span><br><span class="line">    <span class="keyword">while</span> line:</span><br><span class="line">        htmlstr = htmlstr + line</span><br><span class="line">        line = f.readline()</span><br><span class="line">    ctx = execjs.compile(htmlstr)</span><br><span class="line">    <span class="keyword">return</span> ctx.call(<span class="string">'getpassword'</span>, pswd, st, nc)</span><br></pre></td></tr></table></figure></p>
+<h2 id="获取登录Cookie"><a href="#获取登录Cookie" class="headerlink" title="获取登录Cookie"></a>获取登录Cookie</h2><p>由于HTTP是一种无状态协议，在数据交换完毕后，服务器端和客户端的链接就会关闭，即服务器不知道用户上一次的请求内容及次数，这严重阻碍了交互式web应用程序的实现。Cookie则是网站为了辨别用户身份，从而储存在用户本地终端上的数据（通常经过加密）。所以，我们还要获取登录相关的Cookie信息。<br><img src="http://p5fhovz22.bkt.clouddn.com/06.jpg" alt="登录页面">上图是发送登录请求后，服务器的响应内容，可以看到它返回了3个URL地址用于接下来的网络访问。通过分析发现<a href="https://www.6.cn/login_test.php?username=ever17&amp;callback=parent.SSOController.feedBackUrlCallBack&amp;next_action=&amp;p1=&amp;p2=&amp;p3=&amp;retcode=0&amp;ticket=fbq4EvQ8feoEJQ8bfgzLyPpmHDqDVvflbbyyG0w9o9irUbMsBL7ZZNuUsYi-H6ALvM0pxwLbIWIgsA8IPbp4oPkgwMVpQBxG9PqgAAHRspAqxVJMJiiKV9wdio8iV_X510003&amp;prod=10003&amp;un=ever17&amp;savestate=0&amp;reg=login&amp;deviceId=WHJMrwNw1k%2FGhmV2u729g9Aizbh%2BOol%2BDbTWdBes4Ke5f6bBPxWjs%2BX2oQji7oL67x0RooZlZIMtuWCr2JZoqisWiSnTMJkv5NfXRcmA%2FdolMZSN5aoyQfFm6zjYEzmcwSdFB3dHluPe2XjjYMVG2HqZvJshYmWrn7m1P2zMZrizrJ2n8tBLMUaFiwVCiDNOJzbQCr3JAl59y7Qyfzjfd7yL3e1v2U6NZAirC5Rb%2BJdXcLjlxvuKHBaTkjp7Yczxq1487582755342" target="_blank" rel="noopener">redirect_url</a>才是最终用于设置Cookie的链接：<br><img src="http://p5fhovz22.bkt.clouddn.com/7.jpg" alt="设置Cookie">这些Cookie中，有两个字段值得特别注意下，一个是ticket_v，这个应该是服务器下发用于识别账户身份的登录口令，下面会做说明；另一个是_vinfo或者_coin6，它的前几位数字序列是用户的tokenid，这个可以在登录后跳转到用户的直播主页进行确认。之所以单独把它们列出来，是因为这些数据在之后的进房操作时还会用到。。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 解析JS资源</span></span><br><span class="line">soup = BeautifulSoup(html.decode(<span class="string">"UTF-8"</span>), <span class="string">'html.parser'</span>)</span><br><span class="line">jss = soup.find_all(<span class="string">'script'</span>)</span><br><span class="line">pattern = re.compile(<span class="string">"(?:\"prod\":\")([^\"]+)"</span>)</span><br><span class="line">prod = pattern.findall(str(jss))[<span class="number">0</span>]</span><br><span class="line">print(prod)</span><br><span class="line"><span class="comment"># 设置Cookie</span></span><br><span class="line"><span class="keyword">if</span> rhead <span class="keyword">is</span> <span class="keyword">not</span> <span class="keyword">None</span>:</span><br><span class="line">    <span class="keyword">for</span> item <span class="keyword">in</span> rhead:</span><br><span class="line">        <span class="keyword">if</span> item[<span class="number">0</span>] == <span class="string">'Set-Cookie'</span>:</span><br><span class="line">            self._thisCookie += item[<span class="number">1</span>].split(<span class="string">';'</span>)[<span class="number">0</span>] + <span class="string">'; '</span></span><br><span class="line"><span class="comment"># 从cookie中解析用户信息</span></span><br><span class="line">self._ticket = re.search(<span class="string">'ticket_v=[^\;]+'</span>, self._thisCookie).group().split(<span class="string">'='</span>)[<span class="number">1</span>]</span><br><span class="line">self._puid = re.search(<span class="string">'_vinfo=[^\;]+'</span>, self._thisCookie).group().split(<span class="string">'%7C%7C'</span>)[<span class="number">0</span>].split(<span class="string">'='</span>)[<span class="number">1</span>]</span><br><span class="line">print(self._puid)</span><br><span class="line">self.currentlyin = self._puid + <span class="string">"_"</span> + self.getouterip()  <span class="comment"># 登录账号的用户ID加上它的外网IP地址，用于标识和验证一个登录账户</span></span><br><span class="line">self._thisCookie += <span class="string">'currentlyin='</span> + self.currentlyin + <span class="string">'; '</span></span><br><span class="line">self._thisCookie = self._thisCookie[:<span class="number">-2</span>]</span><br><span class="line">print(self._thisCookie)</span><br></pre></td></tr></table></figure></p>
+<h2 id="定位进房网络包"><a href="#定位进房网络包" class="headerlink" title="定位进房网络包"></a>定位进房网络包</h2><p>登录之后的下一步操作就是进指定的直播间了，下面我们以230933572这个房间为例：<br><img src="http://p5fhovz22.bkt.clouddn.com/09.jpg" alt="直播间"><img src="http://p5fhovz22.bkt.clouddn.com/11.jpg" alt="直播间"><br>这里，我们同时使用Fiddler和WireShark对进房行为进行抓包。为什么呢？原因是这两个抓包工具各有特色，Fiddler的原理是把自身作为一个代理，所有的http请求在达到目标服务器之前都会经过Fiddler，同样的，所有的http响应也都会在返回客户端之前流经Fiddler，在目标设备安装并信任Fiddler的证书后，更是可以直接解密HTTPS，但也因此基本上只能够用来分析HTTP/HTTPS网络协议；WireShark的功能则要更强大些，它的原理是直接基于网卡的，通过将其设置成混杂模式从而完成抓包。说简单点就是什么都抓，但配置及使用上比Fiddler要麻烦些。由于目前还无法确定进房的关键数据包是用的是哪种协议，所以都用。。</p>
+
       
     </div>
     
@@ -426,322 +427,58 @@
 
     <div>
       
+        
+<div style="text-align:center;color: #ccc;font-size:14px;">
+------ 本文结束 ------</div>
+<br/>
+<div style="border: 1px solid black">
+<div style="margin-left:10px">
+<span style="font-weight:blod">版权声明</span>
+<img src="/images/my_copyright.png" >
+<br/>
+<p style="font-size: 10px;line-height: 30px"><a href="https://www.wireghost.cn" style="color:#258FC6">Shell In Ghost</a> by <a href="https://www.wireghost.cn" style="color:#258FC6">Jiang Jie</a> is licensed under a <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" style="color:#258FC6">Creative Commons BY-NC-ND 4.0 International License</a>.<br/>
+由<a href="https://www.wireghost.cn" style="color:#258FC6">蒋杰</a>创作并维护的<a href="https://www.wireghost.cn" style="color:#258FC6">Shell In Ghost</a>博客采用<a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" style="color:#258FC6">创作共用保留署名-非商业-禁止演绎4.0国际许可证</a>。<br/>
+本文首发于<a href="https://www.wireghost.cn" style="color:#258FC6">Shell In Ghost</a> 博客（ <a href="https://www.wireghost.cn" style="color:#258FC6">https://www.wireghost.cn</a> ），版权所有，侵权必究。</p>
+</div>
+</div>
+
+      
     </div>
 
     <footer class="post-footer">
       
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/10/基于Cache的模拟器检测/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="WireGhost">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.jpeg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Shell In Ghost">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/03/10/基于Cache的模拟器检测/" itemprop="url">基于Cache的Android模拟器检测</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-10T12:53:28+08:00">
-                2018-03-10
-              </time>
-            
-
-            
-
-            
-          </span>
-
+        <div class="post-tags">
           
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Android/" itemprop="url" rel="index">
-                    <span itemprop="name">Android</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
+            <a href="/tags/直播人气/" rel="tag"># 直播人气</a>
           
-
+            <a href="/tags/业务安全/" rel="tag"># 业务安全</a>
           
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
         </div>
-      </header>
-    
+      
 
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
+      
       
       
 
       
-        
-          
-          ARM和X86目前，绝大部分手机都是基于ARM架构，其他CPU架构给忽略不计，模拟器全部运行在PC的X86架构上。因此，可以利用ARM与X86的区别来判断是否为真机。从上图我们可以看出，在CPU和内存之间，可以存在几级Cache，这里是L1和L2。Cache的作用是加速，把特定地址的数据值缓存起来，
-          ...
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2018/03/10/基于Cache的模拟器检测/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/03/10/基于Cache的模拟器检测/" rel="next" title="基于Cache的Android模拟器检测">
+                <i class="fa fa-chevron-left"></i> 基于Cache的Android模拟器检测
+              </a>
+            
           </div>
-          <!--/noindex-->
-        
-      
-    </div>
-    
-    
-    
 
-    
+          <span class="post-nav-divider"></span>
 
-    
-
-    
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/02/26/Android下的Elf文件结构详解/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="WireGhost">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.jpeg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Shell In Ghost">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/02/26/Android下的Elf文件结构详解/" itemprop="url">Android下的Elf文件结构详解</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
+          <div class="post-nav-prev post-nav-item">
             
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-02-26T14:48:20+08:00">
-                2018-02-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Android/" itemprop="url" rel="index">
-                    <span itemprop="name">Android</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
+          </div>
         </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
       
 
       
-        
-          
-          链接与装载视图Elf文件有2个平行视角：一个是程序链接角度，一个是程序装载角度。从链接的角度来看，Elf文件是按“Section”（节）的形式存储；而在装载的角度上，Elf文件又可以按“Segment”（段）来划分。实际上，Section和Segment难以从中文的翻译上加以区分。因为很多时候Sec
-          ...
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2018/02/26/Android下的Elf文件结构详解/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
       
     </footer>
   </div>
@@ -751,10 +488,11 @@
   </article>
 
 
-    
-  </section>
 
-  
+    <div class="post-spread">
+      
+    </div>
+  </div>
 
 
           </div>
@@ -762,6 +500,15 @@
 
 
           
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zMzcxNS8xMDI3MA=="></div>
+    </div>
+
+  
+
+
 
         </div>
         
@@ -782,8 +529,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -876,6 +632,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#破解登录协议"><span class="nav-number">1.</span> <span class="nav-text">破解登录协议</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#获取登录Cookie"><span class="nav-number">2.</span> <span class="nav-text">获取登录Cookie</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#定位进房网络包"><span class="nav-number">3.</span> <span class="nav-text">定位进房网络包</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
@@ -1009,6 +781,10 @@
   
 
   
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
 
   
 
@@ -1037,6 +813,17 @@
 
 
 
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
   
 
 
