@@ -91,20 +91,20 @@
 
 
 
-<meta name="description" content="ARM和X86目前，绝大部分手机都是基于ARM架构，其他CPU架构给忽略不计，模拟器全部运行在PC的X86架构上。因此，可以利用ARM与X86的区别来判断是否为真机。从上图我们可以看出，在CPU和内存之间，可以存在几级Cache，这里是L1和L2。Cache的作用是加速，把特定地址的数据值缓存起来，这样就不用到低速的内存中去取了。其中，ARM采用的是将指令存储与数据存储分开的哈佛架构，L1 Cac">
+<meta name="description" content="本文主要解决了ARM64位指令的兼容性问题，并通过进程间通信杜绝了崩溃现象，让这部分的检测代码更具有可操作性。。 ARM和X86目前，绝大部分手机都是基于ARM架构，其他CPU架构给忽略不计，模拟器全部运行在PC的X86架构上。因此，可以利用ARM与X86的区别来判断是否为真机。从上图我们可以看出，在CPU和内存之间，可以存在几级Cache，这里是L1和L2。Cache的作用是加速，把特定地址的数">
 <meta name="keywords" content="模拟器检测">
 <meta property="og:type" content="article">
 <meta property="og:title" content="基于Cache的Android模拟器检测">
 <meta property="og:url" content="http://yoursite.com/2018/03/10/基于Cache的模拟器检测/index.html">
 <meta property="og:site_name" content="Shell In Ghost">
-<meta property="og:description" content="ARM和X86目前，绝大部分手机都是基于ARM架构，其他CPU架构给忽略不计，模拟器全部运行在PC的X86架构上。因此，可以利用ARM与X86的区别来判断是否为真机。从上图我们可以看出，在CPU和内存之间，可以存在几级Cache，这里是L1和L2。Cache的作用是加速，把特定地址的数据值缓存起来，这样就不用到低速的内存中去取了。其中，ARM采用的是将指令存储与数据存储分开的哈佛架构，L1 Cac">
+<meta property="og:description" content="本文主要解决了ARM64位指令的兼容性问题，并通过进程间通信杜绝了崩溃现象，让这部分的检测代码更具有可操作性。。 ARM和X86目前，绝大部分手机都是基于ARM架构，其他CPU架构给忽略不计，模拟器全部运行在PC的X86架构上。因此，可以利用ARM与X86的区别来判断是否为真机。从上图我们可以看出，在CPU和内存之间，可以存在几级Cache，这里是L1和L2。Cache的作用是加速，把特定地址的数">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://p5czuvxhw.bkt.clouddn.com/1.png">
 <meta property="og:image" content="http://p5czuvxhw.bkt.clouddn.com/2.png">
-<meta property="og:updated_time" content="2018-03-17T03:53:38.766Z">
+<meta property="og:updated_time" content="2018-03-19T05:02:17.929Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="基于Cache的Android模拟器检测">
-<meta name="twitter:description" content="ARM和X86目前，绝大部分手机都是基于ARM架构，其他CPU架构给忽略不计，模拟器全部运行在PC的X86架构上。因此，可以利用ARM与X86的区别来判断是否为真机。从上图我们可以看出，在CPU和内存之间，可以存在几级Cache，这里是L1和L2。Cache的作用是加速，把特定地址的数据值缓存起来，这样就不用到低速的内存中去取了。其中，ARM采用的是将指令存储与数据存储分开的哈佛架构，L1 Cac">
+<meta name="twitter:description" content="本文主要解决了ARM64位指令的兼容性问题，并通过进程间通信杜绝了崩溃现象，让这部分的检测代码更具有可操作性。。 ARM和X86目前，绝大部分手机都是基于ARM架构，其他CPU架构给忽略不计，模拟器全部运行在PC的X86架构上。因此，可以利用ARM与X86的区别来判断是否为真机。从上图我们可以看出，在CPU和内存之间，可以存在几级Cache，这里是L1和L2。Cache的作用是加速，把特定地址的数">
 <meta name="twitter:image" content="http://p5czuvxhw.bkt.clouddn.com/1.png">
 
 
@@ -401,7 +401,8 @@
       
 
       
-        <h2 id="ARM和X86"><a href="#ARM和X86" class="headerlink" title="ARM和X86"></a>ARM和X86</h2><p>目前，绝大部分手机都是基于ARM架构，其他CPU架构给忽略不计，模拟器全部运行在PC的X86架构上。因此，可以利用ARM与X86的区别来判断是否为真机。<br><img src="http://p5czuvxhw.bkt.clouddn.com/1.png" alt="ELF"><br>从上图我们可以看出，在CPU和内存之间，可以存在几级Cache，这里是L1和L2。Cache的作用是加速，把特定地址的数据值缓存起来，这样就不用到低速的内存中去取了。其中，ARM采用的是将指令存储与数据存储分开的哈佛架构，L1 Cache（一级缓存）被分成了平行的两块，即I-Cache（指令缓存）和D-Cache（数据缓存），而X86采用的是将指令存储和数据存储合并在一起的冯•诺伊曼结构，L1 Cache是连续的一块缓存。<br>因此，如果我们通过读写地址指令的方式对一段可执行代码进行动态修改，那么在执行的时候，X86架构上的指令缓存会被同步修改，而对ARM架构而言，这种数据读写操作修改的只是D-Cahce中的内容，此时I-Cache中的指令并不会被更新。</p>
+        <p>本文主要解决了ARM64位指令的兼容性问题，并通过进程间通信杜绝了崩溃现象，让这部分的检测代码更具有可操作性。。</p>
+<h2 id="ARM和X86"><a href="#ARM和X86" class="headerlink" title="ARM和X86"></a>ARM和X86</h2><p>目前，绝大部分手机都是基于ARM架构，其他CPU架构给忽略不计，模拟器全部运行在PC的X86架构上。因此，可以利用ARM与X86的区别来判断是否为真机。<br><img src="http://p5czuvxhw.bkt.clouddn.com/1.png" alt="ELF"><br>从上图我们可以看出，在CPU和内存之间，可以存在几级Cache，这里是L1和L2。Cache的作用是加速，把特定地址的数据值缓存起来，这样就不用到低速的内存中去取了。其中，ARM采用的是将指令存储与数据存储分开的哈佛架构，L1 Cache（一级缓存）被分成了平行的两块，即I-Cache（指令缓存）和D-Cache（数据缓存），而X86采用的是将指令存储和数据存储合并在一起的冯•诺伊曼结构，L1 Cache是连续的一块缓存。<br>因此，如果我们通过读写地址指令的方式对一段可执行代码进行动态修改，那么在执行的时候，X86架构上的指令缓存会被同步修改，而对ARM架构而言，这种数据读写操作修改的只是D-Cahce中的内容，此时I-Cache中的指令并不会被更新。</p>
 <h2 id="设计思路"><a href="#设计思路" class="headerlink" title="设计思路"></a>设计思路</h2><p>先看下思路的流程图：<br><img src="http://p5czuvxhw.bkt.clouddn.com/2.png" alt="ELF"><br>左边的是真机上发生的情况，右边是模拟器发生的情况，下面详述一下操作过程。  </p>
 <blockquote>
 <ol>
@@ -470,8 +471,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/02/26/Android下的Elf文件结构详解/" rel="next" title="Android下的Elf文件结构详解">
-                <i class="fa fa-chevron-left"></i> Android下的Elf文件结构详解
+              <a href="/2018/02/26/六间房直播刷人气/" rel="next" title="六间房直播刷人气">
+                <i class="fa fa-chevron-left"></i> 六间房直播刷人气
               </a>
             
           </div>
@@ -479,10 +480,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2018/03/10/六间房登录进房协议分析/" rel="prev" title="六间房登录进房协议分析">
-                六间房登录进房协议分析 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
