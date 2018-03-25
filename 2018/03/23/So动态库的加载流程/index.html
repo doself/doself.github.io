@@ -125,7 +125,7 @@
 <meta property="og:image" content="http://p64t598bf.bkt.clouddn.com/34.png">
 <meta property="og:image" content="http://p64t598bf.bkt.clouddn.com/35.png">
 <meta property="og:image" content="http://p64t598bf.bkt.clouddn.com/36.png">
-<meta property="og:updated_time" content="2018-03-25T13:06:08.826Z">
+<meta property="og:updated_time" content="2018-03-25T13:08:31.813Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="细说So动态库的加载流程">
 <meta name="twitter:description" content="dlopen之内存装载dlopen用来打开一个动态链接库，并将其装入内存。它的定义在Android源码中的路径为/bionic/linker/dlfcn.cpp，执行流程如下：其核心代码在do_dlopen中实现，根据传入的路径或文件名去查找一个动态库，并执行该动态链接库的初始化代码。1234567891011121314151617181920212223void* dlopen(const c">
@@ -493,7 +493,7 @@
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>在了解So在内存中的加载原理后，可以得知以下几点：</p>
 <blockquote>
 <ol>
-<li>So的加载路径为：”/vendor/lib”、”/system/lib”、”/data/app-lib/包名-n”</li>
+<li>So的加载路径为：”/vendor/lib”、”/system/lib”、”/data/app-lib/包名-n”;</li>
 <li>So的入口为init_array、init_func这些初始化函数。这部分在dlopen的过程中就会执行，再之后的是JNI_Onload方法的调用。这里面可以注册一些本地方法，也可以继续做些变量的初始化等操作;</li>
 <li>在So的加载流程中，最终会被存放到SharedLib这个结构体中，并添加到nativeLibs这个hash表下。。</li>
 </ol>
