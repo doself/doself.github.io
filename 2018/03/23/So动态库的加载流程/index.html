@@ -91,17 +91,21 @@
 
 
 
-<meta name="description" content="即便停下脚步，也只是一片荒芜">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Categories">
-<meta property="og:url" content="http://yoursite.com/categories/index.html">
+<meta name="description" content="dlopen之内存装载dlopen用来打开一个动态链接库，并将其装入内存。它的定义在Android源码中的路径为/bionic/linker/dlfcn.cpp，执行流程如下：其核心代码在do_dlopen中实现，根据传入的路径或文件名去查找一个动态库，并执行该动态链接库的初始化代码。1234567891011121314151617181920212223void* dlopen(const c">
+<meta property="og:type" content="article">
+<meta property="og:title" content="细说So动态库的加载流程">
+<meta property="og:url" content="http://yoursite.com/2018/03/23/So动态库的加载流程/index.html">
 <meta property="og:site_name" content="Shell In Ghost">
-<meta property="og:description" content="即便停下脚步，也只是一片荒芜">
+<meta property="og:description" content="dlopen之内存装载dlopen用来打开一个动态链接库，并将其装入内存。它的定义在Android源码中的路径为/bionic/linker/dlfcn.cpp，执行流程如下：其核心代码在do_dlopen中实现，根据传入的路径或文件名去查找一个动态库，并执行该动态链接库的初始化代码。1234567891011121314151617181920212223void* dlopen(const c">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-01-28T09:29:37.564Z">
+<meta property="og:image" content="http://p64t598bf.bkt.clouddn.com/1.png">
+<meta property="og:image" content="http://p64t598bf.bkt.clouddn.com/7.png">
+<meta property="og:image" content="http://p64t598bf.bkt.clouddn.com/8.png">
+<meta property="og:updated_time" content="2018-03-25T07:22:32.673Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Categories">
-<meta name="twitter:description" content="即便停下脚步，也只是一片荒芜">
+<meta name="twitter:title" content="细说So动态库的加载流程">
+<meta name="twitter:description" content="dlopen之内存装载dlopen用来打开一个动态链接库，并将其装入内存。它的定义在Android源码中的路径为/bionic/linker/dlfcn.cpp，执行流程如下：其核心代码在do_dlopen中实现，根据传入的路径或文件名去查找一个动态库，并执行该动态链接库的初始化代码。1234567891011121314151617181920212223void* dlopen(const c">
+<meta name="twitter:image" content="http://p64t598bf.bkt.clouddn.com/1.png">
 
 
 
@@ -131,13 +135,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/categories/"/>
+  <link rel="canonical" href="http://yoursite.com/2018/03/23/So动态库的加载流程/"/>
 
 
 
 
 
-  <title>Categories | Shell In Ghost</title>
+  <title>细说So动态库的加载流程 | Shell In Ghost</title>
   
 
 
@@ -296,40 +300,174 @@
 
   <div id="posts" class="posts-expand">
     
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/23/So动态库的加载流程/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="WireGhost">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Shell In Ghost">
+    </span>
+
     
-    
-    <div class="post-block page">
       <header class="post-header">
 
-	<h1 class="post-title" itemprop="name headline">Categories</h1>
-
-
-
-</header>
-
-      
-      
-      
-      <div class="post-body">
         
         
-          <div class="category-all-page">
-            <div class="category-all-title">
-                目前共计 2 个分类
-            </div>
-            <div class="category-all">
-              <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Android/">Android</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Web/">Web</a><span class="category-list-count">1</span></li></ul>
-            </div>
-          </div>
+          <h1 class="post-title" itemprop="name headline">细说So动态库的加载流程</h1>
         
-      </div>
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-23T13:52:18+08:00">
+                2018-03-23
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+             <span id="/2018/03/23/So动态库的加载流程/" class="leancloud_visitors" data-flag-title="细说So动态库的加载流程">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数&#58;</span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
       
       
+
+      
+        <h2 id="dlopen之内存装载"><a href="#dlopen之内存装载" class="headerlink" title="dlopen之内存装载"></a>dlopen之内存装载</h2><p>dlopen用来打开一个动态链接库，并将其装入内存。它的定义在Android源码中的路径为/bionic/linker/dlfcn.cpp，执行流程如下：<br><img src="http://p64t598bf.bkt.clouddn.com/1.png" alt="dlopen执行流程">其核心代码在do_dlopen中实现，根据传入的路径或文件名去查找一个动态库，并执行该动态链接库的初始化代码。<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span>* <span class="title">dlopen</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* filename, <span class="keyword">int</span> flags)</span> </span>&#123;</span><br><span class="line">  <span class="function">ScopedPthreadMutexLocker <span class="title">locker</span><span class="params">(&amp;gDlMutex)</span></span>;</span><br><span class="line">  soinfo* result = do_dlopen(filename, flags);</span><br><span class="line">  <span class="keyword">if</span> (result == <span class="literal">NULL</span>) &#123;</span><br><span class="line">    __bionic_format_dlerror(<span class="string">"dlopen failed"</span>, linker_get_error_buffer());</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">soinfo* <span class="title">do_dlopen</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* name, <span class="keyword">int</span> flags)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> ((flags &amp; ~(RTLD_NOW|RTLD_LAZY|RTLD_LOCAL|RTLD_GLOBAL)) != <span class="number">0</span>) &#123;</span><br><span class="line">    DL_ERR(<span class="string">"invalid flags to dlopen: %x"</span>, flags);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  set_soinfo_pool_protection(PROT_READ | PROT_WRITE);</span><br><span class="line">  soinfo* si = find_library(name);</span><br><span class="line">  <span class="keyword">if</span> (si != <span class="literal">NULL</span>) &#123;</span><br><span class="line">    si-&gt;CallConstructors();</span><br><span class="line">  &#125;</span><br><span class="line">  set_soinfo_pool_protection(PROT_READ);</span><br><span class="line">  <span class="keyword">return</span> si;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>再来看find_library这个方法，它会先在solist（已经加载的动态链接库链表）里进行查找，如果找到了就返回对应的soinfo结构体指针。否则，就调用load_library进行加载。然后，调用soinfo_link_image方法，根据soinfo结构体解析相应的Section。<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> soinfo *<span class="title">find_loaded_library</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *name)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    soinfo *si;</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *bname;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// <span class="doctag">TODO:</span> don't use basename only for determining libraries</span></span><br><span class="line">    <span class="comment">// http://code.google.com/p/android/issues/detail?id=6670</span></span><br><span class="line"></span><br><span class="line">    bname = <span class="built_in">strrchr</span>(name, <span class="string">'/'</span>);</span><br><span class="line">    bname = bname ? bname + <span class="number">1</span> : name;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (si = solist; si != <span class="literal">NULL</span>; si = si-&gt;next) &#123;</span><br><span class="line">        <span class="keyword">if</span> (!<span class="built_in">strcmp</span>(bname, si-&gt;name)) &#123;</span><br><span class="line">            <span class="keyword">return</span> si;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> soinfo* <span class="title">find_library_internal</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* name)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (name == <span class="literal">NULL</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> somain;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  soinfo* si = find_loaded_library(name);</span><br><span class="line">  <span class="keyword">if</span> (si != <span class="literal">NULL</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (si-&gt;flags &amp; FLAG_LINKED) &#123;</span><br><span class="line">      <span class="keyword">return</span> si;</span><br><span class="line">    &#125;</span><br><span class="line">    DL_ERR(<span class="string">"OOPS: recursive link to \"%s\""</span>, si-&gt;name);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  TRACE(<span class="string">"[ '%s' has not been loaded yet.  Locating...]"</span>, name);</span><br><span class="line">  si = load_library(name);</span><br><span class="line">  <span class="keyword">if</span> (si == <span class="literal">NULL</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// At this point we know that whatever is loaded @ base is a valid ELF</span></span><br><span class="line">  <span class="comment">// shared library whose segments are properly mapped in.</span></span><br><span class="line">  TRACE(<span class="string">"[ init_library base=0x%08x sz=0x%08x name='%s' ]"</span>,</span><br><span class="line">        si-&gt;base, si-&gt;size, si-&gt;name);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!soinfo_link_image(si)) &#123;</span><br><span class="line">    munmap(<span class="keyword">reinterpret_cast</span>&lt;<span class="keyword">void</span>*&gt;(si-&gt;base), si-&gt;size);</span><br><span class="line">    soinfo_free(si);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> si;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> soinfo* <span class="title">find_library</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span>* name)</span> </span>&#123;</span><br><span class="line">  soinfo* si = find_library_internal(name);</span><br><span class="line">  <span class="keyword">if</span> (si != <span class="literal">NULL</span>) &#123;</span><br><span class="line">    si-&gt;ref_count++;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> si;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>load_library调用open_library打开一个动态链接库，返回一个句柄，将其与共享库所在的路径作为参数，对ElfReader进行初始化。<br><img src="http://p64t598bf.bkt.clouddn.com/7.png" alt="dlopen调用链"><img src="http://p64t598bf.bkt.clouddn.com/8.png" alt="dlopen调用链">调用ElfReader作用域中的Load方法，读ELF文件头、校验ELF文件头、读ELF程序头并映射至内存、在内存中分配地址空间、将Load Segment加载进内存、在内存中找到程序的起始地址。。<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">bool</span> ElfReader::Load() &#123;</span><br><span class="line">  <span class="keyword">return</span> ReadElfHeader() &amp;&amp;</span><br><span class="line">         VerifyElfHeader() &amp;&amp;</span><br><span class="line">         ReadProgramHeader() &amp;&amp;</span><br><span class="line">         ReserveAddressSpace() &amp;&amp;</span><br><span class="line">         LoadSegments() &amp;&amp;</span><br><span class="line">         FindPhdr();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">bool</span> ElfReader::ReadElfHeader() &#123;</span><br><span class="line">  <span class="keyword">ssize_t</span> rc = TEMP_FAILURE_RETRY(read(fd_, &amp;header_, <span class="keyword">sizeof</span>(header_)));</span><br><span class="line">  <span class="keyword">if</span> (rc &lt; <span class="number">0</span>) &#123;</span><br><span class="line">    DL_ERR(<span class="string">"can't read file \"%s\": %s"</span>, name_, strerror(errno));</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (rc != <span class="keyword">sizeof</span>(header_)) &#123;</span><br><span class="line">    DL_ERR(<span class="string">"\"%s\" is too small to be an ELF executable"</span>, name_);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<center> 读ELF文件头</center>
+
+
+
       
     </div>
     
     
     
+
+    
+
+    
+
+    
+
+    <div>
+      
+        
+<div style="text-align:center;color: #ccc;font-size:14px;">
+------ 本文结束 感谢阅读 ------</div>
+<br/>
+<div style="border: 1px solid black">
+<div style="margin-left:10px">
+<span style="font-weight:blod">版权声明</span>
+<img src="/images/my_copyright.png" >
+<br/>
+<p style="font-size: 10px;line-height: 30px"><a href="https://www.wireghost.cn" style="color:#258FC6">Shell In Ghost</a> by <a href="https://www.wireghost.cn" style="color:#258FC6">Jiang Jie</a> is licensed under a <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" style="color:#258FC6">Creative Commons BY-NC-ND 4.0 International License</a>.<br/>
+由<a href="https://www.wireghost.cn" style="color:#258FC6">蒋杰</a>创作并维护的<a href="https://www.wireghost.cn" style="color:#258FC6">Shell In Ghost</a>博客采用<a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" style="color:#258FC6">创作共用保留署名-非商业-禁止演绎4.0国际许可证</a>。<br/>
+本文首发于<a href="https://www.wireghost.cn" style="color:#258FC6">Shell In Ghost</a> 博客（ <a href="https://www.wireghost.cn" style="color:#258FC6">https://www.wireghost.cn</a> ），版权所有，侵权必究。</p>
+</div>
+</div>
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/03/10/基于Cache的模拟器检测/" rel="next" title="基于Cache的Android模拟器检测">
+                <i class="fa fa-chevron-left"></i> 基于Cache的Android模拟器检测
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
   </div>
 
 
@@ -367,8 +505,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -461,6 +608,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#dlopen之内存装载"><span class="nav-number">1.</span> <span class="nav-text">dlopen之内存装载</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
