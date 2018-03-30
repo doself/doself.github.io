@@ -99,7 +99,10 @@
 <meta property="og:description" content="定义智能手机配置中的ROM指的是EEProm（电擦除可写只读存储器），类似于计算机的硬盘，而一般手机刷机的过程，就是将只读内存镜像（ROM image）写入到只读内存（ROM）的过程。常见的ROM image有img、zip等格式，前者通常用fastboot程序通过数据线刷入（线刷），后者通常用recovery模式从SD卡刷入（卡刷），故img镜像也被称为线刷包，zip镜像被称为卡刷包。此外，因为">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://p68i1nkqj.bkt.clouddn.com/1.png">
-<meta property="og:updated_time" content="2018-03-27T06:24:57.712Z">
+<meta property="og:image" content="http://p68i1nkqj.bkt.clouddn.com/2.png">
+<meta property="og:image" content="http://p68i1nkqj.bkt.clouddn.com/3.png">
+<meta property="og:image" content="http://p68i1nkqj.bkt.clouddn.com/4.png">
+<meta property="og:updated_time" content="2018-03-30T05:48:55.770Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="ROM安全梳理">
 <meta name="twitter:description" content="定义智能手机配置中的ROM指的是EEProm（电擦除可写只读存储器），类似于计算机的硬盘，而一般手机刷机的过程，就是将只读内存镜像（ROM image）写入到只读内存（ROM）的过程。常见的ROM image有img、zip等格式，前者通常用fastboot程序通过数据线刷入（线刷），后者通常用recovery模式从SD卡刷入（卡刷），故img镜像也被称为线刷包，zip镜像被称为卡刷包。此外，因为">
@@ -434,7 +437,79 @@
 <li>/lost+found</li>
 </ul>
 </blockquote>
-<h2 id="运行时的挂载顺序"><a href="#运行时的挂载顺序" class="headerlink" title="运行时的挂载顺序"></a>运行时的挂载顺序</h2><p>当PC启动的时候，首先执行的是在BIOS上的代码，然后再由BIOS负责将Kernel加载起来执行。在嵌入式世界里，BootLoader的作用就相当于PC的BIOS。手机开机会先进入Bootloader，然后判断是正常启动还是进入recovery，若正常启动则对boot.img解压并将执行权限交给zImage，zImage挂载ramdisk.img执行其中的init进程，init进程进一步挂载system.img、cache.img、userdata.img文件系统镜像。  </p>
+<h2 id="运行时的挂载顺序"><a href="#运行时的挂载顺序" class="headerlink" title="运行时的挂载顺序"></a>运行时的挂载顺序</h2><p>当PC启动的时候，首先执行的是在BIOS上的代码，然后再由BIOS负责将Kernel加载起来执行。在嵌入式世界里，BootLoader的作用就相当于PC的BIOS。手机开机会先进入Bootloader，然后判断是正常启动还是进入recovery，若正常启动则对boot.img解压并将执行权限交给zImage，zImage挂载ramdisk.img执行其中的init进程，init进程进一步挂载system.img、cache.img、userdata.img文件系统镜像。<br><img src="http://p68i1nkqj.bkt.clouddn.com/2.png" alt="挂载顺序"></p>
+<h2 id="Android攻击面"><a href="#Android攻击面" class="headerlink" title="Android攻击面"></a>Android攻击面</h2><p>在学习ROM安全之前，先让我们试着对整个Android设备的攻击面做下了解（参考《Android安全攻防权威指南》）：<br><img src="http://p68i1nkqj.bkt.clouddn.com/3.png" alt="Android攻击面梳理"></p>
+<h3 id="远程攻击面"><a href="#远程攻击面" class="headerlink" title="远程攻击面"></a>远程攻击面</h3><p>最巨大的、最危险的、最有吸引力的攻击界面，攻击者无需本地物理接触受害者。</p>
+<h4 id="网络协议栈"><a href="#网络协议栈" class="headerlink" title="网络协议栈"></a>网络协议栈</h4><p>安全漏洞研究中的”圣杯”是这样的一种远程攻击，它不需要与目标交互就可以实施，就能获取系统的完全访问权限。在这种攻击场景中，攻击者通常只需能在因特网上与目标主机进行通信即可。这类攻击可以简单到发送单个数据包，也可能需要一长串复杂的协议谈判过程。由于防火墙和NAT技术的广泛使用，这一攻击面变得更难可达，因此在这些底层代码中的安全漏洞往往只暴露给网络邻居攻击者。<br>在Android系统上，符合这一描述的主要攻击面是Linux内核中的网络协议栈：  </p>
+<ul>
+<li>Linux底层的网络协议栈由C/C++编写，其存在的“缓冲区溢出”等代码问题可能导致远程执行任意代码</li>
+<li>协议处理过程中的某些字段没有作判断而导致拒绝服务</li>
+<li>…</li>
+</ul>
+<p>检查方法：代码review，并搜索不安全函数</p>
+<h4 id="暴露的网络服务"><a href="#暴露的网络服务" class="headerlink" title="暴露的网络服务"></a>暴露的网络服务</h4><p>无需目标用户交互的联网服务是第二位有吸引力的攻击面，这些服务通常在用户空间中执行，消除了获得内核空间代码执行的可能性。但是仍然有一些潜在的网络服务，如果被成功利用攻击面中的安全漏洞，就可以获取到root权限，不过这类网络服务在Android系统上极少的，多是由应用程序暴露，如开启WIFI热点功能后，会监听TCP 53端口。<br>检查方法：通过nmap扫描或者本地执行netstat -na|grep LISTEN可以获得暴露的服务，再进行分析。</p>
+<h4 id="移动技术"><a href="#移动技术" class="headerlink" title="移动技术"></a>移动技术</h4><p>这里指SMS、MMS、电话等蜂窝网络服务暴露的攻击面。<br>SMS、MMS服务使用WAP协议，其中的WAP PUSH消息可被用来发送Service Loading request (SL消息)，SL消息可以去调用USSD(Unstructured Supplementary Service Data)功能来执行充值、语音邮箱查询等操作。<br>已知攻击：发送tel://开头的SL指令可触发手机打电话。</p>
+<h4 id="客户端攻击面"><a href="#客户端攻击面" class="headerlink" title="客户端攻击面"></a>客户端攻击面</h4><p>手机上安装的客户端软件引入的的攻击界面：  </p>
+<ul>
+<li>浏览器攻击面：主要有URL钓鱼、MitM、XSS、CSRF这些方面的威胁</li>
+<li>Web引擎的移动应用：使用webview技术而引入的攻击面</li>
+<li>广告</li>
+<li>媒体推送：处理图片、文档的开源库，如libjpeg，包括png攻击和stagefright攻击</li>
+<li>电子邮件：电邮应用引入的漏洞</li>
+</ul>
+<h4 id="谷歌的基础设施"><a href="#谷歌的基础设施" class="headerlink" title="谷歌的基础设施"></a>谷歌的基础设施</h4><p>Google体系中的后端云服务引入的攻击面：  </p>
+<ul>
+<li>Google Play：Google应用市场中可能存在恶意APP</li>
+<li>第三方应用市场：非官方应用市场中可能存在伪装为热门APP的恶意程序，以及在热门APP中注入的后门软件</li>
+<li>Google Phones Home：GTalkService是google云服务中的重要组件，允许google在用户不知情的情况下在用户设备上安装或卸载应用</li>
+</ul>
+<h3 id="物理邻接攻击"><a href="#物理邻接攻击" class="headerlink" title="物理邻接攻击"></a>物理邻接攻击</h3><p>攻击者与被攻击对象在一定范围内，如GPS、WIFI</p>
+<h4 id="无线通信"><a href="#无线通信" class="headerlink" title="无线通信"></a>无线通信</h4><ul>
+<li>GPS：用户位置信息被APP滥用，泄露用户隐私；发送虚假GPS信号导致GPS设备定位错误</li>
+<li>Baseband：伪基站、针对RIL层的攻击</li>
+<li>Bluetooth</li>
+<li>Wi-Fi</li>
+<li>NFC</li>
+<li>…</li>
+</ul>
+<h4 id="其他技术"><a href="#其他技术" class="headerlink" title="其他技术"></a>其他技术</h4><p>除了无线通信技术之外，还有两个技术也与Android的整体攻击面相关。具体而言，QR码（快速响应矩阵码）和语言指令在理论上可以导致设备被攻破。</p>
+<h3 id="本地攻击面"><a href="#本地攻击面" class="headerlink" title="本地攻击面"></a>本地攻击面</h3><p>攻击者可以达到实现任意代码执行和提权的目的，这种攻击界面在测试新root方法时最为明显。</p>
+<h4 id="探索文件系统"><a href="#探索文件系统" class="headerlink" title="探索文件系统"></a>探索文件系统</h4><p>Android的Unix血统意味着许多攻击面都是通过文件系统条目暴露的，这些条目包括内核空间和用户空间的端点。在内核空间，设备驱动节点与特殊的虚拟文件系统提供与内核空间驱动代码进行直接交互的访问点。许多用户空间的组件，如特权服务，通过PF_UNIX族的套接字暴露进程间通信功能。甚至，一些普通文件与目录条目如果没有进行充分的权限限制，也会为几种攻击类型提供攻击路径。这部分的攻击面包括：文件系统访问权限设置、SUID/SGUID设置、Owner设置等。</p>
+<h4 id="应用生命周期"><a href="#应用生命周期" class="headerlink" title="应用生命周期"></a>应用生命周期</h4><p>程序应用生命周期中引入的攻击面。</p>
+<h5 id="install"><a href="#install" class="headerlink" title="install"></a>install</h5><p>安装流程中引入的攻击面，如超长应用名攻击、畸形AndroidManifest.xml标签、APK占位攻击、签名漏洞等。</p>
+<h5 id="Application-run"><a href="#Application-run" class="headerlink" title="Application run"></a>Application run</h5><p>应用运行流程中引入的攻击面。</p>
+<h5 id="backup"><a href="#backup" class="headerlink" title="backup"></a>backup</h5><p>应用备份恢复时引入的攻击面，如ALLOW-BACKUP漏洞。</p>
+<h4 id="找到其他的本地攻击面"><a href="#找到其他的本地攻击面" class="headerlink" title="找到其他的本地攻击面"></a>找到其他的本地攻击面</h4><p>其他的本地攻击面是由Linux内核暴露的，包括系统调用和套接字实现等。Android系统中的许多服务和应用通过不同类型的IPC（包括套接字与共享内存）暴露着本地攻击面。。</p>
+<ul>
+<li>System Calls：Linux内核在执行系统调用时可能还会处理一些潜在的恶意数据，因此内核中的系统调用函数是一个值得关注的攻击面。要想找到这些函数，可以简单的在源代码中检索“SYSCALL_DEFINE”字符串</li>
+<li>Sockets：sockets恶意调用</li>
+<li>Binder</li>
+<li>Shared Memory</li>
+<li>Baseband Interface</li>
+<li>Attacking Hardware Support Services</li>
+<li>JAVA Native Interface：JNI恶意调用、JNI-DOS</li>
+<li>AIDL service Calls</li>
+<li>TrustZone Proxy：TurstZone Proxy是链接非安全世界和安全世界的代理</li>
+</ul>
+<h3 id="物理攻击面"><a href="#物理攻击面" class="headerlink" title="物理攻击面"></a>物理攻击面</h3><p>攻击需要物理接触设备，虽然大部分物理攻击可防御，但仍很严重因为有些攻击会在瞬间完成。</p>
+<h4 id="拆解设备"><a href="#拆解设备" class="headerlink" title="拆解设备"></a>拆解设备</h4><p>打开一个硬件设备通常能发现：  </p>
+<ul>
+<li>暴露的串口，允许接收调试信息，或者在某些情况下，提供设备的shell访问</li>
+<li>暴露的JTAG调试端口，允许对设备的固件进行调试、重刷或访问</li>
+</ul>
+<p>极少数情况下，攻击者无法找到这些通用接口，但是其他攻击仍然是可能的。一个非常实用和真实的攻击是物理性地移除闪存或核心CPU（通常包含着内部内存）。一旦被移除，攻击者可以轻易地从设备中读取引导装载程序、启动配置和完整的闪存文件系统。攻击者完全占有设备后，能够实施许多攻击，这些只是其中的一部分。</p>
+<h4 id="USB"><a href="#USB" class="headerlink" title="USB"></a>USB</h4><h5 id="枚举USB攻击面"><a href="#枚举USB攻击面" class="headerlink" title="枚举USB攻击面"></a>枚举USB攻击面</h5><p>USB暴露的攻击面取决于设备支持哪些USB模式（ADB、存储、MTP等）。</p>
+<h5 id="ADB"><a href="#ADB" class="headerlink" title="ADB"></a>ADB</h5><p>通常使用adb shell，4.2.2之前 ADB shell不需要认证，之后需要。<br>攻击场景：Juice Jacking 假充电站攻击  </p>
+<h5 id="其他物理攻击面"><a href="#其他物理攻击面" class="headerlink" title="其他物理攻击面"></a>其他物理攻击面</h5><p>尽管USB是Android设备上最普遍存在的物理攻击面，但它并不是唯一的一个，其他物理攻击面包括手机SIM卡、SD卡、HDMI、暴露的测试点和对接连接器等。。</p>
+<h3 id="第三方修改"><a href="#第三方修改" class="headerlink" title="第三方修改"></a>第三方修改</h3><p>所有的第三方修改都可能会扩大设备的攻击面，而这种情况确实经常发生，主要包括：  </p>
+<ul>
+<li>OEM厂家定制的预装应用</li>
+<li>遗留的开发调测工具</li>
+<li>对Framework层的修改引入的新功能、API、JNI</li>
+<li>驱动层新增的驱动节点</li>
+</ul>
+<h2 id="Rom安全"><a href="#Rom安全" class="headerlink" title="Rom安全"></a>Rom安全</h2><h3 id="Rom攻击面"><a href="#Rom攻击面" class="headerlink" title="Rom攻击面"></a>Rom攻击面</h3><p>由于这里所说的ROM主要是指代手机系统，根据前面对Android设备的攻击面整理，从系统层面对ROM安全进行分析，梳理如下：<br><img src="http://p68i1nkqj.bkt.clouddn.com/4.png" alt="ROM安全攻击面梳理"></p>
+<h3 id="安全现状"><a href="#安全现状" class="headerlink" title="安全现状"></a>安全现状</h3><p>下面我们将结合这两年的安全事件，从案例的角度对ROM安全的当前现状作简单介绍。。</p>
 
       
     </div>
@@ -661,7 +736,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#定义"><span class="nav-number">1.</span> <span class="nav-text">定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#分类"><span class="nav-number">2.</span> <span class="nav-text">分类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#文件格式"><span class="nav-number">3.</span> <span class="nav-text">文件格式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#boot-img-amp-amp-recovery-img"><span class="nav-number">3.1.</span> <span class="nav-text">boot.img&amp;&amp;recovery.img</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#system-img"><span class="nav-number">3.2.</span> <span class="nav-text">system.img</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ramdisk-img"><span class="nav-number">3.3.</span> <span class="nav-text">ramdisk.img</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#userdata-img"><span class="nav-number">3.4.</span> <span class="nav-text">userdata.img</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#cache-img"><span class="nav-number">3.5.</span> <span class="nav-text">cache.img</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#运行时的挂载顺序"><span class="nav-number">4.</span> <span class="nav-text">运行时的挂载顺序</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#定义"><span class="nav-number">1.</span> <span class="nav-text">定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#分类"><span class="nav-number">2.</span> <span class="nav-text">分类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#文件格式"><span class="nav-number">3.</span> <span class="nav-text">文件格式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#boot-img-amp-amp-recovery-img"><span class="nav-number">3.1.</span> <span class="nav-text">boot.img&amp;&amp;recovery.img</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#system-img"><span class="nav-number">3.2.</span> <span class="nav-text">system.img</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ramdisk-img"><span class="nav-number">3.3.</span> <span class="nav-text">ramdisk.img</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#userdata-img"><span class="nav-number">3.4.</span> <span class="nav-text">userdata.img</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#cache-img"><span class="nav-number">3.5.</span> <span class="nav-text">cache.img</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#运行时的挂载顺序"><span class="nav-number">4.</span> <span class="nav-text">运行时的挂载顺序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Android攻击面"><span class="nav-number">5.</span> <span class="nav-text">Android攻击面</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#远程攻击面"><span class="nav-number">5.1.</span> <span class="nav-text">远程攻击面</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#网络协议栈"><span class="nav-number">5.1.1.</span> <span class="nav-text">网络协议栈</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#暴露的网络服务"><span class="nav-number">5.1.2.</span> <span class="nav-text">暴露的网络服务</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#移动技术"><span class="nav-number">5.1.3.</span> <span class="nav-text">移动技术</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#客户端攻击面"><span class="nav-number">5.1.4.</span> <span class="nav-text">客户端攻击面</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#谷歌的基础设施"><span class="nav-number">5.1.5.</span> <span class="nav-text">谷歌的基础设施</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#物理邻接攻击"><span class="nav-number">5.2.</span> <span class="nav-text">物理邻接攻击</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#无线通信"><span class="nav-number">5.2.1.</span> <span class="nav-text">无线通信</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#其他技术"><span class="nav-number">5.2.2.</span> <span class="nav-text">其他技术</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#本地攻击面"><span class="nav-number">5.3.</span> <span class="nav-text">本地攻击面</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#探索文件系统"><span class="nav-number">5.3.1.</span> <span class="nav-text">探索文件系统</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#应用生命周期"><span class="nav-number">5.3.2.</span> <span class="nav-text">应用生命周期</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#install"><span class="nav-number">5.3.2.1.</span> <span class="nav-text">install</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Application-run"><span class="nav-number">5.3.2.2.</span> <span class="nav-text">Application run</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#backup"><span class="nav-number">5.3.2.3.</span> <span class="nav-text">backup</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#找到其他的本地攻击面"><span class="nav-number">5.3.3.</span> <span class="nav-text">找到其他的本地攻击面</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#物理攻击面"><span class="nav-number">5.4.</span> <span class="nav-text">物理攻击面</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#拆解设备"><span class="nav-number">5.4.1.</span> <span class="nav-text">拆解设备</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#USB"><span class="nav-number">5.4.2.</span> <span class="nav-text">USB</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#枚举USB攻击面"><span class="nav-number">5.4.2.1.</span> <span class="nav-text">枚举USB攻击面</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ADB"><span class="nav-number">5.4.2.2.</span> <span class="nav-text">ADB</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#其他物理攻击面"><span class="nav-number">5.4.2.3.</span> <span class="nav-text">其他物理攻击面</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#第三方修改"><span class="nav-number">5.5.</span> <span class="nav-text">第三方修改</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Rom安全"><span class="nav-number">6.</span> <span class="nav-text">Rom安全</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Rom攻击面"><span class="nav-number">6.1.</span> <span class="nav-text">Rom攻击面</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#安全现状"><span class="nav-number">6.2.</span> <span class="nav-text">安全现状</span></a></li></ol></li></ol></div>
             
 
           </div>
