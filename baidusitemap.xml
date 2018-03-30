@@ -5,14 +5,21 @@
     
   <url>
     <loc>http://yoursite.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/</loc>
-    <lastmod>2018-03-30T09:22:11.716Z</lastmod>
+    <lastmod>2018-03-30T09:26:49.074Z</lastmod>
     <data>
         <display>
         <title>ROM安全梳理</title>
         <pubTime>2017-01-27T05:43:15.000Z</pubTime>
         
+        <tag>ROM</tag>
+         
+        <tag>调研</tag>
+         
          
            
+             
+              <breadCrumb title="Android" url="http://yoursite.com/categories/Android/"/>
+          
         </display>
     </data>
     </url>
