@@ -107,7 +107,13 @@
 <meta property="og:image" content="http://p6gkhqd2o.bkt.clouddn.com/6.png">
 <meta property="og:image" content="http://p6gkhqd2o.bkt.clouddn.com/7.png">
 <meta property="og:image" content="http://p6gkhqd2o.bkt.clouddn.com/8.png">
-<meta property="og:updated_time" content="2018-03-31T16:52:52.681Z">
+<meta property="og:image" content="http://p6gkhqd2o.bkt.clouddn.com/9.png">
+<meta property="og:image" content="http://p6gkhqd2o.bkt.clouddn.com/10.png">
+<meta property="og:image" content="http://p6gkhqd2o.bkt.clouddn.com/11.png">
+<meta property="og:image" content="http://p6gkhqd2o.bkt.clouddn.com/12.png">
+<meta property="og:image" content="http://p6gkhqd2o.bkt.clouddn.com/13.png">
+<meta property="og:image" content="http://p6gkhqd2o.bkt.clouddn.com/14.png">
+<meta property="og:updated_time" content="2018-04-01T03:33:13.609Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="低功耗蓝牙（BLE）安全初探">
 <meta name="twitter:description" content="BLE概述“蓝牙”，即Bluetooth，是斯堪的纳维亚语中 Blåtand / Blåtann 的英化版本。该词是十世纪的一位国王Harald Bluetooth的绰号，相传他将纷争不断的丹麦部落统一为一个王国，并引入了基督教。蓝牙技术开发者Jim Kardach于1997年提出用Bluetooth这个名词，据说他当时正在读一本名为The Long Ships的小说，讲述的就是维京人和Haral">
@@ -507,10 +513,29 @@
 <h2 id="BLE数据包格式"><a href="#BLE数据包格式" class="headerlink" title="BLE数据包格式"></a>BLE数据包格式</h2><p>在低功耗蓝牙规范中，分广播报文和数据报文这两种。设备利用广播报文发现、连接其它设备，而在连接建立之后，便开始使用数据报文。无论是广播报文还是数据报文，链路层只使用一种数据包格式，它由“前导码”（preamble）、“访问码”（access code）、”有效载荷“和”循环冗余校验“（Cyclical Redundancy Check，CRC）校验码组成。其中，”访问码“有时又称为”访问地址“（access address）。<br><img src="http://p6gkhqd2o.bkt.clouddn.com/8.png" alt="BLE数据包格式"></p>
 <ol>
 <li>Preamble<br>1个字节长度，接受中用于频率同步、数据速率同步、自动增益控制调整，固定为01010101或者10101010序列</li>
-<li>Access Address</li>
-<li>PDU</li>
-<li>CRC</li>
+<li>Access Address<br>4个字节长度，广播报文接入地址为：0x8E89BED6，数据报文接入地址为：32bits随机数</li>
+<li>PDU  <ul>
+<li>广播报文（见协议BLUETOOTH SPECIFICATION Version 4.0 [Vol 6] Part B 2.3）<br><img src="http://p6gkhqd2o.bkt.clouddn.com/9.png" alt="广播报文"><img src="http://p6gkhqd2o.bkt.clouddn.com/10.png" alt="广播报文"><ul>
+<li>PDU Type：有效载荷内容的类型，通过这一字段确定该数据包是一个”通告“还是”扫描请求“或”响应“等<br><img src="http://p6gkhqd2o.bkt.clouddn.com/11.png" alt="PDU Type"></li>
+<li>RFU 保留位</li>
+<li>TxAdd：发送地址字段</li>
+<li>RxAdd：接收地址字段</li>
+<li>Payload Length：用来表示”有效载荷数据“（payload data）的长度，不包括头部内容</li>
+</ul>
+</li>
+<li>数据报文（见协议BLUETOOTH SPECIFICATION Version 4.0 [Vol 6] Part B 2.4）<br><img src="http://p6gkhqd2o.bkt.clouddn.com/12.png" alt="数据报文"><img src="http://p6gkhqd2o.bkt.clouddn.com/13.png" alt="数据报文"><img src="http://p6gkhqd2o.bkt.clouddn.com/14.png" alt="数据报文"><ul>
+<li>LLID（逻辑链路ID）：0x01表示该数据包是一个帧的延续内容，或者这是一个空的“逻辑链路控制及适配协议”数据包；0x02表示一个“逻辑链路控制及适配协议”数据包的开始；0x03表示这是一个“逻辑链路控制”数据包的内容</li>
+<li>NESN：下一个期望的序列号，用于对接收到的数据包进行确认</li>
+<li>MD：更多数据字段，主要是为了说明发送方是否还有要发给接收者的数据</li>
+<li>RFU 保留位</li>
+<li>Payload Length：用以表示包含“信息完整性校验码”（Message Integrity Check，MIC）在内的“有效载荷数据”的长度</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>CRC<br>3个字节长度，“循环冗余校验”（Cyclical Redundancy Check，CRC），可检查数据的正确性</li>
 </ol>
+<h2 id="BLE通信协议分析"><a href="#BLE通信协议分析" class="headerlink" title="BLE通信协议分析"></a>BLE通信协议分析</h2><h3 id="逆向思路"><a href="#逆向思路" class="headerlink" title="逆向思路"></a>逆向思路</h3><p>ndroid系统自4.3版本开始，引入了对BLE的支持，详见Bluetooth Low Energy。通过浏览当中的信息，我们可以得知在app开发环节，需要做到如下几件事情：</p>
 
       
     </div>
@@ -745,7 +770,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#BLE概述"><span class="nav-number">1.</span> <span class="nav-text">BLE概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BLE协议栈"><span class="nav-number">2.</span> <span class="nav-text">BLE协议栈</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Physical-Layer"><span class="nav-number">2.1.</span> <span class="nav-text">Physical Layer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Link-Layer"><span class="nav-number">2.2.</span> <span class="nav-text">Link Layer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HCI"><span class="nav-number">2.3.</span> <span class="nav-text">HCI</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Generic-Access-Profile（GAP）"><span class="nav-number">2.4.</span> <span class="nav-text">Generic Access Profile（GAP）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#L2CAP-Protocol"><span class="nav-number">2.5.</span> <span class="nav-text">L2CAP Protocol</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Attribute-protocol（ATT）"><span class="nav-number">2.6.</span> <span class="nav-text">Attribute protocol（ATT）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Generic-Attribute-profile（GATT）"><span class="nav-number">2.7.</span> <span class="nav-text">Generic Attribute profile（GATT）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Security-Manager（SM）"><span class="nav-number">2.8.</span> <span class="nav-text">Security Manager（SM）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BLE数据包格式"><span class="nav-number">3.</span> <span class="nav-text">BLE数据包格式</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#BLE概述"><span class="nav-number">1.</span> <span class="nav-text">BLE概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BLE协议栈"><span class="nav-number">2.</span> <span class="nav-text">BLE协议栈</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Physical-Layer"><span class="nav-number">2.1.</span> <span class="nav-text">Physical Layer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Link-Layer"><span class="nav-number">2.2.</span> <span class="nav-text">Link Layer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HCI"><span class="nav-number">2.3.</span> <span class="nav-text">HCI</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Generic-Access-Profile（GAP）"><span class="nav-number">2.4.</span> <span class="nav-text">Generic Access Profile（GAP）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#L2CAP-Protocol"><span class="nav-number">2.5.</span> <span class="nav-text">L2CAP Protocol</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Attribute-protocol（ATT）"><span class="nav-number">2.6.</span> <span class="nav-text">Attribute protocol（ATT）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Generic-Attribute-profile（GATT）"><span class="nav-number">2.7.</span> <span class="nav-text">Generic Attribute profile（GATT）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Security-Manager（SM）"><span class="nav-number">2.8.</span> <span class="nav-text">Security Manager（SM）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BLE数据包格式"><span class="nav-number">3.</span> <span class="nav-text">BLE数据包格式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BLE通信协议分析"><span class="nav-number">4.</span> <span class="nav-text">BLE通信协议分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#逆向思路"><span class="nav-number">4.1.</span> <span class="nav-text">逆向思路</span></a></li></ol></li></ol></div>
             
 
           </div>
