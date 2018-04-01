@@ -113,7 +113,15 @@
 <meta property="og:image" content="http://p6gkhqd2o.bkt.clouddn.com/12.png">
 <meta property="og:image" content="http://p6gkhqd2o.bkt.clouddn.com/13.png">
 <meta property="og:image" content="http://p6gkhqd2o.bkt.clouddn.com/14.png">
-<meta property="og:updated_time" content="2018-04-01T03:33:13.609Z">
+<meta property="og:image" content="http://p6gkhqd2o.bkt.clouddn.com/15.png">
+<meta property="og:image" content="http://p6gkhqd2o.bkt.clouddn.com/16.png">
+<meta property="og:image" content="http://p6gkhqd2o.bkt.clouddn.com/17.png">
+<meta property="og:image" content="http://p6gkhqd2o.bkt.clouddn.com/18.png">
+<meta property="og:image" content="http://p6gkhqd2o.bkt.clouddn.com/19.png">
+<meta property="og:image" content="http://p6gkhqd2o.bkt.clouddn.com/20.png">
+<meta property="og:image" content="http://p6gkhqd2o.bkt.clouddn.com/21.png">
+<meta property="og:image" content="http://p6gkhqd2o.bkt.clouddn.com/22.png">
+<meta property="og:updated_time" content="2018-04-01T03:44:10.237Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="低功耗蓝牙（BLE）安全初探">
 <meta name="twitter:description" content="BLE概述“蓝牙”，即Bluetooth，是斯堪的纳维亚语中 Blåtand / Blåtann 的英化版本。该词是十世纪的一位国王Harald Bluetooth的绰号，相传他将纷争不断的丹麦部落统一为一个王国，并引入了基督教。蓝牙技术开发者Jim Kardach于1997年提出用Bluetooth这个名词，据说他当时正在读一本名为The Long Ships的小说，讲述的就是维京人和Haral">
@@ -535,8 +543,17 @@
 </li>
 <li>CRC<br>3个字节长度，“循环冗余校验”（Cyclical Redundancy Check，CRC），可检查数据的正确性</li>
 </ol>
-<h2 id="BLE通信协议分析"><a href="#BLE通信协议分析" class="headerlink" title="BLE通信协议分析"></a>BLE通信协议分析</h2><h3 id="逆向思路"><a href="#逆向思路" class="headerlink" title="逆向思路"></a>逆向思路</h3><p>ndroid系统自4.3版本开始，引入了对BLE的支持，详见Bluetooth Low Energy。通过浏览当中的信息，我们可以得知在app开发环节，需要做到如下几件事情：</p>
-
+<h2 id="BLE通信协议分析"><a href="#BLE通信协议分析" class="headerlink" title="BLE通信协议分析"></a>BLE通信协议分析</h2><h3 id="逆向思路"><a href="#逆向思路" class="headerlink" title="逆向思路"></a>逆向思路</h3><p>Android系统自4.3版本开始，引入了对BLE的支持，详见Bluetooth Low Energy。通过浏览当中的信息，我们可以得知在app开发环节，需要做到如下几件事情：  </p>
+<ol>
+<li>BLE相关权限声明<br><img src="http://p6gkhqd2o.bkt.clouddn.com/15.png" alt="BLE权限声明"></li>
+<li>操作蓝牙之前，判断系统是否支持BLE<br><img src="http://p6gkhqd2o.bkt.clouddn.com/16.png" alt="BLE支持判断"></li>
+<li>获取本机的蓝牙适配器，BluetoothAdapter的获取依赖于bluetoothManager.getAdapter()实现<br><img src="http://p6gkhqd2o.bkt.clouddn.com/17.png" alt="获取蓝牙适配"></li>
+<li>发intent通知系统打开蓝牙<br><img src="http://p6gkhqd2o.bkt.clouddn.com/18.png" alt="打开蓝牙"></li>
+<li>使用startLeScan()函数获取外围设备，并实现BluetoothAdapter.LeScanCallback方法接受扫描结果<br><img src="http://p6gkhqd2o.bkt.clouddn.com/19.png" alt="扫描外围设备"><img src="http://p6gkhqd2o.bkt.clouddn.com/20.png" alt="扫描外围设备"></li>
+<li>调用connectGatt方法对设备进行连接，里面的BluetoothGattCallback对象用于交付操作结果给客户端。如果连接成功将返回BluetoothGatt实例，该实例是进行蓝牙控制的基础<br><img src="http://p6gkhqd2o.bkt.clouddn.com/21.png" alt="返回BluetoothGatt实例"></li>
+<li>成功建立连接后，便可对attributes（属性，参考前面的BLE协议栈）进行读写。利用getService、getCharacteristics获取外围设备的service和characteristic，对于其中支持写的characteristic在写入相应的数据，可实现外围设备的控制<br><img src="http://p6gkhqd2o.bkt.clouddn.com/22.png" alt="操作attributes属性">了解BLE app的开发步骤后，进行逆向时思路也就清晰了许多。首先，可以通过startLeScan、LeScanCallback等方法定位到扫描BLE外围设备的相关代码段；然后，根据connectGatt、BluetoothGattCallback等api锁定设备连接的相关函数，并找到指令交互部分，最后梳理出整个控制流程。。</li>
+</ol>
+<h3 id="BLE嗅探"><a href="#BLE嗅探" class="headerlink" title="BLE嗅探"></a>BLE嗅探</h3>
       
     </div>
     
@@ -770,7 +787,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#BLE概述"><span class="nav-number">1.</span> <span class="nav-text">BLE概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BLE协议栈"><span class="nav-number">2.</span> <span class="nav-text">BLE协议栈</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Physical-Layer"><span class="nav-number">2.1.</span> <span class="nav-text">Physical Layer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Link-Layer"><span class="nav-number">2.2.</span> <span class="nav-text">Link Layer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HCI"><span class="nav-number">2.3.</span> <span class="nav-text">HCI</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Generic-Access-Profile（GAP）"><span class="nav-number">2.4.</span> <span class="nav-text">Generic Access Profile（GAP）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#L2CAP-Protocol"><span class="nav-number">2.5.</span> <span class="nav-text">L2CAP Protocol</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Attribute-protocol（ATT）"><span class="nav-number">2.6.</span> <span class="nav-text">Attribute protocol（ATT）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Generic-Attribute-profile（GATT）"><span class="nav-number">2.7.</span> <span class="nav-text">Generic Attribute profile（GATT）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Security-Manager（SM）"><span class="nav-number">2.8.</span> <span class="nav-text">Security Manager（SM）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BLE数据包格式"><span class="nav-number">3.</span> <span class="nav-text">BLE数据包格式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BLE通信协议分析"><span class="nav-number">4.</span> <span class="nav-text">BLE通信协议分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#逆向思路"><span class="nav-number">4.1.</span> <span class="nav-text">逆向思路</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#BLE概述"><span class="nav-number">1.</span> <span class="nav-text">BLE概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BLE协议栈"><span class="nav-number">2.</span> <span class="nav-text">BLE协议栈</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Physical-Layer"><span class="nav-number">2.1.</span> <span class="nav-text">Physical Layer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Link-Layer"><span class="nav-number">2.2.</span> <span class="nav-text">Link Layer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HCI"><span class="nav-number">2.3.</span> <span class="nav-text">HCI</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Generic-Access-Profile（GAP）"><span class="nav-number">2.4.</span> <span class="nav-text">Generic Access Profile（GAP）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#L2CAP-Protocol"><span class="nav-number">2.5.</span> <span class="nav-text">L2CAP Protocol</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Attribute-protocol（ATT）"><span class="nav-number">2.6.</span> <span class="nav-text">Attribute protocol（ATT）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Generic-Attribute-profile（GATT）"><span class="nav-number">2.7.</span> <span class="nav-text">Generic Attribute profile（GATT）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Security-Manager（SM）"><span class="nav-number">2.8.</span> <span class="nav-text">Security Manager（SM）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BLE数据包格式"><span class="nav-number">3.</span> <span class="nav-text">BLE数据包格式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BLE通信协议分析"><span class="nav-number">4.</span> <span class="nav-text">BLE通信协议分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#逆向思路"><span class="nav-number">4.1.</span> <span class="nav-text">逆向思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#BLE嗅探"><span class="nav-number">4.2.</span> <span class="nav-text">BLE嗅探</span></a></li></ol></li></ol></div>
             
 
           </div>
