@@ -181,9 +181,16 @@
     <link href="http://yoursite.com/2015/06/04/360%E9%80%9A%E8%AE%AF%E5%BD%95%E7%BD%91%E7%BB%9C%E5%8A%A0%E5%AF%86%E5%8D%8F%E8%AE%AE%E5%88%86%E6%9E%90/"/>
     <id>http://yoursite.com/2015/06/04/360通讯录网络加密协议分析/</id>
     <published>2015-06-04T05:33:32.000Z</published>
-    <updated>2018-04-03T05:36:07.518Z</updated>
+    <updated>2018-04-03T06:13:16.085Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="调试获取密钥"><a href="#调试获取密钥" class="headerlink" title="调试获取密钥"></a>调试获取密钥</h2><p>通过检索关键字，在Java层定位出获取密钥所在的代码段：<br><img src="http://p6lhv1vz1.bkt.clouddn.com/1.png" alt="调Native层获取密钥"><img src="http://p6lhv1vz1.bkt.clouddn.com/2.png" alt="调Native层获取密钥">对libmobilesafe360-jni-530.2.so进行分析，发现导出表下只有1个JNI_OnLoad方法。这里实际是完成了本地函数的注册，其中R2寄存器的值是指向JNINativeMethod结构体的指针。以getInt方法为例，这个native方法对应sub_2A538本地函数。<br><img src="http://p6lhv1vz1.bkt.clouddn.com/3.png" alt="jni注册本地函数"><img src="http://p6lhv1vz1.bkt.clouddn.com/4.png" alt="jni注册本地函数"><img src="http://p6lhv1vz1.bkt.clouddn.com/5.png" alt="对应的本地函数">通过so动态调试的手段，解密”70&gt;@|:CF0z€.97:M0z|ovyrMN6marisa9ExceptionE”字符串获取对应密钥”*#13o-69”。同理，获取其他密钥。其中sKey3是用来加密联网上传的参数的，sKey1、sKey2则是用来加密上传的数据部分。。<br><img src="http://p6lhv1vz1.bkt.clouddn.com/6.png" alt="动态调试"><img src="http://p6lhv1vz1.bkt.clouddn.com/7.png" alt="动态调试"></p><table><thead><tr><th>DES密钥</th><th>值</th></tr></thead><tbody><tr><td>sKey1</td><td>*#13o-69</td></tr><tr><td>sKey2</td><td>#ms!,*-@</td></tr><tr><td>sKey3</td><td>#mobile@</td></tr></tbody></table><p>联网上传的数据保存在com/qihoo360/contacts/backup/http/HttpHandler;-&gt;mPostData变量中，追踪该数据的写入来源，中间用到了较多的接口引用，最终可以定位到abm类下的p方法，其中data数据结构所示：</p><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Struct mPostData&#123;</span><br><span class="line"> U2        <span class="number">1</span></span><br><span class="line"> U2        type</span><br><span class="line"> U4        length</span><br><span class="line"> Unknown   data</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure><p><img src="http://p6lhv1vz1.bkt.clouddn.com/8.png" alt=""><img src="http://p6lhv1vz1.bkt.clouddn.com/9.png" alt=""><img src="http://p6lhv1vz1.bkt.clouddn.com/10.png" alt=""><img src="http://p6lhv1vz1.bkt.clouddn.com/11.png" alt="">抽取上传的数据部分中的数据段部分，这里使用的DES加密算法。需要注意的是，这里的密钥会根据实际传入的布尔类型参数来决定是sKey1还是sKey2。<br><img src="http://p6lhv1vz1.bkt.clouddn.com/12.png" alt="">这里自己动手实现一个简单的DES解密算法，前后用sKey1、sKey2来进行解密操作。然后在这个过程中，发现当sKey2作为密钥时，解密后文件均存在固定的文件头，这里怀疑是一个特殊的魔术字，简单查阅了相关资料后，发现其是一个gzip格式的压缩文件，直接解压拿到上传数据。。<br><img src="http://p6lhv1vz1.bkt.clouddn.com/13.png" alt=""><img src="http://p6lhv1vz1.bkt.clouddn.com/14.png" alt=""><img src="http://p6lhv1vz1.bkt.clouddn.com/15.png" alt=""><img src="http://p6lhv1vz1.bkt.clouddn.com/16.png" alt="代码中对应的压缩代码"></p>]]></content>
     
     <summary type="html">
+    
+      
+      
+        &lt;h2 id=&quot;调试获取密钥&quot;&gt;&lt;a href=&quot;#调试获取密钥&quot; class=&quot;headerlink&quot; title=&quot;调试获取密钥&quot;&gt;&lt;/a&gt;调试获取密钥&lt;/h2&gt;&lt;p&gt;通过检索关键字，在Java层定位出获取密钥所在的代码段：&lt;br&gt;&lt;img src=&quot;http://p6lhv
+      
     
     </summary>
     
