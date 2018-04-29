@@ -124,7 +124,8 @@
 <meta property="og:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/23.png">
 <meta property="og:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/24.png">
 <meta property="og:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/25.png">
-<meta property="og:updated_time" content="2018-04-29T15:54:00.524Z">
+<meta property="og:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/26.png">
+<meta property="og:updated_time" content="2018-04-29T16:00:18.126Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Sadstrot木马分析报告">
 <meta name="twitter:description" content="木马行为及危害 一旦运行，该木马立即申请root权限，为之后各种恶意行为做好铺垫； 创建一个detect进程，此进程下的模块插件与主进程进行通信，通过回调Java层代码、hook等方式收集用户隐私； 监听键盘输入，用户所有敲入的字符都会被窃取，包括银行账号密码、社交APP账号密码等； 接收云端指令，执行模块更新、删除指定文件等操作，给系统安全带来极大安全隐患。  木马执行流程该木马的执行流程如下：">
@@ -479,10 +480,7 @@
 </tr>
 </tbody>
 </table>
-<h3 id="附录2：本地进程间通信协议"><a href="#附录2：本地进程间通信协议" class="headerlink" title="附录2：本地进程间通信协议"></a>附录2：本地进程间通信协议</h3><p>运行在com.sec.android.service.powerManager进程的libnativeLoad.so、libPowerDetect.cy.so，会创建大量的服务监听。当接收到来自detect进程中的插件模块发来的socket通信请求时，通过判断buffer的前2个字节作为魔术字进行匹配，执行相应操作。</p>
-<table><br>   <tr><br>      <td>服务名</td><br>      <td>魔术字</td><br>      <td>功能</td><br>   </tr><br>   <tr><br>      <td>“/data/data/com.sec.android.service.powerManager/cores/Users/All Users/Intel/Data/plugin2IPC”</td><br>      <td>‘&amp;x’</td><br>      <td>将hook到的字符输入发送至detect进程</td><br>   </tr><br>   <tr><br>      <td>“/data/data/com.sec.android.service.powerManager/cores/pro”</td><br>      <td>‘%2’</td><br>      <td>获取当前进程号和pid</td><br>   </tr><br>   <tr><br>      <td>“/data/data/com.sec.android.service.powerManager/cores/location”</td><br>      <td>‘&amp;(‘</td><br>      <td>回调Java代码获取地理位置信息</td><br>   </tr><br>   <tr><br>      <td rowspan="4">“/data/data/com.sec.android.service.powerManager/cores/smsListener”</td><br>      <td>‘&amp;)’</td><br>      <td>回调Java代码获取号码地址</td><br>   </tr><br>   <tr><br>      <td>‘&amp;0’</td><br>      <td>回调Java代码，获取手机联系人</td><br>   </tr><br>   <tr><br>      <td>‘&amp;1’</td><br>      <td>回调Java代码，获取短信箱</td><br>   </tr><br>   <tr><br>      <td>‘&amp;2’</td><br>      <td>回调Java代码，获取通话记录</td><br>   </tr><br>   <tr><br>      <td rowspan="3">“/data/data/com.sec.android.service.powerManager/cores/audioListener”</td><br>      <td>‘&amp;3’</td><br>      <td rowspan="3">回调Java代码代码，执行开启、关闭、刷新环境录音的操作</td><br>   </tr><br>   <tr><br>      <td>‘&amp;4’</td><br>   </tr><br>   <tr><br>      <td>‘&amp;5’</td><br>   </tr><br></table>
-
-
+<h3 id="附录2：本地进程间通信协议"><a href="#附录2：本地进程间通信协议" class="headerlink" title="附录2：本地进程间通信协议"></a>附录2：本地进程间通信协议</h3><p>运行在com.sec.android.service.powerManager进程的libnativeLoad.so、libPowerDetect.cy.so，会创建大量的服务监听。当接收到来自detect进程中的插件模块发来的socket通信请求时，通过判断buffer的前2个字节作为魔术字进行匹配，执行相应操作。<br><img src="/2015/08/08/Sadstrot木马分析报告/26.png" alt="本地进程间通信协议"></p>
 <table>
 <thead>
 <tr>
