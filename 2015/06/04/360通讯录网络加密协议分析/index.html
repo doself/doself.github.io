@@ -91,13 +91,13 @@
 
 
 
-<meta name="description" content="调试获取密钥通过检索关键字，在Java层定位出获取密钥所在的代码段：对libmobilesafe360-jni-530.2.so进行分析，发现导出表下只有1个JNI_OnLoad方法。这里实际是完成了本地函数的注册，其中R2寄存器的值是指向JNINativeMethod结构体的指针。以getInt方法为例，这个native方法对应sub_2A538本地函数。通过so动态调试的手段，解密”70&amp;gt">
+<meta name="description" content="分析过程记录通过检索关键字，在Java层定位出获取密钥所在的代码段：对libmobilesafe360-jni-530.2.so进行分析，发现导出表下只有1个JNI_OnLoad方法。这里实际是完成了本地函数的注册，其中R2寄存器的值是指向JNINativeMethod结构体的指针。以getInt方法为例，这个native方法对应sub_2A538本地函数。通过so动态调试的手段，解密”70&amp;gt">
 <meta name="keywords" content="逆向">
 <meta property="og:type" content="article">
 <meta property="og:title" content="360通讯录网络加密协议分析">
 <meta property="og:url" content="http://yoursite.com/2015/06/04/360通讯录网络加密协议分析/index.html">
 <meta property="og:site_name" content="Shell In Ghost">
-<meta property="og:description" content="调试获取密钥通过检索关键字，在Java层定位出获取密钥所在的代码段：对libmobilesafe360-jni-530.2.so进行分析，发现导出表下只有1个JNI_OnLoad方法。这里实际是完成了本地函数的注册，其中R2寄存器的值是指向JNINativeMethod结构体的指针。以getInt方法为例，这个native方法对应sub_2A538本地函数。通过so动态调试的手段，解密”70&amp;gt">
+<meta property="og:description" content="分析过程记录通过检索关键字，在Java层定位出获取密钥所在的代码段：对libmobilesafe360-jni-530.2.so进行分析，发现导出表下只有1个JNI_OnLoad方法。这里实际是完成了本地函数的注册，其中R2寄存器的值是指向JNINativeMethod结构体的指针。以getInt方法为例，这个native方法对应sub_2A538本地函数。通过so动态调试的手段，解密”70&amp;gt">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/1.png">
 <meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/2.png">
@@ -115,10 +115,10 @@
 <meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/14.png">
 <meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/15.png">
 <meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/16.png">
-<meta property="og:updated_time" content="2018-04-03T06:13:16.085Z">
+<meta property="og:updated_time" content="2018-04-29T13:25:13.368Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="360通讯录网络加密协议分析">
-<meta name="twitter:description" content="调试获取密钥通过检索关键字，在Java层定位出获取密钥所在的代码段：对libmobilesafe360-jni-530.2.so进行分析，发现导出表下只有1个JNI_OnLoad方法。这里实际是完成了本地函数的注册，其中R2寄存器的值是指向JNINativeMethod结构体的指针。以getInt方法为例，这个native方法对应sub_2A538本地函数。通过so动态调试的手段，解密”70&amp;gt">
+<meta name="twitter:description" content="分析过程记录通过检索关键字，在Java层定位出获取密钥所在的代码段：对libmobilesafe360-jni-530.2.so进行分析，发现导出表下只有1个JNI_OnLoad方法。这里实际是完成了本地函数的注册，其中R2寄存器的值是指向JNINativeMethod结构体的指针。以getInt方法为例，这个native方法对应sub_2A538本地函数。通过so动态调试的手段，解密”70&amp;gt">
 <meta name="twitter:image" content="http://p6lhv1vz1.bkt.clouddn.com/1.png">
 
 
@@ -426,7 +426,7 @@
       
 
       
-        <h2 id="调试获取密钥"><a href="#调试获取密钥" class="headerlink" title="调试获取密钥"></a>调试获取密钥</h2><p>通过检索关键字，在Java层定位出获取密钥所在的代码段：<br><img src="http://p6lhv1vz1.bkt.clouddn.com/1.png" alt="调Native层获取密钥"><img src="http://p6lhv1vz1.bkt.clouddn.com/2.png" alt="调Native层获取密钥">对libmobilesafe360-jni-530.2.so进行分析，发现导出表下只有1个JNI_OnLoad方法。这里实际是完成了本地函数的注册，其中R2寄存器的值是指向JNINativeMethod结构体的指针。以getInt方法为例，这个native方法对应sub_2A538本地函数。<br><img src="http://p6lhv1vz1.bkt.clouddn.com/3.png" alt="jni注册本地函数"><img src="http://p6lhv1vz1.bkt.clouddn.com/4.png" alt="jni注册本地函数"><img src="http://p6lhv1vz1.bkt.clouddn.com/5.png" alt="对应的本地函数">通过so动态调试的手段，解密”70&gt;@|:CF0z€.97:M0z|ovyrMN6marisa9ExceptionE”字符串获取对应密钥”*#13o-69”。同理，获取其他密钥。其中sKey3是用来加密联网上传的参数的，sKey1、sKey2则是用来加密上传的数据部分。。<br><img src="http://p6lhv1vz1.bkt.clouddn.com/6.png" alt="动态调试"><img src="http://p6lhv1vz1.bkt.clouddn.com/7.png" alt="动态调试"></p>
+        <h2 id="分析过程记录"><a href="#分析过程记录" class="headerlink" title="分析过程记录"></a>分析过程记录</h2><p>通过检索关键字，在Java层定位出获取密钥所在的代码段：<br><img src="http://p6lhv1vz1.bkt.clouddn.com/1.png" alt="调Native层获取密钥"><img src="http://p6lhv1vz1.bkt.clouddn.com/2.png" alt="调Native层获取密钥">对libmobilesafe360-jni-530.2.so进行分析，发现导出表下只有1个JNI_OnLoad方法。这里实际是完成了本地函数的注册，其中R2寄存器的值是指向JNINativeMethod结构体的指针。以getInt方法为例，这个native方法对应sub_2A538本地函数。<br><img src="http://p6lhv1vz1.bkt.clouddn.com/3.png" alt="jni注册本地函数"><img src="http://p6lhv1vz1.bkt.clouddn.com/4.png" alt="jni注册本地函数"><img src="http://p6lhv1vz1.bkt.clouddn.com/5.png" alt="对应的本地函数">通过so动态调试的手段，解密”70&gt;@|:CF0z€.97:M0z|ovyrMN6marisa9ExceptionE”字符串获取对应密钥”*#13o-69”。同理，获取其他密钥。  其中，sKey3是用来加密联网上传的参数的，sKey1、sKey2则是用来加密上传的数据部分。。<br><img src="http://p6lhv1vz1.bkt.clouddn.com/6.png" alt="动态调试"><img src="http://p6lhv1vz1.bkt.clouddn.com/7.png" alt="动态调试"></p>
 <table>
 <thead>
 <tr>
@@ -684,7 +684,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#调试获取密钥"><span class="nav-number">1.</span> <span class="nav-text">调试获取密钥</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#分析过程记录"><span class="nav-number">1.</span> <span class="nav-text">分析过程记录</span></a></li></ol></div>
             
 
           </div>
