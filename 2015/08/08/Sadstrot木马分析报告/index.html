@@ -78,7 +78,7 @@
 
 
 
-  <meta name="keywords" content="恶意代码分析," />
+  <meta name="keywords" content="恶意代码," />
 
 
 
@@ -92,15 +92,18 @@
 
 
 <meta name="description" content="木马行为及危害 一旦运行，该木马立即申请root权限，为之后各种恶意行为做好铺垫； 创建一个detect进程，此进程下的模块插件与主进程进行通信，通过回调Java层代码、hook等方式收集用户隐私； 监听键盘输入，用户所有敲入的字符都会被窃取，包括银行账号密码、社交APP账号密码等； 接收云端指令，执行模块更新、删除指定文件等操作，给系统安全带来极大安全隐患。  木马执行流程该木马的执行流程如下：">
-<meta name="keywords" content="恶意代码分析">
+<meta name="keywords" content="恶意代码">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Sadstrot木马分析报告">
 <meta property="og:url" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/index.html">
 <meta property="og:site_name" content="Shell In Ghost">
 <meta property="og:description" content="木马行为及危害 一旦运行，该木马立即申请root权限，为之后各种恶意行为做好铺垫； 创建一个detect进程，此进程下的模块插件与主进程进行通信，通过回调Java层代码、hook等方式收集用户隐私； 监听键盘输入，用户所有敲入的字符都会被窃取，包括银行账号密码、社交APP账号密码等； 接收云端指令，执行模块更新、删除指定文件等操作，给系统安全带来极大安全隐患。  木马执行流程该木马的执行流程如下：">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/1.png">
 <meta property="og:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/2.png">
+<meta property="og:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/26.png">
+<meta property="og:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/1.png">
+<meta property="og:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/27.png">
+<meta property="og:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/28.png">
 <meta property="og:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/3.png">
 <meta property="og:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/4.png">
 <meta property="og:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/5.png">
@@ -124,12 +127,11 @@
 <meta property="og:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/23.png">
 <meta property="og:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/24.png">
 <meta property="og:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/25.png">
-<meta property="og:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/26.png">
-<meta property="og:updated_time" content="2018-04-29T16:08:12.262Z">
+<meta property="og:updated_time" content="2018-04-29T16:44:26.692Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Sadstrot木马分析报告">
 <meta name="twitter:description" content="木马行为及危害 一旦运行，该木马立即申请root权限，为之后各种恶意行为做好铺垫； 创建一个detect进程，此进程下的模块插件与主进程进行通信，通过回调Java层代码、hook等方式收集用户隐私； 监听键盘输入，用户所有敲入的字符都会被窃取，包括银行账号密码、社交APP账号密码等； 接收云端指令，执行模块更新、删除指定文件等操作，给系统安全带来极大安全隐患。  木马执行流程该木马的执行流程如下：">
-<meta name="twitter:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/1.png">
+<meta name="twitter:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/2.png">
 
 
 
@@ -442,8 +444,16 @@
 <li>监听键盘输入，用户所有敲入的字符都会被窃取，包括银行账号密码、社交APP账号密码等；</li>
 <li>接收云端指令，执行模块更新、删除指定文件等操作，给系统安全带来极大安全隐患。</li>
 </ul>
-<h2 id="木马执行流程"><a href="#木马执行流程" class="headerlink" title="木马执行流程"></a>木马执行流程</h2><p>该木马的执行流程如下：<br><img src="/2015/08/08/Sadstrot木马分析报告/1.png" alt="执行流程"><img src="/2015/08/08/Sadstrot木马分析报告/2.png" alt="执行流程"></p>
-<h2 id="详细分析"><a href="#详细分析" class="headerlink" title="详细分析"></a>详细分析</h2><h3 id="调用Substrate框架，hook键盘输入"><a href="#调用Substrate框架，hook键盘输入" class="headerlink" title="调用Substrate框架，hook键盘输入"></a>调用Substrate框架，hook键盘输入</h3><p>运行substrate框架，libPowerDetect.cy.so在init_array段进行初始化时，便会调用Substrate框架提供的api，对输入法操作中的字符输入、结束输入、隐藏键盘等方法进行hook，并发送至detect进程。<br><img src="/2015/08/08/Sadstrot木马分析报告/3.png" alt=""><img src="/2015/08/08/Sadstrot木马分析报告/4.png" alt=""><img src="/2015/08/08/Sadstrot木马分析报告/5.png" alt=""><img src="/2015/08/08/Sadstrot木马分析报告/6.png" alt=""></p>
+<h2 id="木马执行流程"><a href="#木马执行流程" class="headerlink" title="木马执行流程"></a>木马执行流程</h2><p>该木马的执行流程如下：<br><img src="/2015/08/08/Sadstrot木马分析报告/2.png" alt="执行流程"></p>
+<h3 id="本地进程间通信协议"><a href="#本地进程间通信协议" class="headerlink" title="本地进程间通信协议"></a>本地进程间通信协议</h3><p>运行在com.sec.android.service.powerManager进程的libnativeLoad.so、libPowerDetect.cy.so，会创建大量的服务监听。当接收到来自detect进程中的插件模块发来的socket通信请求时，通过判断buffer的前2个字节作为魔术字进行匹配，执行相应操作。<br><img src="/2015/08/08/Sadstrot木马分析报告/26.png" alt="本地进程间通信协议"></p>
+<h2 id="详细分析"><a href="#详细分析" class="headerlink" title="详细分析"></a>详细分析</h2><h3 id="申请root权限，运行cInstall可执行文件"><a href="#申请root权限，运行cInstall可执行文件" class="headerlink" title="申请root权限，运行cInstall可执行文件"></a>申请root权限，运行cInstall可执行文件</h3><ol>
+<li>cInstall文件会在应用的私有路径下创建工作目录与数据存储目录，将cache缓存中detect、plugin.dat、dtl.dat、glp.uin拷贝到指定的目录下。</li>
+<li>读取plugin.dat，解析获取指定id模块对应的插件名称，据此改名写入”/data/data/com.sec.android.service.powerManager/cores/Users/All Users/Intel”目录。</li>
+</ol>
+<p>以上目录与文件均被赋予可读可写可执行权限，为之后各种恶意行为做好铺垫。<br>将cache缓存下的super拷贝到/system/bin/目录，并提权。之后将libPowerDetect.cy.so、libnativeLoad.so等文件拷贝到指定目录，并静默安装substrate hook框架。<br><img src="/2015/08/08/Sadstrot木马分析报告/1.png" alt=""></p>
+<center><font size="3" face="黑体"><strong>cInstall文件执行流程</strong></font></center><br><img src="/2015/08/08/Sadstrot木马分析报告/27.png" alt=""><br><center><font size="3" face="黑体"><strong>将super拷贝到/system/bin目录下，并提权</strong></font></center><br><img src="/2015/08/08/Sadstrot木马分析报告/28.png" alt=""><br><center><font size="3" face="黑体"><strong>静默安装substrate框架</strong></font></center>
+
+<h3 id="调用Substrate框架，hook键盘输入"><a href="#调用Substrate框架，hook键盘输入" class="headerlink" title="调用Substrate框架，hook键盘输入"></a>调用Substrate框架，hook键盘输入</h3><p>运行substrate框架，libPowerDetect.cy.so在init_array段进行初始化时，便会调用Substrate框架提供的api，对输入法操作中的字符输入、结束输入、隐藏键盘等方法进行hook，并发送至detect进程。<br><img src="/2015/08/08/Sadstrot木马分析报告/3.png" alt=""><img src="/2015/08/08/Sadstrot木马分析报告/4.png" alt=""><img src="/2015/08/08/Sadstrot木马分析报告/5.png" alt=""><img src="/2015/08/08/Sadstrot木马分析报告/6.png" alt=""></p>
 <h3 id="创建大量的监听服务，运行detect可执行文件"><a href="#创建大量的监听服务，运行detect可执行文件" class="headerlink" title="创建大量的监听服务，运行detect可执行文件"></a>创建大量的监听服务，运行detect可执行文件</h3><p>libnativeLoad.so会调用以下jni方法，创建大量的监听服务，并运行detect可执行文件。<br><img src="/2015/08/08/Sadstrot木马分析报告/7.png" alt=""><img src="/2015/08/08/Sadstrot木马分析报告/8.png" alt=""><img src="/2015/08/08/Sadstrot木马分析报告/9.png" alt=""><img src="/2015/08/08/Sadstrot木马分析报告/10.png" alt=""></p>
 <h3 id="初始化主插件"><a href="#初始化主插件" class="headerlink" title="初始化主插件"></a>初始化主插件</h3><p>detect可执行文件查找主插件下Initialplugin、NetWorkStateChanged这两个符号，并调用进行初始化。<br><img src="/2015/08/08/Sadstrot木马分析报告/11.png" alt=""><img src="/2015/08/08/Sadstrot木马分析报告/12.png" alt=""><img src="/2015/08/08/Sadstrot木马分析报告/13.png" alt=""></p>
 <h3 id="主插件加载调用其他模块"><a href="#主插件加载调用其他模块" class="headerlink" title="主插件加载调用其他模块"></a>主插件加载调用其他模块</h3><p>WSDMoo.dat会调用执行其他模块下的SetCallbackInterface方法，并将一组函数指针作为参数传入，使其能够通过回调相应函数获取工作目录、插件配置等信息，且能为主插件添加一个上传任务。<br><img src="/2015/08/08/Sadstrot木马分析报告/14.png" alt=""><img src="/2015/08/08/Sadstrot木马分析报告/15.png" alt=""><img src="/2015/08/08/Sadstrot木马分析报告/16.png" alt="">获取winbrrnd.dat、sxwreg.dat插件中以下符号的地址，并调用。<br><img src="/2015/08/08/Sadstrot木马分析报告/17.png" alt=""></p>
@@ -480,8 +490,7 @@
 </tr>
 </tbody>
 </table>
-<h3 id="附录2：本地进程间通信协议"><a href="#附录2：本地进程间通信协议" class="headerlink" title="附录2：本地进程间通信协议"></a>附录2：本地进程间通信协议</h3><p>运行在com.sec.android.service.powerManager进程的libnativeLoad.so、libPowerDetect.cy.so，会创建大量的服务监听。当接收到来自detect进程中的插件模块发来的socket通信请求时，通过判断buffer的前2个字节作为魔术字进行匹配，执行相应操作。<br><img src="/2015/08/08/Sadstrot木马分析报告/26.png" alt="本地进程间通信协议"></p>
-<h3 id="附录3：远控指令列表"><a href="#附录3：远控指令列表" class="headerlink" title="附录3：远控指令列表"></a>附录3：远控指令列表</h3><table>
+<h3 id="附录2：远控指令列表"><a href="#附录2：远控指令列表" class="headerlink" title="附录2：远控指令列表"></a>附录2：远控指令列表</h3><table>
 <thead>
 <tr>
 <th>远程指令</th>
@@ -572,7 +581,7 @@
       
         <div class="post-tags">
           
-            <a href="/tags/恶意代码分析/" rel="tag"># 恶意代码分析</a>
+            <a href="/tags/恶意代码/" rel="tag"># 恶意代码</a>
           
         </div>
       
@@ -767,7 +776,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#木马行为及危害"><span class="nav-number">1.</span> <span class="nav-text">木马行为及危害</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#木马执行流程"><span class="nav-number">2.</span> <span class="nav-text">木马执行流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#详细分析"><span class="nav-number">3.</span> <span class="nav-text">详细分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#调用Substrate框架，hook键盘输入"><span class="nav-number">3.1.</span> <span class="nav-text">调用Substrate框架，hook键盘输入</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#创建大量的监听服务，运行detect可执行文件"><span class="nav-number">3.2.</span> <span class="nav-text">创建大量的监听服务，运行detect可执行文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#初始化主插件"><span class="nav-number">3.3.</span> <span class="nav-text">初始化主插件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#主插件加载调用其他模块"><span class="nav-number">3.4.</span> <span class="nav-text">主插件加载调用其他模块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#收集QQ账户、好友等隐私信息"><span class="nav-number">3.5.</span> <span class="nav-text">收集QQ账户、好友等隐私信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Socket联网上传，获取指令，执行相应远控操作"><span class="nav-number">3.6.</span> <span class="nav-text">Socket联网上传，获取指令，执行相应远控操作</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#附录"><span class="nav-number">4.</span> <span class="nav-text">附录</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#附录1：指定ID模块对应的插件名"><span class="nav-number">4.1.</span> <span class="nav-text">附录1：指定ID模块对应的插件名</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#附录2：本地进程间通信协议"><span class="nav-number">4.2.</span> <span class="nav-text">附录2：本地进程间通信协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#附录3：远控指令列表"><span class="nav-number">4.3.</span> <span class="nav-text">附录3：远控指令列表</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#木马行为及危害"><span class="nav-number">1.</span> <span class="nav-text">木马行为及危害</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#木马执行流程"><span class="nav-number">2.</span> <span class="nav-text">木马执行流程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#本地进程间通信协议"><span class="nav-number">2.1.</span> <span class="nav-text">本地进程间通信协议</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#详细分析"><span class="nav-number">3.</span> <span class="nav-text">详细分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#申请root权限，运行cInstall可执行文件"><span class="nav-number">3.1.</span> <span class="nav-text">申请root权限，运行cInstall可执行文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#调用Substrate框架，hook键盘输入"><span class="nav-number">3.2.</span> <span class="nav-text">调用Substrate框架，hook键盘输入</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#创建大量的监听服务，运行detect可执行文件"><span class="nav-number">3.3.</span> <span class="nav-text">创建大量的监听服务，运行detect可执行文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#初始化主插件"><span class="nav-number">3.4.</span> <span class="nav-text">初始化主插件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#主插件加载调用其他模块"><span class="nav-number">3.5.</span> <span class="nav-text">主插件加载调用其他模块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#收集QQ账户、好友等隐私信息"><span class="nav-number">3.6.</span> <span class="nav-text">收集QQ账户、好友等隐私信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Socket联网上传，获取指令，执行相应远控操作"><span class="nav-number">3.7.</span> <span class="nav-text">Socket联网上传，获取指令，执行相应远控操作</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#附录"><span class="nav-number">4.</span> <span class="nav-text">附录</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#附录1：指定ID模块对应的插件名"><span class="nav-number">4.1.</span> <span class="nav-text">附录1：指定ID模块对应的插件名</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#附录2：远控指令列表"><span class="nav-number">4.2.</span> <span class="nav-text">附录2：远控指令列表</span></a></li></ol></li></ol></div>
             
 
           </div>
