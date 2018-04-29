@@ -125,7 +125,7 @@
 <meta property="og:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/24.png">
 <meta property="og:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/25.png">
 <meta property="og:image" content="http://yoursite.com/2015/08/08/Sadstrot木马分析报告/26.png">
-<meta property="og:updated_time" content="2018-04-29T16:00:18.126Z">
+<meta property="og:updated_time" content="2018-04-29T16:08:12.262Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Sadstrot木马分析报告">
 <meta name="twitter:description" content="木马行为及危害 一旦运行，该木马立即申请root权限，为之后各种恶意行为做好铺垫； 创建一个detect进程，此进程下的模块插件与主进程进行通信，通过回调Java层代码、hook等方式收集用户隐私； 监听键盘输入，用户所有敲入的字符都会被窃取，包括银行账号密码、社交APP账号密码等； 接收云端指令，执行模块更新、删除指定文件等操作，给系统安全带来极大安全隐患。  木马执行流程该木马的执行流程如下：">
@@ -481,68 +481,61 @@
 </tbody>
 </table>
 <h3 id="附录2：本地进程间通信协议"><a href="#附录2：本地进程间通信协议" class="headerlink" title="附录2：本地进程间通信协议"></a>附录2：本地进程间通信协议</h3><p>运行在com.sec.android.service.powerManager进程的libnativeLoad.so、libPowerDetect.cy.so，会创建大量的服务监听。当接收到来自detect进程中的插件模块发来的socket通信请求时，通过判断buffer的前2个字节作为魔术字进行匹配，执行相应操作。<br><img src="/2015/08/08/Sadstrot木马分析报告/26.png" alt="本地进程间通信协议"></p>
-<table>
+<h3 id="附录3：远控指令列表"><a href="#附录3：远控指令列表" class="headerlink" title="附录3：远控指令列表"></a>附录3：远控指令列表</h3><table>
 <thead>
 <tr>
-<th>服务名</th>
-<th>魔术字</th>
+<th>远程指令</th>
 <th>功能</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>“/data/data/com.sec.android.service.powerManager/cores/Users/All Users/Intel/Data/plugin2IPC”</td>
-<td>‘&amp;x’</td>
-<td>将hook到的字符输入发送至detect进程</td>
+<td>“UPL”</td>
+<td>更新插件模块</td>
 </tr>
 <tr>
-<td>“/data/data/com.sec.android.service.powerManager/cores/pro”</td>
-<td>‘%2’</td>
-<td>获取当前进程号和pid</td>
+<td>“PLI”</td>
+<td>对插件模块进行初始化</td>
 </tr>
 <tr>
-<td>“/data/data/com.sec.android.service.powerManager/cores/location”</td>
-<td>‘&amp;(‘</td>
-<td>回调Java代码获取地理位置信息</td>
+<td>“DIR”</td>
+<td>查询指定目录下的信息</td>
 </tr>
 <tr>
-<td>“/data/data/com.sec.android.service.powerManager/cores/smsListener”</td>
-<td>‘&amp;)’</td>
-<td>回调Java代码，获取号码地址</td>
+<td>“DTK”</td>
+<td>上传指定目录列表</td>
 </tr>
 <tr>
-<td>“/data/data/com.sec.android.service.powerManager/cores/smsListener”</td>
-<td>‘&amp;0’</td>
-<td>回调Java代码，获取手机联系人</td>
+<td>“OSC”</td>
+<td>在指定目录下进行检索操作</td>
 </tr>
 <tr>
-<td>“/data/data/com.sec.android.service.powerManager/cores/smsListener”</td>
-<td>‘&amp;1’</td>
-<td>回调Java代码，获取短信箱</td>
+<td>“OSF”</td>
+<td>结束掉一个检索操作</td>
 </tr>
 <tr>
-<td>“/data/data/com.sec.android.service.powerManager/cores/smsListener”</td>
-<td>‘&amp;2’</td>
-<td>回调Java代码，获取通话记录</td>
+<td>“DEL”</td>
+<td>删除指定文件</td>
 </tr>
 <tr>
-<td>“/data/data/com.sec.android.service.powerManager/cores/audioListener”</td>
-<td>‘&amp;3’</td>
-<td>回调Java代码代码，执行开启、关闭、刷新环境录音的操作</td>
+<td>“SCP”</td>
+<td>全屏截图</td>
 </tr>
 <tr>
-<td>“/data/data/com.sec.android.service.powerManager/cores/audioListener”</td>
-<td>‘&amp;4’</td>
-<td>回调Java代码代码，执行开启、关闭、刷新环境录音的操作</td>
+<td>“BGS”</td>
+<td>进行环境录音</td>
 </tr>
 <tr>
-<td>“/data/data/com.sec.android.service.powerManager/cores/audioListener”</td>
-<td>‘&amp;5’</td>
-<td>回调Java代码代码，执行开启、关闭、刷新环境录音的操作</td>
+<td>“GPRS”</td>
+<td>发送地理位置信息</td>
+</tr>
+<tr>
+<td>…</td>
+<td>…</td>
 </tr>
 </tbody>
 </table>
-<h3 id="附录3：远控指令列表"><a href="#附录3：远控指令列表" class="headerlink" title="附录3：远控指令列表"></a>附录3：远控指令列表</h3>
+
       
     </div>
     
