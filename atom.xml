@@ -123,33 +123,6 @@
   </entry>
   
   <entry>
-    <title>Zigbee无线协议学习笔记</title>
-    <link href="http://yoursite.com/2016/08/30/Zigbee%E6%97%A0%E7%BA%BF%E5%8D%8F%E8%AE%AE%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/"/>
-    <id>http://yoursite.com/2016/08/30/Zigbee无线协议学习笔记/</id>
-    <published>2016-08-30T07:53:08.000Z</published>
-    <updated>2018-04-30T08:21:41.266Z</updated>
-    
-    <content type="html"><![CDATA[<h2 id="ZigBee简介"><a href="#ZigBee简介" class="headerlink" title="ZigBee简介"></a>ZigBee简介</h2><p>严格的来说，ZigBee仅是几份用自然语言写的文档，而ZigBee的实现才是真正的软件，比如Z-Stack这个ZigBee的实现就是纯软件。这些内容是可以与传统的TCP/IP进行对比的，及ZigBee相当于定义TCP/IP的一系列RFC文档的集合。只不过那些RFC文档的实现仅是TCP/IP一家独大，而ZigBee的实现却有很多种比如Z-Stack、ZBOSS等等。<br>现在来讨论下ZigBee具体是什么。ZigBee是一种短距离、低功耗、低复杂度、低传输速率的无线网络通信规范。ZigBee这个规范由ZigBee Alliance维护，这一点有些类似Wi-Fi规范与Wi-Fi Alliance的关系。不过ZigBee相对于Wi-Fi还非常年轻。在Wi-Fi快要覆盖全球的时代，使用ZigBee的消费级设备都还很难看到。不过由于ZigBee技术在相对廉价的同时，还保持了易用性和安全性，其未来在工业传感控制、智能家庭、智能城市等领域的发展前景也十分明朗。ZigBee还有一个重要的特点就是底层基于并完全兼容IEEE 802.15.4协议。这与Wi-Fi基于IEEE 802.11是一个道理。</p><h2 id="ZigBee协议栈"><a href="#ZigBee协议栈" class="headerlink" title="ZigBee协议栈"></a>ZigBee协议栈</h2><p>ZigBee协议定义了四层网络结构，从上到下依次为Application layer、Network layer、MAC layer和Physical layer。其中最下面两层即MAC layer与Physical layer的定义，遵循IEEE 802.15.4规范，因此会在IEEE 802.15.4章节中介绍，而不在本章节中进行展开。<br><img src="/2016/08/30/Zigbee无线协议学习笔记/1.png" alt="ZigBee协议栈"></p>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h2 id=&quot;ZigBee简介&quot;&gt;&lt;a href=&quot;#ZigBee简介&quot; class=&quot;headerlink&quot; title=&quot;ZigBee简介&quot;&gt;&lt;/a&gt;ZigBee简介&lt;/h2&gt;&lt;p&gt;严格的来说，ZigBee仅是几份用自然语言写的文档，而ZigBee的实现才是真正的软件，比如
-      
-    
-    </summary>
-    
-      <category term="物联网" scheme="http://yoursite.com/categories/%E7%89%A9%E8%81%94%E7%BD%91/"/>
-    
-    
-      <category term="ZigBee" scheme="http://yoursite.com/tags/ZigBee/"/>
-    
-      <category term="学习总结" scheme="http://yoursite.com/tags/%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/"/>
-    
-  </entry>
-  
-  <entry>
     <title>低功耗蓝牙（BLE）安全初探</title>
     <link href="http://yoursite.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/"/>
     <id>http://yoursite.com/2016/07/25/低功耗蓝牙（BLE）安全初探/</id>
@@ -170,9 +143,9 @@
       <category term="物联网" scheme="http://yoursite.com/categories/%E7%89%A9%E8%81%94%E7%BD%91/"/>
     
     
-      <category term="学习总结" scheme="http://yoursite.com/tags/%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/"/>
-    
       <category term="BLE" scheme="http://yoursite.com/tags/BLE/"/>
+    
+      <category term="学习总结" scheme="http://yoursite.com/tags/%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/"/>
     
   </entry>
   
