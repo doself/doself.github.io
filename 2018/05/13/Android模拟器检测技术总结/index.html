@@ -91,13 +91,13 @@
 
 
 
-<meta name="description" content="&amp;gt;模拟器作为一种虚拟机，配合改机工具，能够以较低成本实现设备多开，因此而备受黑灰产的青睐。如何准确识别模拟器成为App开发中的一个重要模块，目前也有专门的公司提供相应的SDK供开发者识别模拟器。通过前段时间对模拟器检测技术的调研，希望能总结出一套特征挖掘的体系化方案。 模拟器概述定义安卓模拟器是一种可以运行在电脑上的虚拟设备，通过它可以实现应用的跨平台操作，让移动端APP无需任何改动即可在P">
+<meta name="description" content="模拟器作为一种虚拟机，配合改机工具，能够以较低成本实现设备多开，因此而备受黑灰产的青睐。如何准确识别模拟器成为App开发中的一个重要模块，目前也有专门的公司提供相应的SDK供开发者识别模拟器。通过前段时间对模拟器检测技术的调研，希望能总结出一套特征挖掘的体系化方案。 模拟器概述定义安卓模拟器是一种可以运行在电脑上的虚拟设备，通过它可以实现应用的跨平台操作，让移动端APP无需任何改动即可在PC上执行">
 <meta name="keywords" content="模拟器检测,学习总结">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Android模拟器检测体系梳理">
 <meta property="og:url" content="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/index.html">
 <meta property="og:site_name" content="Shell In Ghost">
-<meta property="og:description" content="&amp;gt;模拟器作为一种虚拟机，配合改机工具，能够以较低成本实现设备多开，因此而备受黑灰产的青睐。如何准确识别模拟器成为App开发中的一个重要模块，目前也有专门的公司提供相应的SDK供开发者识别模拟器。通过前段时间对模拟器检测技术的调研，希望能总结出一套特征挖掘的体系化方案。 模拟器概述定义安卓模拟器是一种可以运行在电脑上的虚拟设备，通过它可以实现应用的跨平台操作，让移动端APP无需任何改动即可在P">
+<meta property="og:description" content="模拟器作为一种虚拟机，配合改机工具，能够以较低成本实现设备多开，因此而备受黑灰产的青睐。如何准确识别模拟器成为App开发中的一个重要模块，目前也有专门的公司提供相应的SDK供开发者识别模拟器。通过前段时间对模拟器检测技术的调研，希望能总结出一套特征挖掘的体系化方案。 模拟器概述定义安卓模拟器是一种可以运行在电脑上的虚拟设备，通过它可以实现应用的跨平台操作，让移动端APP无需任何改动即可在PC上执行">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/3.png">
 <meta property="og:image" content="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/1.png">
@@ -109,10 +109,10 @@
 <meta property="og:image" content="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/8.png">
 <meta property="og:image" content="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/9.png">
 <meta property="og:image" content="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/10.png">
-<meta property="og:updated_time" content="2018-05-15T12:19:11.148Z">
+<meta property="og:updated_time" content="2018-05-15T12:21:27.269Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Android模拟器检测体系梳理">
-<meta name="twitter:description" content="&amp;gt;模拟器作为一种虚拟机，配合改机工具，能够以较低成本实现设备多开，因此而备受黑灰产的青睐。如何准确识别模拟器成为App开发中的一个重要模块，目前也有专门的公司提供相应的SDK供开发者识别模拟器。通过前段时间对模拟器检测技术的调研，希望能总结出一套特征挖掘的体系化方案。 模拟器概述定义安卓模拟器是一种可以运行在电脑上的虚拟设备，通过它可以实现应用的跨平台操作，让移动端APP无需任何改动即可在P">
+<meta name="twitter:description" content="模拟器作为一种虚拟机，配合改机工具，能够以较低成本实现设备多开，因此而备受黑灰产的青睐。如何准确识别模拟器成为App开发中的一个重要模块，目前也有专门的公司提供相应的SDK供开发者识别模拟器。通过前段时间对模拟器检测技术的调研，希望能总结出一套特征挖掘的体系化方案。 模拟器概述定义安卓模拟器是一种可以运行在电脑上的虚拟设备，通过它可以实现应用的跨平台操作，让移动端APP无需任何改动即可在PC上执行">
 <meta name="twitter:image" content="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/3.png">
 
 
@@ -420,7 +420,7 @@
       
 
       
-        <p>&gt;<br>模拟器作为一种虚拟机，配合改机工具，能够以较低成本实现设备多开，因此而备受黑灰产的青睐。如何准确识别模拟器成为App开发中的一个重要模块，目前也有专门的公司提供相应的SDK供开发者识别模拟器。通过前段时间对模拟器检测技术的调研，希望能总结出一套特征挖掘的体系化方案。</p>
+        <p>模拟器作为一种虚拟机，配合改机工具，能够以较低成本实现设备多开，因此而备受黑灰产的青睐。如何准确识别模拟器成为App开发中的一个重要模块，目前也有专门的公司提供相应的SDK供开发者识别模拟器。通过前段时间对模拟器检测技术的调研，希望能总结出一套特征挖掘的体系化方案。</p>
 <h2 id="模拟器概述"><a href="#模拟器概述" class="headerlink" title="模拟器概述"></a>模拟器概述</h2><h3 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h3><p>安卓模拟器是一种可以运行在电脑上的虚拟设备，通过它可以实现应用的跨平台操作，让移动端APP无需任何改动即可在PC上执行。</p>
 <h3 id="特性"><a href="#特性" class="headerlink" title="特性"></a>特性</h3><h4 id="优势"><a href="#优势" class="headerlink" title="优势"></a>优势</h4><p>随着技术的不断发展，目前模拟器基本已经能够完成手机90%以上的功能。此外，由于在PC端工作，与传统手机相比，具有以下几点优势：</p>
 <ul>
