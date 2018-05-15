@@ -78,7 +78,7 @@
 
 
 
-  <meta name="keywords" content="逆向," />
+  <meta name="keywords" content="模拟器检测,学习总结," />
 
 
 
@@ -91,35 +91,29 @@
 
 
 
-<meta name="description" content="分析过程记录通过检索关键字，在Java层定位出获取密钥所在的代码段：对libmobilesafe360-jni-530.2.so进行分析，发现导出表下只有1个JNI_OnLoad方法。这里实际是完成了本地函数的注册，其中R2寄存器的值是指向JNINativeMethod结构体的指针。以getInt方法为例，这个native方法对应sub_2A538本地函数。通过so动态调试的手段，解密”70&amp;gt">
-<meta name="keywords" content="逆向">
+<meta name="description" content="&amp;gt;模拟器作为一种虚拟机，配合改机工具，能够以较低成本实现设备多开，因此而备受黑灰产的青睐。如何准确识别模拟器成为App开发中的一个重要模块，目前也有专门的公司提供相应的SDK供开发者识别模拟器。通过前段时间对模拟器检测技术的调研，希望能总结出一套特征挖掘的体系化方案。 模拟器概述定义安卓模拟器是一种可以运行在电脑上的虚拟设备，通过它可以实现应用的跨平台操作，让移动端APP无需任何改动即可在P">
+<meta name="keywords" content="模拟器检测,学习总结">
 <meta property="og:type" content="article">
-<meta property="og:title" content="360通讯录网络加密协议分析">
-<meta property="og:url" content="http://yoursite.com/2015/06/04/360通讯录网络加密协议分析/index.html">
+<meta property="og:title" content="Android模拟器检测体系梳理">
+<meta property="og:url" content="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/index.html">
 <meta property="og:site_name" content="Shell In Ghost">
-<meta property="og:description" content="分析过程记录通过检索关键字，在Java层定位出获取密钥所在的代码段：对libmobilesafe360-jni-530.2.so进行分析，发现导出表下只有1个JNI_OnLoad方法。这里实际是完成了本地函数的注册，其中R2寄存器的值是指向JNINativeMethod结构体的指针。以getInt方法为例，这个native方法对应sub_2A538本地函数。通过so动态调试的手段，解密”70&amp;gt">
+<meta property="og:description" content="&amp;gt;模拟器作为一种虚拟机，配合改机工具，能够以较低成本实现设备多开，因此而备受黑灰产的青睐。如何准确识别模拟器成为App开发中的一个重要模块，目前也有专门的公司提供相应的SDK供开发者识别模拟器。通过前段时间对模拟器检测技术的调研，希望能总结出一套特征挖掘的体系化方案。 模拟器概述定义安卓模拟器是一种可以运行在电脑上的虚拟设备，通过它可以实现应用的跨平台操作，让移动端APP无需任何改动即可在P">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/1.png">
-<meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/2.png">
-<meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/3.png">
-<meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/4.png">
-<meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/5.png">
-<meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/6.png">
-<meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/7.png">
-<meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/8.png">
-<meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/9.png">
-<meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/10.png">
-<meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/11.png">
-<meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/12.png">
-<meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/13.png">
-<meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/14.png">
-<meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/15.png">
-<meta property="og:image" content="http://p6lhv1vz1.bkt.clouddn.com/16.png">
-<meta property="og:updated_time" content="2018-04-29T13:25:13.368Z">
+<meta property="og:image" content="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/3.png">
+<meta property="og:image" content="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/1.png">
+<meta property="og:image" content="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/2.png">
+<meta property="og:image" content="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/5.png">
+<meta property="og:image" content="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/4.png">
+<meta property="og:image" content="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/6.png">
+<meta property="og:image" content="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/7.png">
+<meta property="og:image" content="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/8.png">
+<meta property="og:image" content="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/9.png">
+<meta property="og:image" content="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/10.png">
+<meta property="og:updated_time" content="2018-05-15T12:17:41.702Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="360通讯录网络加密协议分析">
-<meta name="twitter:description" content="分析过程记录通过检索关键字，在Java层定位出获取密钥所在的代码段：对libmobilesafe360-jni-530.2.so进行分析，发现导出表下只有1个JNI_OnLoad方法。这里实际是完成了本地函数的注册，其中R2寄存器的值是指向JNINativeMethod结构体的指针。以getInt方法为例，这个native方法对应sub_2A538本地函数。通过so动态调试的手段，解密”70&amp;gt">
-<meta name="twitter:image" content="http://p6lhv1vz1.bkt.clouddn.com/1.png">
+<meta name="twitter:title" content="Android模拟器检测体系梳理">
+<meta name="twitter:description" content="&amp;gt;模拟器作为一种虚拟机，配合改机工具，能够以较低成本实现设备多开，因此而备受黑灰产的青睐。如何准确识别模拟器成为App开发中的一个重要模块，目前也有专门的公司提供相应的SDK供开发者识别模拟器。通过前段时间对模拟器检测技术的调研，希望能总结出一套特征挖掘的体系化方案。 模拟器概述定义安卓模拟器是一种可以运行在电脑上的虚拟设备，通过它可以实现应用的跨平台操作，让移动端APP无需任何改动即可在P">
+<meta name="twitter:image" content="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/3.png">
 
 
 
@@ -149,13 +143,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2015/06/04/360通讯录网络加密协议分析/"/>
+  <link rel="canonical" href="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/"/>
 
 
 
 
 
-  <title>360通讯录网络加密协议分析 | Shell In Ghost</title>
+  <title>Android模拟器检测体系梳理 | Shell In Ghost</title>
   
 
 
@@ -326,7 +320,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2015/06/04/360通讯录网络加密协议分析/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/13/Android模拟器检测技术总结/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="WireGhost">
@@ -343,7 +337,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">360通讯录网络加密协议分析</h1>
+          <h1 class="post-title" itemprop="name headline">Android模拟器检测体系梳理</h1>
         
 
         <div class="post-meta">
@@ -355,8 +349,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2015-06-04T13:33:32+08:00">
-                2015-06-04
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-13T22:12:01+08:00">
+                2018-05-13
               </time>
             
 
@@ -395,7 +389,7 @@
 
           
           
-             <span id="/2015/06/04/360通讯录网络加密协议分析/" class="leancloud_visitors" data-flag-title="360通讯录网络加密协议分析">
+             <span id="/2018/05/13/Android模拟器检测技术总结/" class="leancloud_visitors" data-flag-title="Android模拟器检测体系梳理">
                <span class="post-meta-divider">|</span>
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -426,32 +420,83 @@
       
 
       
-        <h2 id="分析过程记录"><a href="#分析过程记录" class="headerlink" title="分析过程记录"></a>分析过程记录</h2><p>通过检索关键字，在Java层定位出获取密钥所在的代码段：<br><img src="http://p6lhv1vz1.bkt.clouddn.com/1.png" alt="调Native层获取密钥"><img src="http://p6lhv1vz1.bkt.clouddn.com/2.png" alt="调Native层获取密钥">对libmobilesafe360-jni-530.2.so进行分析，发现导出表下只有1个JNI_OnLoad方法。这里实际是完成了本地函数的注册，其中R2寄存器的值是指向JNINativeMethod结构体的指针。以getInt方法为例，这个native方法对应sub_2A538本地函数。<br><img src="http://p6lhv1vz1.bkt.clouddn.com/3.png" alt="jni注册本地函数"><img src="http://p6lhv1vz1.bkt.clouddn.com/4.png" alt="jni注册本地函数"><img src="http://p6lhv1vz1.bkt.clouddn.com/5.png" alt="对应的本地函数">通过so动态调试的手段，解密”70&gt;@|:CF0z€.97:M0z|ovyrMN6marisa9ExceptionE”字符串获取对应密钥”*#13o-69”。同理，获取其他密钥。  其中，sKey3是用来加密联网上传的参数的，sKey1、sKey2则是用来加密上传的数据部分。。<br><img src="http://p6lhv1vz1.bkt.clouddn.com/6.png" alt="动态调试"><img src="http://p6lhv1vz1.bkt.clouddn.com/7.png" alt="动态调试"></p>
-<table>
-<thead>
-<tr>
-<th>DES密钥</th>
-<th>值</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>sKey1</td>
-<td>*#13o-69</td>
-</tr>
-<tr>
-<td>sKey2</td>
-<td>#ms!,*-@</td>
-</tr>
-<tr>
-<td>sKey3</td>
-<td>#mobile@</td>
-</tr>
-</tbody>
-</table>
-<p>联网上传的数据保存在com/qihoo360/contacts/backup/http/HttpHandler;-&gt;mPostData变量中，追踪该数据的写入来源，中间用到了较多的接口引用，最终可以定位到abm类下的p方法，其中data数据结构所示：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Struct mPostData&#123;</span><br><span class="line"> U2        <span class="number">1</span></span><br><span class="line"> U2        type</span><br><span class="line"> U4        length</span><br><span class="line"> Unknown   data</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p><img src="http://p6lhv1vz1.bkt.clouddn.com/8.png" alt=""><img src="http://p6lhv1vz1.bkt.clouddn.com/9.png" alt=""><img src="http://p6lhv1vz1.bkt.clouddn.com/10.png" alt=""><img src="http://p6lhv1vz1.bkt.clouddn.com/11.png" alt="">抽取上传的数据部分中的数据段部分，这里使用的DES加密算法。需要注意的是，这里的密钥会根据实际传入的布尔类型参数来决定是sKey1还是sKey2。<br><img src="http://p6lhv1vz1.bkt.clouddn.com/12.png" alt="">这里自己动手实现一个简单的DES解密算法，前后用sKey1、sKey2来进行解密操作。然后在这个过程中，发现当sKey2作为密钥时，解密后文件均存在固定的文件头，这里怀疑是一个特殊的魔术字，简单查阅了相关资料后，发现其是一个gzip格式的压缩文件，直接解压拿到上传数据。。<br><img src="http://p6lhv1vz1.bkt.clouddn.com/13.png" alt=""><img src="http://p6lhv1vz1.bkt.clouddn.com/14.png" alt=""><img src="http://p6lhv1vz1.bkt.clouddn.com/15.png" alt=""><img src="http://p6lhv1vz1.bkt.clouddn.com/16.png" alt="代码中对应的压缩代码"></p>
+        <p>&gt;<br>模拟器作为一种虚拟机，配合改机工具，能够以较低成本实现设备多开，因此而备受黑灰产的青睐。如何准确识别模拟器成为App开发中的一个重要模块，目前也有专门的公司提供相应的SDK供开发者识别模拟器。通过前段时间对模拟器检测技术的调研，希望能总结出一套特征挖掘的体系化方案。</p>
+<h2 id="模拟器概述"><a href="#模拟器概述" class="headerlink" title="模拟器概述"></a>模拟器概述</h2><h3 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h3><p>安卓模拟器是一种可以运行在电脑上的虚拟设备，通过它可以实现应用的跨平台操作，让移动端APP无需任何改动即可在PC上执行。</p>
+<h3 id="特性"><a href="#特性" class="headerlink" title="特性"></a>特性</h3><h4 id="优势"><a href="#优势" class="headerlink" title="优势"></a>优势</h4><p>随着技术的不断发展，目前模拟器基本已经能够完成手机90%以上的功能。此外，由于在PC端工作，与传统手机相比，具有以下几点优势：</p>
+<ul>
+<li><strong>更炫</strong>：支持大屏幕、提供更炫酷的视觉效果，从而能够天然的将一些移动端由于适配成客户端应用；</li>
+<li><strong>易上手</strong>：支持鼠标、键盘、手柄、摄像头等众多硬件外设，将操作方式从手指运动中解放出来，发挥外设的优势；</li>
+<li><strong>更强的性能</strong>：通过模拟器可自定义配置性能参数，发挥PC硬件性能优势，跑分数据远超手机，使得高配游戏运行不再卡顿；</li>
+<li><strong>更好的操控性</strong>：通过虚拟按键功能，能够将任意点触操作、震动、摇摇等手机独有操作映射到键盘的自定义按键，更加简易、便捷；</li>
+<li><strong>使用PC工具</strong>：利用PC端其他辅助工具完成对移动端应用的支持，如通过按键精灵完成自动挂机等操作，解放双手；</li>
+<li><strong>模拟多人操作</strong>：通过模拟器多开功能，零成本体验同时多部手机、多个账户开小黑屋，实现刷单的快感；</li>
+<li><strong>更便捷的虚拟定位功能</strong>：通过模拟器虚拟定位，让你轻松落脚五湖四海；</li>
+<li><strong>再也不用担心电池电量、手机流量了…</strong></li>
+</ul>
+<h4 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h4><p>此外，Android模拟器鉴于自身技术瓶颈，也存在以下普遍问题：</p>
+<ul>
+<li><strong>性能</strong>：运行时普遍需要占据较大的CPU、内存等资源，导致低配机运行不流畅。此外，即便是高配机，多开也很容易出现卡顿等现象；</li>
+<li><strong>稳定性</strong>：模拟器技术本身的BUG导致的闪退、花屏、无响应等现象；</li>
+<li><strong>兼容性</strong><ul>
+<li><strong>硬件兼容性</strong>：主要表现为大部分模拟器对AMD架构PC的不支持；</li>
+<li><strong>应用兼容性</strong>：比如部分模拟器尚不兼容ARM架构的APP，又或者某些应用对安卓内核、虚拟机的调用方式比较底层，当模拟器对这些接口支持的不好时，表现为该类程序无法在模拟器上运行；</li>
+<li><strong>PC系统兼容性</strong>：表现为模拟器主要适配Windows主流平台，而能在Mac下运行的很少，且过低、过高版本支持的不好（如XP之前版本、Win 10，市面上某些定制的平板系统等）；</li>
+<li><strong>安卓系统兼容性</strong>：目前模拟器上的Android系统仍然停留在4.x，部分达到5.1，使得部分对安卓版本有要求的应用或游戏在模拟器上运行体验不好。</li>
+</ul>
+</li>
+</ul>
+<h2 id="底层关键技术"><a href="#底层关键技术" class="headerlink" title="底层关键技术"></a>底层关键技术</h2><h3 id="虚拟化技术"><a href="#虚拟化技术" class="headerlink" title="虚拟化技术"></a>虚拟化技术</h3><p>模拟器是用软件来模拟硬件操作，这就需要用到虚拟化技术。广义的虚拟化，是指将网络、CPU、内存及存储等各种实体资源，予以抽象、转换后呈现出来，进而打破实体结构间不可切割的障碍，使用户可以比原本的组态更好的方式来应用这些资源。我们所熟知的虚拟机就是虚拟化技术中的一种，通常来说它们只是模拟了一套与Host主机相同架构、相同指令集的硬件平台，不涉及内存和CPU的虚拟化。所有的Android模拟器都在不同程度上运用了虚拟化技术，比如雷电、夜神，包括Bluestack模拟器是基于Virtualbox虚拟机，谷歌原生模拟器和红手指云模拟器则是应用了Qemu的虚拟化技术。</p>
+<h4 id="CPU虚拟化"><a href="#CPU虚拟化" class="headerlink" title="CPU虚拟化"></a>CPU虚拟化</h4><p>目前，已知的所有ARM架构的模拟器都是基于Qemu虚拟机。Qemu采用的是纯软件模拟，在物理机的操作系统上创建一个模拟硬件的程序来仿真所有想要的硬件，然后在上面跑ARM运行时。在这种环境下，由于程序每次执行都需要将其翻译成宿主机（X86）的指令，导致性能非常低下，这也是原生模拟器不够流畅的原因之一。</p>
+<h4 id="ARM-Translation"><a href="#ARM-Translation" class="headerlink" title="ARM Translation"></a>ARM Translation</h4><p>当下主流的Android模拟器都是X86架构，基于Virtualbox虚拟机。由于不需要做CPU虚拟化，少了一层指令集转换过程，因此在运行支持X86架构的app时，就和普通的虚拟机没有区别，速度也就明显提高了很多。<br>此外，针对ARM架构的兼容性问题，普遍采用的是半虚拟化，根据二进制翻译技术将ARM指令动态翻译成X86指令。</p>
+<h2 id="黑产常用的模拟器"><a href="#黑产常用的模拟器" class="headerlink" title="黑产常用的模拟器"></a>黑产常用的模拟器</h2><p>目前市面上安卓模拟器软件种类繁多，有51、mumu、蓝叠、夜神、逍遥、海马玩、雷电等等。通过在黑产聚集论坛、QQ群等多个渠道进行调研，我们发现黑产当下常用的是夜神、雷电和逍遥模拟器。<br><img src="/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/3.png" alt=""><img src="/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/1.png" alt=""><img src="/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/2.png" alt="">可以注意到，这些模拟器的共通点是都自带修改设备参数、多开、操作录制和虚拟定位等功能。<br><img src="/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/5.png" alt=""><img src="/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/4.png" alt=""><img src="/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/6.png" alt=""><img src="/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/7.png" alt=""></p>
+<h2 id="模拟器检测技术框架"><a href="#模拟器检测技术框架" class="headerlink" title="模拟器检测技术框架"></a>模拟器检测技术框架</h2><p>模拟器检测的本质就是要利用模拟器和真机之间的微小差异，从而判断当前设备是否为模拟器，具体检测技术框架整理如下：<br><img src="/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/8.png" alt=""></p>
+<h3 id="如何挖掘特征"><a href="#如何挖掘特征" class="headerlink" title="如何挖掘特征"></a>如何挖掘特征</h3><p>结合前面梳理出的模拟器检测框架，后续在做相应的特征挖掘时，可直接根据该脑图做进一步的完善和加强。</p>
+<table><tr><td>特征项</td><td colspan="2">细分点</td><td>描述</td><td>备注</td></tr><tr><td rowspan="2">软件信息</td><td>应用层</td><td></td><td></td> <td></td></tr><tr><td>系统库</td><td></td><td></td><td></td></tr><tr><td rowspan="3">无线射频</td><td>WIFI</td><td></td><td></td><td></td></tr><tr><td>GPS</td><td></td><td></td><td></td></tr><tr><td>…</td><td></td><td></td><td></td></tr><tr><td rowspan="9">硬件信息</td><td rowspan="3">底层硬件</td><td>CPU</td><td></td><td></td></tr><tr><td>电池</td><td></td><td></td></tr><tr><td>设备参数</td><td></td><td></td></tr><tr><td rowspan="6">硬件抽象层</td><td>图形</td><td></td><td></td></tr><tr><td>相机</td><td></td><td></td></tr><tr><td>蓝牙</td><td></td><td></td></tr><tr><td>输入</td><td></td><td></td></tr><tr><td>存储</td><td></td><td></td></tr><tr><td>传感器</td><td></td><td></td></tr><tr><td rowspan="4">文件系统（重点关注Linux内核相关）</td><td>检查/sys硬件驱动信息</td><td></td><td></td><td></td></tr><tr><td>检查/dev设备节点特征</td><td></td><td></td><td></td></tr><tr><td>检查/proc运行时的内核信息映射</td><td></td><td></td><td></td></tr><tr><td>…</td><td></td><td></td><td></td></tr></table>
+
+<p>此外，基于文件系统差异的特征挖掘，具体可参考Android根目录文件结构进行操作，以下是几个重要的目录/文件的说明：</p>
+<ul>
+<li>/mnt：挂载点目录</li>
+<li>/etc：指向 /system/etc ，系统配置文件所在目录</li>
+<li>/data：存放用户安装的应用以及各种数据</li>
+<li>/system：Android系统目录文件夹</li>
+<li>/dev：设备节点文件存放地</li>
+<li>/sys：用于挂载 sysfs文件系统，在设备模型中，sysfs文件系统用来表示设备的结构，将设备的层次结构形象的反应到用户空间中</li>
+<li>/proc：这是一个虚拟的文件系统，不占用实际存储空间。它以文件系统的方式为访问系统内核的操作提供接口，动态从系统内核中读出所需信息</li>
+<li>init.rc：启动脚本</li>
+<li>default.prop：系统属性配置文件</li>
+</ul>
+<h3 id="对应的检测弱点"><a href="#对应的检测弱点" class="headerlink" title="对应的检测弱点"></a>对应的检测弱点</h3><h4 id="基于模拟器结构特征"><a href="#基于模拟器结构特征" class="headerlink" title="基于模拟器结构特征"></a>基于模拟器结构特征</h4><h4 id="利用任务调度检测模拟器"><a href="#利用任务调度检测模拟器" class="headerlink" title="利用任务调度检测模拟器"></a>利用任务调度检测模拟器</h4><h5 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h5><p>模拟器与真机的本质区别在于运行载体，市面上已知的ARM模拟器都是基于qemu虚拟机。由于qemu在执行程序时实际上是将其翻译成宿主机的指令，比如将安卓的arm指令翻译成PC的x86指令。为了效率上的考虑，qemu在翻译执行arm指令时并没有实时更新模拟的pc寄存器值，只会在一段代码翻译执行完之后再更新，而真机中pc寄存器是一直在更新的。根据这一点，可以设计一段CPU任务调度程序来检测模拟器。<br><img src="/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/9.png" alt=""></p>
+<h5 id="优缺点"><a href="#优缺点" class="headerlink" title="优缺点"></a>优缺点</h5><p>优点：因为是基于qemu的二进制翻译技术来做特征检测，所以能够很好的识别这类Android模拟器。<br>缺点：</p>
+<ol>
+<li>需要自己设计反应离散程度的算法来统计任务调度的地址分布情况，想要实际应用到SDK有些困难</li>
+<li>会执行汇编代码，在不同的机器设备上需要考虑稳定性和兼容性等问题</li>
+</ol>
+<h4 id="利用cache特性检测Android模拟器"><a href="#利用cache特性检测Android模拟器" class="headerlink" title="利用cache特性检测Android模拟器"></a>利用cache特性检测Android模拟器</h4><h5 id="原理-1"><a href="#原理-1" class="headerlink" title="原理"></a>原理</h5><p>由于绝大部分手机都是基于ARM架构，而模拟器几乎全部是运行在PC的X86架构上。因此，可以利用ARM与X86的底层缓存行为差异来判断是否为真机。<br>具体来说，ARM采用的是将指令存储与数据存储分开的哈佛架构，L1 Cache（一级缓存）被分成了平行的两块，即I-Cache（指令缓存）和D-Cache（数据缓存），而X86采用的是将指令存储和数据存储合并在一起的冯•诺伊曼结构，L1 Cache是连续的一块缓存。所以，如果我们通过读写地址指令的方式对一段可执行代码进行动态修改，那么在执行的时候，X86架构上的指令缓存会被同步修改，而对ARM架构而言，这种数据读写操作修改的只是D-Cache中的内容，此时I-Cache中的指令并不会被更新。<br><img src="/2018/05/13/Android模拟器检测技术总结/Android模拟器检测体系梳理/10.png" alt=""></p>
+<h5 id="优缺点-1"><a href="#优缺点-1" class="headerlink" title="优缺点"></a>优缺点</h5><p>优点：能够准确的识别arm和x86架构。<br>缺点：要执行汇编代码，在不同的机器设备上需要考虑稳定性和兼容性等问题。实测发现容易引起崩溃，需要配合多进程予以解决。</p>
+<h4 id="基于Android体系架构"><a href="#基于Android体系架构" class="headerlink" title="基于Android体系架构"></a>基于Android体系架构</h4><h5 id="应用层行为数据"><a href="#应用层行为数据" class="headerlink" title="应用层行为数据"></a>应用层行为数据</h5><p>这种检测方案本质上是对正常用户的行为模式进行统计分析，它也许不能有效的对真机和模拟器进行区分，但可以作为风险设备画像的一个参考维度。</p>
+<h5 id="无线射频"><a href="#无线射频" class="headerlink" title="无线射频"></a>无线射频</h5><h6 id="WIFI"><a href="#WIFI" class="headerlink" title="WIFI"></a>WIFI</h6><p>检查WIFI列表这种方式，目前没发现明显缺点。当正常手机接入WIFI的时候，周边往往有复数的WIFI信号，而模拟器由于不具备检索周边WIFI的能力，其WIFI列表通常为空或者只有一个WIFI。</p>
+<h6 id="GPS"><a href="#GPS" class="headerlink" title="GPS"></a>GPS</h6><p>这种检测手法的原理是基于模拟器没有真实的GPS模块，通常无法获取到地理位置信息。缺点是部分用户在实际使用中可能会关闭该权限，导致获取不到数据。</p>
+<h5 id="硬件信息"><a href="#硬件信息" class="headerlink" title="硬件信息"></a>硬件信息</h5><h6 id="底层硬件"><a href="#底层硬件" class="headerlink" title="底层硬件"></a>底层硬件</h6><ul>
+<li>CPU  <ol>
+<li>型号：正常x86手机的cpu型号为intel atom，arm则是联发科，高通，麒麟等。缺点是需要大盘做数据分析，另外可能要结合手机型号等其他维度才能做一个比较好的识别。  </li>
+<li>温度：目前来看应该是比较靠谱的，缺点是需要大量的数据统计做支撑，不排除有误杀的可能。</li>
+</ol>
+</li>
+<li>电池<br>  需要在后台多次采集数据，检验电压、电量是否有实时变化，实际应用起来有些困难。。</li>
+<li>设备<br>  通过系统API获取手机硬件参数，可以说是非常传统的模拟器检测方案了。也正是因为传统，基本上都知道会获取哪些信息，所以缺点是很容易遭到篡改。</li>
+</ul>
+<h6 id="硬件抽象层"><a href="#硬件抽象层" class="headerlink" title="硬件抽象层"></a>硬件抽象层</h6><ul>
+<li>相机<br>  通过提取摄像头参数信息，可以有效的识别当前设备是否为“主流手机”。缺点是考虑到平板、学习机等“冷门设备”的存在，不能直接区分出模拟器，需要结合其他维度一起使用，且需要接入的APP有打开摄像头的权限。</li>
+<li>蓝牙<br>  若想从API层面进行检测，那就必须先开启蓝牙，而这个需要弹框让用户确认。</li>
+<li>输入<br>  缺点是对触摸事件的处理是在前台完成的，如果是作为SDK可能不是很好接入和应用。</li>
+<li>存储  <ol>
+<li>闪存分区<br> Android系统的更新以及刷机等方式都有可能导致分区的变化，目前来看，在高版本的机器上检查mmcblk、dm-x分区并不是一个靠谱的特征，需要配合其它维度一起使用。</li>
+<li>/mnt挂载<br> 这种文件名的检测手法只能针对性的做特定模拟器检测、不通用，且很容易通过版本更新、改名等手段进行绕过。</li>
+</ol>
+</li>
+<li>传感器<br>  除判断设备有支持哪些传感器外，若想要做更进一步的验证，就仍然绕不开多次采集数据的问题。</li>
+</ul>
+<h5 id="文件系统"><a href="#文件系统" class="headerlink" title="文件系统"></a>文件系统</h5><p>特点是用于做特征检出的目录文件与底层硬件的关联性越强，其效果越好，反之越可能失效。建议尽量提取和虚拟机、硬件驱动相关的文件特征，缺点是部分特征可能需要结合大量的机型数据做可靠性验证。</p>
 
       
     </div>
@@ -489,7 +534,9 @@
       
         <div class="post-tags">
           
-            <a href="/tags/逆向/" rel="tag"># 逆向</a>
+            <a href="/tags/模拟器检测/" rel="tag"># 模拟器检测</a>
+          
+            <a href="/tags/学习总结/" rel="tag"># 学习总结</a>
           
         </div>
       
@@ -502,8 +549,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2015/04/28/ELF Hook总结与代码实现/" rel="next" title="ELF Hook总结与代码实现">
-                <i class="fa fa-chevron-left"></i> ELF Hook总结与代码实现
+              <a href="/2018/04/21/起底薅羊毛灰色产业链/" rel="next" title="起底薅羊毛灰色产业链">
+                <i class="fa fa-chevron-left"></i> 起底薅羊毛灰色产业链
               </a>
             
           </div>
@@ -512,8 +559,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2015/06/30/LBE主动防御逆向分析/" rel="prev" title="LBE主动防御逆向">
-                LBE主动防御逆向 <i class="fa fa-chevron-right"></i>
+              <a href="/2018/05/13/Android模拟器检测体系梳理/" rel="prev" title="Android模拟器检测体系梳理">
+                Android模拟器检测体系梳理 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -684,7 +731,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#分析过程记录"><span class="nav-number">1.</span> <span class="nav-text">分析过程记录</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#模拟器概述"><span class="nav-number">1.</span> <span class="nav-text">模拟器概述</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#定义"><span class="nav-number">1.1.</span> <span class="nav-text">定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#特性"><span class="nav-number">1.2.</span> <span class="nav-text">特性</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#优势"><span class="nav-number">1.2.1.</span> <span class="nav-text">优势</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#问题"><span class="nav-number">1.2.2.</span> <span class="nav-text">问题</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#底层关键技术"><span class="nav-number">2.</span> <span class="nav-text">底层关键技术</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#虚拟化技术"><span class="nav-number">2.1.</span> <span class="nav-text">虚拟化技术</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#CPU虚拟化"><span class="nav-number">2.1.1.</span> <span class="nav-text">CPU虚拟化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ARM-Translation"><span class="nav-number">2.1.2.</span> <span class="nav-text">ARM Translation</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#黑产常用的模拟器"><span class="nav-number">3.</span> <span class="nav-text">黑产常用的模拟器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#模拟器检测技术框架"><span class="nav-number">4.</span> <span class="nav-text">模拟器检测技术框架</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#如何挖掘特征"><span class="nav-number">4.1.</span> <span class="nav-text">如何挖掘特征</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#对应的检测弱点"><span class="nav-number">4.2.</span> <span class="nav-text">对应的检测弱点</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#基于模拟器结构特征"><span class="nav-number">4.2.1.</span> <span class="nav-text">基于模拟器结构特征</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#利用任务调度检测模拟器"><span class="nav-number">4.2.2.</span> <span class="nav-text">利用任务调度检测模拟器</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#原理"><span class="nav-number">4.2.2.1.</span> <span class="nav-text">原理</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#优缺点"><span class="nav-number">4.2.2.2.</span> <span class="nav-text">优缺点</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#利用cache特性检测Android模拟器"><span class="nav-number">4.2.3.</span> <span class="nav-text">利用cache特性检测Android模拟器</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#原理-1"><span class="nav-number">4.2.3.1.</span> <span class="nav-text">原理</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#优缺点-1"><span class="nav-number">4.2.3.2.</span> <span class="nav-text">优缺点</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#基于Android体系架构"><span class="nav-number">4.2.4.</span> <span class="nav-text">基于Android体系架构</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#应用层行为数据"><span class="nav-number">4.2.4.1.</span> <span class="nav-text">应用层行为数据</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#无线射频"><span class="nav-number">4.2.4.2.</span> <span class="nav-text">无线射频</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#WIFI"><span class="nav-number">4.2.4.2.1.</span> <span class="nav-text">WIFI</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#GPS"><span class="nav-number">4.2.4.2.2.</span> <span class="nav-text">GPS</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#硬件信息"><span class="nav-number">4.2.4.3.</span> <span class="nav-text">硬件信息</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#底层硬件"><span class="nav-number">4.2.4.3.1.</span> <span class="nav-text">底层硬件</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#硬件抽象层"><span class="nav-number">4.2.4.3.2.</span> <span class="nav-text">硬件抽象层</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#文件系统"><span class="nav-number">4.2.4.4.</span> <span class="nav-text">文件系统</span></a></li></ol></li></ol></li></ol></li></ol></div>
             
 
           </div>
