@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Android模拟器检测体系梳理 | Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="模拟器作为一种虚拟机，配合改机工具，能够以较低成本实现设备多开，因此而备受黑灰产的青睐。如何准确识别模拟器成为App开发中的一个重要模块，目前也有专门的公司提供相应的SDK供开发者识别模拟器。通过前段时间对模拟器检测技术的调研，希望能总结出一套特征挖掘的体系化方案。 模拟器概述定义安卓模拟器是一种可以运行在电脑上的虚拟设备，通过它可以实现应用的跨平台操作，让移动端APP无需任何改动即可在PC上执行">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android模拟器检测体系梳理">
+<meta property="og:url" content="http://example.com/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="模拟器作为一种虚拟机，配合改机工具，能够以较低成本实现设备多开，因此而备受黑灰产的青睐。如何准确识别模拟器成为App开发中的一个重要模块，目前也有专门的公司提供相应的SDK供开发者识别模拟器。通过前段时间对模拟器检测技术的调研，希望能总结出一套特征挖掘的体系化方案。 模拟器概述定义安卓模拟器是一种可以运行在电脑上的虚拟设备，通过它可以实现应用的跨平台操作，让移动端APP无需任何改动即可在PC上执行">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/3.png">
+<meta property="og:image" content="http://example.com/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/1.png">
+<meta property="og:image" content="http://example.com/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/2.png">
+<meta property="og:image" content="http://example.com/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/5.png">
+<meta property="og:image" content="http://example.com/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/4.png">
+<meta property="og:image" content="http://example.com/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/6.png">
+<meta property="og:image" content="http://example.com/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/7.png">
+<meta property="og:image" content="http://example.com/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/8.png">
+<meta property="og:image" content="http://example.com/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/9.png">
+<meta property="og:image" content="http://example.com/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/10.png">
+<meta property="article:published_time" content="2018-05-10T14:12:01.000Z">
+<meta property="article:modified_time" content="2018-05-15T14:40:34.840Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="模拟器检测">
+<meta property="article:tag" content="知识梳理">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/3.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 6.2.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-Android模拟器检测体系梳理" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/" class="article-date">
+  <time class="dt-published" datetime="2018-05-10T14:12:01.000Z" itemprop="datePublished">2018-05-10</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/Android/">Android</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      Android模拟器检测体系梳理
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>模拟器作为一种虚拟机，配合改机工具，能够以较低成本实现设备多开，因此而备受黑灰产的青睐。如何准确识别模拟器成为App开发中的一个重要模块，目前也有专门的公司提供相应的SDK供开发者识别模拟器。通过前段时间对模拟器检测技术的调研，希望能总结出一套特征挖掘的体系化方案。</p>
+<h2 id="模拟器概述"><a href="#模拟器概述" class="headerlink" title="模拟器概述"></a>模拟器概述</h2><h3 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h3><p>安卓模拟器是一种可以运行在电脑上的虚拟设备，通过它可以实现应用的跨平台操作，让移动端APP无需任何改动即可在PC上执行。</p>
+<h3 id="特性"><a href="#特性" class="headerlink" title="特性"></a>特性</h3><h4 id="优势"><a href="#优势" class="headerlink" title="优势"></a>优势</h4><p>随着技术的不断发展，目前模拟器基本已经能够完成手机90%以上的功能。此外，由于在PC端工作，与传统手机相比，具有以下几点优势：</p>
+<ul>
+<li><strong>更炫</strong>：支持大屏幕、提供更炫酷的视觉效果，从而能够天然的将一些移动端由于适配成客户端应用；</li>
+<li><strong>易上手</strong>：支持鼠标、键盘、手柄、摄像头等众多硬件外设，将操作方式从手指运动中解放出来，发挥外设的优势；</li>
+<li><strong>更强的性能</strong>：通过模拟器可自定义配置性能参数，发挥PC硬件性能优势，跑分数据远超手机，使得高配游戏运行不再卡顿；</li>
+<li><strong>更好的操控性</strong>：通过虚拟按键功能，能够将任意点触操作、震动、摇摇等手机独有操作映射到键盘的自定义按键，更加简易、便捷；</li>
+<li><strong>使用PC工具</strong>：利用PC端其他辅助工具完成对移动端应用的支持，如通过按键精灵完成自动挂机等操作，解放双手；</li>
+<li><strong>模拟多人操作</strong>：通过模拟器多开功能，零成本体验同时多部手机、多个账户开小黑屋，实现刷单的快感；</li>
+<li><strong>更便捷的虚拟定位功能</strong>：通过模拟器虚拟定位，让你轻松落脚五湖四海；</li>
+<li><strong>再也不用担心电池电量、手机流量了…</strong></li>
+</ul>
+<h4 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h4><p>此外，Android模拟器鉴于自身技术瓶颈，也存在以下普遍问题：</p>
+<ul>
+<li><strong>性能</strong>：运行时普遍需要占据较大的CPU、内存等资源，导致低配机运行不流畅。此外，即便是高配机，多开也很容易出现卡顿等现象；</li>
+<li><strong>稳定性</strong>：模拟器技术本身的BUG导致的闪退、花屏、无响应等现象；</li>
+<li><strong>兼容性</strong><ul>
+<li><strong>硬件兼容性</strong>：主要表现为大部分模拟器对AMD架构PC的不支持；</li>
+<li><strong>应用兼容性</strong>：比如部分模拟器尚不兼容ARM架构的APP，又或者某些应用对安卓内核、虚拟机的调用方式比较底层，当模拟器对这些接口支持的不好时，表现为该类程序无法在模拟器上运行；</li>
+<li><strong>PC系统兼容性</strong>：表现为模拟器主要适配Windows主流平台，而能在Mac下运行的很少，且过低、过高版本支持的不好（如XP之前版本、Win 10，市面上某些定制的平板系统等）；</li>
+<li><strong>安卓系统兼容性</strong>：目前模拟器上的Android系统仍然停留在4.x，部分达到5.1，使得部分对安卓版本有要求的应用或游戏在模拟器上运行体验不好。</li>
+</ul>
+</li>
+</ul>
+<h2 id="底层关键技术"><a href="#底层关键技术" class="headerlink" title="底层关键技术"></a>底层关键技术</h2><h3 id="虚拟化技术"><a href="#虚拟化技术" class="headerlink" title="虚拟化技术"></a>虚拟化技术</h3><p>模拟器是用软件来模拟硬件操作，这就需要用到虚拟化技术。广义的虚拟化，是指将网络、CPU、内存及存储等各种实体资源，予以抽象、转换后呈现出来，进而打破实体结构间不可切割的障碍，使用户可以比原本的组态更好的方式来应用这些资源。我们所熟知的虚拟机就是虚拟化技术中的一种，通常来说它们只是模拟了一套与Host主机相同架构、相同指令集的硬件平台，不涉及内存和CPU的虚拟化。所有的Android模拟器都在不同程度上运用了虚拟化技术，比如雷电、夜神，包括Bluestack模拟器是基于Virtualbox虚拟机，谷歌原生模拟器和红手指云模拟器则是应用了Qemu的虚拟化技术。</p>
+<h4 id="CPU虚拟化"><a href="#CPU虚拟化" class="headerlink" title="CPU虚拟化"></a>CPU虚拟化</h4><p>目前，已知的所有ARM架构的模拟器都是基于Qemu虚拟机。Qemu采用的是纯软件模拟，在物理机的操作系统上创建一个模拟硬件的程序来仿真所有想要的硬件，然后在上面跑ARM运行时。在这种环境下，由于程序每次执行都需要将其翻译成宿主机（X86）的指令，导致性能非常低下，这也是原生模拟器不够流畅的原因之一。</p>
+<h4 id="ARM-Translation"><a href="#ARM-Translation" class="headerlink" title="ARM Translation"></a>ARM Translation</h4><p>当下主流的Android模拟器都是X86架构，基于Virtualbox虚拟机。由于不需要做CPU虚拟化，少了一层指令集转换过程，因此在运行支持X86架构的app时，就和普通的虚拟机没有区别，速度也就明显提高了很多。<br>此外，针对ARM架构的兼容性问题，普遍采用的是半虚拟化，根据二进制翻译技术将ARM指令动态翻译成X86指令。</p>
+<h2 id="黑产常用的模拟器"><a href="#黑产常用的模拟器" class="headerlink" title="黑产常用的模拟器"></a>黑产常用的模拟器</h2><p>目前市面上安卓模拟器软件种类繁多，有51、mumu、蓝叠、夜神、逍遥、海马玩、雷电等等。通过在黑产聚集论坛、QQ群等多个渠道进行调研，我们发现黑产当下常用的是夜神、雷电和逍遥模拟器。<br><img src="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/3.png"><img src="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/1.png"><img src="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/2.png">可以注意到，这些模拟器的共通点是都自带修改设备参数、多开、操作录制和虚拟定位等功能。<br><img src="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/5.png"><img src="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/4.png"><img src="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/6.png"><img src="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/7.png"></p>
+<h2 id="模拟器检测技术框架"><a href="#模拟器检测技术框架" class="headerlink" title="模拟器检测技术框架"></a>模拟器检测技术框架</h2><p>模拟器检测的本质就是要利用模拟器和真机之间的微小差异，从而判断当前设备是否为模拟器，具体检测技术框架整理如下：<br><img src="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/8.png"></p>
+<h3 id="如何挖掘特征"><a href="#如何挖掘特征" class="headerlink" title="如何挖掘特征"></a>如何挖掘特征</h3><p>结合前面梳理出的模拟器检测框架，后续在做相应的特征挖掘时，可直接根据该脑图做进一步的完善和加强。</p>
+<table><tr><td>特征项</td><td colspan="2">细分点</td><td>描述</td><td>备注</td></tr><tr><td rowspan="2">软件信息</td><td>应用层</td><td></td><td></td> <td></td></tr><tr><td>系统库</td><td></td><td></td><td></td></tr><tr><td rowspan="3">无线射频</td><td>WIFI</td><td></td><td></td><td></td></tr><tr><td>GPS</td><td></td><td></td><td></td></tr><tr><td>…</td><td></td><td></td><td></td></tr><tr><td rowspan="9">硬件信息</td><td rowspan="3">底层硬件</td><td>CPU</td><td></td><td></td></tr><tr><td>电池</td><td></td><td></td></tr><tr><td>设备参数</td><td></td><td></td></tr><tr><td rowspan="6">硬件抽象层</td><td>图形</td><td></td><td></td></tr><tr><td>相机</td><td></td><td></td></tr><tr><td>蓝牙</td><td></td><td></td></tr><tr><td>输入</td><td></td><td></td></tr><tr><td>存储</td><td></td><td></td></tr><tr><td>传感器</td><td></td><td></td></tr><tr><td rowspan="4">文件系统（重点关注Linux内核相关）</td><td>检查/sys硬件驱动信息</td><td></td><td></td><td></td></tr><tr><td>检查/dev设备节点特征</td><td></td><td></td><td></td></tr><tr><td>检查/proc运行时的内核信息映射</td><td></td><td></td><td></td></tr><tr><td>…</td><td></td><td></td><td></td></tr></table>
+
+<p>此外，基于文件系统差异的特征挖掘，具体可参考Android根目录文件结构进行操作，以下是几个重要的目录&#x2F;文件的说明：</p>
+<ul>
+<li>&#x2F;mnt：挂载点目录</li>
+<li>&#x2F;etc：指向 &#x2F;system&#x2F;etc ，系统配置文件所在目录</li>
+<li>&#x2F;data：存放用户安装的应用以及各种数据</li>
+<li>&#x2F;system：Android系统目录文件夹</li>
+<li>&#x2F;dev：设备节点文件存放地</li>
+<li>&#x2F;sys：用于挂载 sysfs文件系统，在设备模型中，sysfs文件系统用来表示设备的结构，将设备的层次结构形象的反应到用户空间中</li>
+<li>&#x2F;proc：这是一个虚拟的文件系统，不占用实际存储空间。它以文件系统的方式为访问系统内核的操作提供接口，动态从系统内核中读出所需信息</li>
+<li>init.rc：启动脚本</li>
+<li>default.prop：系统属性配置文件</li>
+</ul>
+<h3 id="对应的检测弱点"><a href="#对应的检测弱点" class="headerlink" title="对应的检测弱点"></a>对应的检测弱点</h3><h4 id="基于模拟器结构特征"><a href="#基于模拟器结构特征" class="headerlink" title="基于模拟器结构特征"></a>基于模拟器结构特征</h4><h4 id="利用任务调度检测模拟器"><a href="#利用任务调度检测模拟器" class="headerlink" title="利用任务调度检测模拟器"></a>利用任务调度检测模拟器</h4><h5 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h5><p>模拟器与真机的本质区别在于运行载体，市面上已知的ARM模拟器都是基于qemu虚拟机。由于qemu在执行程序时实际上是将其翻译成宿主机的指令，比如将安卓的arm指令翻译成PC的x86指令。为了效率上的考虑，qemu在翻译执行arm指令时并没有实时更新模拟的pc寄存器值，只会在一段代码翻译执行完之后再更新，而真机中pc寄存器是一直在更新的。根据这一点，可以设计一段CPU任务调度程序来检测模拟器。<br><img src="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/9.png"></p>
+<h5 id="优缺点"><a href="#优缺点" class="headerlink" title="优缺点"></a>优缺点</h5><p>优点：因为是基于qemu的二进制翻译技术来做特征检测，所以能够很好的识别这类Android模拟器。<br>缺点：</p>
+<ol>
+<li>需要自己设计反应离散程度的算法来统计任务调度的地址分布情况，想要实际应用到SDK有些困难</li>
+<li>会执行汇编代码，在不同的机器设备上需要考虑稳定性和兼容性等问题</li>
+</ol>
+<h4 id="利用cache特性检测Android模拟器"><a href="#利用cache特性检测Android模拟器" class="headerlink" title="利用cache特性检测Android模拟器"></a>利用cache特性检测Android模拟器</h4><h5 id="原理-1"><a href="#原理-1" class="headerlink" title="原理"></a>原理</h5><p>由于绝大部分手机都是基于ARM架构，而模拟器几乎全部是运行在PC的X86架构上。因此，可以利用ARM与X86的底层缓存行为差异来判断是否为真机。<br>具体来说，ARM采用的是将指令存储与数据存储分开的哈佛架构，L1 Cache（一级缓存）被分成了平行的两块，即I-Cache（指令缓存）和D-Cache（数据缓存），而X86采用的是将指令存储和数据存储合并在一起的冯•诺伊曼结构，L1 Cache是连续的一块缓存。所以，如果我们通过读写地址指令的方式对一段可执行代码进行动态修改，那么在执行的时候，X86架构上的指令缓存会被同步修改，而对ARM架构而言，这种数据读写操作修改的只是D-Cache中的内容，此时I-Cache中的指令并不会被更新。<br><img src="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/10.png"></p>
+<h5 id="优缺点-1"><a href="#优缺点-1" class="headerlink" title="优缺点"></a>优缺点</h5><p>优点：能够准确的识别arm和x86架构。<br>缺点：要执行汇编代码，在不同的机器设备上需要考虑稳定性和兼容性等问题。实测发现容易引起崩溃，需要配合多进程予以解决。</p>
+<h4 id="基于Android体系架构"><a href="#基于Android体系架构" class="headerlink" title="基于Android体系架构"></a>基于Android体系架构</h4><h5 id="应用层行为数据"><a href="#应用层行为数据" class="headerlink" title="应用层行为数据"></a>应用层行为数据</h5><p>这种检测方案本质上是对正常用户的行为模式进行统计分析，它也许不能有效的对真机和模拟器进行区分，但可以作为风险设备画像的一个参考维度。</p>
+<h5 id="无线射频"><a href="#无线射频" class="headerlink" title="无线射频"></a>无线射频</h5><h6 id="WIFI"><a href="#WIFI" class="headerlink" title="WIFI"></a>WIFI</h6><p>检查WIFI列表这种方式，目前没发现明显缺点。当正常手机接入WIFI的时候，周边往往有复数的WIFI信号，而模拟器由于不具备检索周边WIFI的能力，其WIFI列表通常为空或者只有一个WIFI。</p>
+<h6 id="GPS"><a href="#GPS" class="headerlink" title="GPS"></a>GPS</h6><p>这种检测手法的原理是基于模拟器没有真实的GPS模块，通常无法获取到地理位置信息。缺点是部分用户在实际使用中可能会关闭该权限，导致获取不到数据。</p>
+<h5 id="硬件信息"><a href="#硬件信息" class="headerlink" title="硬件信息"></a>硬件信息</h5><h6 id="底层硬件"><a href="#底层硬件" class="headerlink" title="底层硬件"></a>底层硬件</h6><ul>
+<li>CPU  <ol>
+<li>型号：正常x86手机的cpu型号为intel atom，arm则是联发科，高通，麒麟等。缺点是需要大盘做数据分析，另外可能要结合手机型号等其他维度才能做一个比较好的识别。  </li>
+<li>温度：目前来看应该是比较靠谱的，缺点是需要大量的数据统计做支撑，不排除有误杀的可能。</li>
+</ol>
+</li>
+<li>电池<br>  需要在后台多次采集数据，检验电压、电量是否有实时变化，实际应用起来有些困难。。</li>
+<li>设备<br>  通过系统API获取手机硬件参数，可以说是非常传统的模拟器检测方案了。也正是因为传统，基本上都知道会获取哪些信息，所以缺点是很容易遭到篡改。</li>
+</ul>
+<h6 id="硬件抽象层"><a href="#硬件抽象层" class="headerlink" title="硬件抽象层"></a>硬件抽象层</h6><ul>
+<li>相机<br>  通过提取摄像头参数信息，可以有效的识别当前设备是否为“主流手机”。缺点是考虑到平板、学习机等“冷门设备”的存在，不能直接区分出模拟器，需要结合其他维度一起使用，且需要接入的APP有打开摄像头的权限。</li>
+<li>蓝牙<br>  若想从API层面进行检测，那就必须先开启蓝牙，而这个需要弹框让用户确认。</li>
+<li>输入<br>  缺点是对触摸事件的处理是在前台完成的，如果是作为SDK可能不是很好接入和应用。</li>
+<li>存储  <ol>
+<li>闪存分区<br> Android系统的更新以及刷机等方式都有可能导致分区的变化，目前来看，在高版本的机器上检查mmcblk、dm-x分区并不是一个靠谱的特征，需要配合其它维度一起使用。</li>
+<li>&#x2F;mnt挂载<br> 这种文件名的检测手法只能针对性的做特定模拟器检测、不通用，且很容易通过版本更新、改名等手段进行绕过。</li>
+</ol>
+</li>
+<li>传感器<br>  除判断设备有支持哪些传感器外，若想要做更进一步的验证，就仍然绕不开多次采集数据的问题。</li>
+</ul>
+<h5 id="文件系统"><a href="#文件系统" class="headerlink" title="文件系统"></a>文件系统</h5><p>特点是用于做特征检出的目录文件与底层硬件的关联性越强，其效果越好，反之越可能失效。建议尽量提取和虚拟机、硬件驱动相关的文件特征，缺点是部分特征可能需要结合大量的机型数据做可靠性验证。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/" data-id="cl4bh2x0p000188w1gtdk021j" data-title="Android模拟器检测体系梳理" class="article-share-link">Share</a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/" rel="tag">模拟器检测</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E6%A2%B3%E7%90%86/" rel="tag">知识梳理</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          OLLVM通用反平坦化研究
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">起底薅羊毛灰色产业链</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Android/">Android</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Web/">Web</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%99%BA%E8%83%BD%E8%AE%BE%E5%A4%87/">智能设备</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%89%A9%E8%81%94%E7%BD%91/">物联网</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E/">虚拟现实</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%BB%91%E4%BA%A7%E7%A0%94%E7%A9%B6/">黑产研究</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/BLE/" rel="tag">BLE</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ELF/" rel="tag">ELF</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ROM/" rel="tag">ROM</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%9A%E5%8A%A1%E5%AE%89%E5%85%A8/" rel="tag">业务安全</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8F%8D%E6%B7%B7%E6%B7%86/" rel="tag">反混淆</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" rel="tag">学习总结</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%81%B6%E6%84%8F%E4%BB%A3%E7%A0%81/" rel="tag">恶意代码</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" rel="tag">文件格式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/" rel="tag">模拟器检测</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" rel="tag">源码分析</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9B%B4%E6%92%AD%E4%BA%BA%E6%B0%94/" rel="tag">直播人气</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E6%A2%B3%E7%90%86/" rel="tag">知识梳理</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%B0%83%E7%A0%94/" rel="tag">调研</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%80%86%E5%90%91/" rel="tag">逆向</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%87%8D%E6%94%BE%E6%94%BB%E5%87%BB/" rel="tag">重放攻击</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/BLE/" style="font-size: 13.33px;">BLE</a> <a href="/tags/ELF/" style="font-size: 20px;">ELF</a> <a href="/tags/ROM/" style="font-size: 10px;">ROM</a> <a href="/tags/%E4%B8%9A%E5%8A%A1%E5%AE%89%E5%85%A8/" style="font-size: 10px;">业务安全</a> <a href="/tags/%E5%8F%8D%E6%B7%B7%E6%B7%86/" style="font-size: 10px;">反混淆</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" style="font-size: 10px;">学习总结</a> <a href="/tags/%E6%81%B6%E6%84%8F%E4%BB%A3%E7%A0%81/" style="font-size: 10px;">恶意代码</a> <a href="/tags/%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" style="font-size: 10px;">文件格式</a> <a href="/tags/%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/" style="font-size: 13.33px;">模拟器检测</a> <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" style="font-size: 16.67px;">源码分析</a> <a href="/tags/%E7%9B%B4%E6%92%AD%E4%BA%BA%E6%B0%94/" style="font-size: 10px;">直播人气</a> <a href="/tags/%E7%9F%A5%E8%AF%86%E6%A2%B3%E7%90%86/" style="font-size: 13.33px;">知识梳理</a> <a href="/tags/%E8%B0%83%E7%A0%94/" style="font-size: 13.33px;">调研</a> <a href="/tags/%E9%80%86%E5%90%91/" style="font-size: 13.33px;">逆向</a> <a href="/tags/%E9%87%8D%E6%94%BE%E6%94%BB%E5%87%BB/" style="font-size: 10px;">重放攻击</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">August 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/05/">May 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/04/">April 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">March 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/07/">July 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">March 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">August 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">June 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">April 2015</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/">OLLVM通用反平坦化研究</a>
+          </li>
+        
+          <li>
+            <a href="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/">Android模拟器检测体系梳理</a>
+          </li>
+        
+          <li>
+            <a href="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/">起底薅羊毛灰色产业链</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/">基于Cache的Android模拟器检测</a>
+          </li>
+        
+          <li>
+            <a href="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/">六间房直播刷人气</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2022 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

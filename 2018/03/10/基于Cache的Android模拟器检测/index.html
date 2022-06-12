@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>基于Cache的Android模拟器检测 | Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="本文主要解决了ARM64位指令的兼容性问题，并通过进程间通信杜绝了崩溃现象，让这部分的检测代码更具有可操作性。。 ARM和X86目前，绝大部分手机都是基于ARM架构，其他CPU架构给忽略不计，模拟器全部运行在PC的X86架构上。因此，可以利用ARM与X86的区别来判断是否为真机。从上图我们可以看出，在CPU和内存之间，可以存在几级Cache，这里是L1和L2。Cache的作用是加速，把特定地址的数">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于Cache的Android模拟器检测">
+<meta property="og:url" content="http://example.com/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="本文主要解决了ARM64位指令的兼容性问题，并通过进程间通信杜绝了崩溃现象，让这部分的检测代码更具有可操作性。。 ARM和X86目前，绝大部分手机都是基于ARM架构，其他CPU架构给忽略不计，模拟器全部运行在PC的X86架构上。因此，可以利用ARM与X86的区别来判断是否为真机。从上图我们可以看出，在CPU和内存之间，可以存在几级Cache，这里是L1和L2。Cache的作用是加速，把特定地址的数">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/1.png">
+<meta property="og:image" content="http://example.com/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/2.png">
+<meta property="article:published_time" content="2018-03-10T04:53:28.000Z">
+<meta property="article:modified_time" content="2019-02-02T09:21:16.850Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="模拟器检测">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/1.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 6.2.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-基于Cache的Android模拟器检测" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/" class="article-date">
+  <time class="dt-published" datetime="2018-03-10T04:53:28.000Z" itemprop="datePublished">2018-03-10</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/Android/">Android</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      基于Cache的Android模拟器检测
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>本文主要解决了ARM64位指令的兼容性问题，并通过进程间通信杜绝了崩溃现象，让这部分的检测代码更具有可操作性。。</p>
+<h2 id="ARM和X86"><a href="#ARM和X86" class="headerlink" title="ARM和X86"></a>ARM和X86</h2><p>目前，绝大部分手机都是基于ARM架构，其他CPU架构给忽略不计，模拟器全部运行在PC的X86架构上。因此，可以利用ARM与X86的区别来判断是否为真机。<br><img src="/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/1.png" alt="ELF"><br>从上图我们可以看出，在CPU和内存之间，可以存在几级Cache，这里是L1和L2。Cache的作用是加速，把特定地址的数据值缓存起来，这样就不用到低速的内存中去取了。其中，ARM采用的是将指令存储与数据存储分开的哈佛架构，L1 Cache（一级缓存）被分成了平行的两块，即I-Cache（指令缓存）和D-Cache（数据缓存），而X86采用的是将指令存储和数据存储合并在一起的冯•诺伊曼结构，L1 Cache是连续的一块缓存。<br>因此，如果我们通过读写地址指令的方式对一段可执行代码进行动态修改，那么在执行的时候，X86架构上的指令缓存会被同步修改，而对ARM架构而言，这种数据读写操作修改的只是D-Cahce中的内容，此时I-Cache中的指令并不会被更新。</p>
+<h2 id="设计思路"><a href="#设计思路" class="headerlink" title="设计思路"></a>设计思路</h2><p>先看下思路的流程图：<br><img src="/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/2.png" alt="ELF"><br>左边的是真机上发生的情况，右边是模拟器发生的情况，下面详述一下操作过程。  </p>
+<blockquote>
+</blockquote>
+<ol>
+<li>先执行一个地址上的指令，假设就是address这个地址。那么对于真机，指令将会写到I-Cache，而模拟器则会直接写到一整块Cache上;  </li>
+<li>向address写入一个新指令。注意，这就有区别了，真机上的新指令会写入D-Cache，而在模拟器直接写到Cache;  </li>
+<li>执行address的指令。此时在真机上，会从I-Cache读指令，也就是会执行第一步的指令。模拟器直接从Cache上读指令，会执行第二步的新指令。</li>
+</ol>
+<p>实际操作中，我们发现存在真机上的指令Cache被洗掉的情况，但总的来说这种可能性还是比较低的，可以通过对市面上的大量机型做多次重复实验，并统计它的大盘分布..</p>
+<h2 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h2><h3 id="测试代码"><a href="#测试代码" class="headerlink" title="测试代码"></a>测试代码</h3><h4 id="ARM32"><a href="#ARM32" class="headerlink" title="ARM32"></a>ARM32</h4><p>以下实现代码是测试代码的核心，主要就是将第8行地址的指令add r4, r4, #1，在运行中动态替换为第5行的指令add r6, r6, #1，这里的目标是ARM-V7架构的，要注意它采用的是三级流水，PC寄存器的值等于当前程序执行位置加8，代码如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">#!cpp</span><br><span class="line">__asm __volatile (</span><br><span class="line">  STMFD  SP!,&#123;R4-R7,LR&#125;</span><br><span class="line">  MOV  R6, #<span class="number">0</span>                  <span class="comment">//为r6赋初值</span></span><br><span class="line">  MOV  R7, PC                  <span class="comment">//PC指向第7行指令所在位置</span></span><br><span class="line">  MOV  R4, #<span class="number">0</span>      </span><br><span class="line">  ADD  R6, R6, #<span class="number">1</span>              <span class="comment">//用来覆盖$address的“新指令”</span></span><br><span class="line">  LDR  R5, [R7]      </span><br><span class="line">  code:      </span><br><span class="line">  ADD  R4, R4, #<span class="number">1</span>              <span class="comment">//这就是$address，是对r4加1</span></span><br><span class="line">  MOV  R7, PC                  <span class="comment">//10~13行的作用就是把第10行的指令写到第7行</span></span><br><span class="line">  SUB  R7, R7, #<span class="number">0xC</span>      </span><br><span class="line">  STR  R5, [R7]</span><br><span class="line">  CMP  R4, #<span class="number">2</span>                  <span class="comment">//控制循环次数</span></span><br><span class="line">  BGE  out      </span><br><span class="line">  CMP  R6, #<span class="number">2</span>                  <span class="comment">//控制循环次数</span></span><br><span class="line">  BGE  out                     <span class="comment">//不满足循环次数，则调回去</span></span><br><span class="line">  B    code </span><br><span class="line">  out:</span><br><span class="line">  MOV  R0, R4                  <span class="comment">//把r4的值作为返回值</span></span><br><span class="line">  LDMFD SP!,&#123;R4-R7,PC&#125;</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<h4 id="ARM64"><a href="#ARM64" class="headerlink" title="ARM64"></a>ARM64</h4><p>考虑到在64位的真机上可能会存在兼容性问题，需要针对arm64-v8a架构重新设计一段代码，原理同上。另外，由于arm64指令集中没有PC寄存器，这里选择用ADR指令做为替代方案。。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">#!cpp</span><br><span class="line">__asm __volatile (</span><br><span class="line">  SUB SP, SP, #<span class="number">0x30</span>       <span class="comment">//开辟栈空间</span></span><br><span class="line">  STR X9, [SP, #<span class="number">8</span>]</span><br><span class="line">  STR X10, [SP, #<span class="number">0x10</span>]</span><br><span class="line">  STR X11, [SP, #<span class="number">0x18</span>]</span><br><span class="line">  STR X12, [SP, #<span class="number">0x20</span>]</span><br><span class="line">  MOV X10, #<span class="number">0</span></span><br><span class="line">  _start:</span><br><span class="line">  ADR X11, _start        <span class="comment">//ADR指令，自动取_start的地址（相对于PC的），并存放到x11寄存器中</span></span><br><span class="line">  ADD X11, X11, #<span class="number">12</span>      <span class="comment">//x11加12，指向第13行指令</span></span><br><span class="line">  MOV X12, #<span class="number">0</span>            <span class="comment">//为x12赋初值</span></span><br><span class="line">  ADD X10, X10, #<span class="number">1</span>       <span class="comment">//用来覆盖$address的&quot;新指令&quot;</span></span><br><span class="line">  LDR X9, [X11]</span><br><span class="line">  code:</span><br><span class="line">  ADD X12, X12, #<span class="number">1</span>       <span class="comment">//这就是$address，是对x12加1</span></span><br><span class="line">  ADR X11, code          <span class="comment">//adr伪指令，自动取code的地址（相对于PC的，即第16行指令)</span></span><br><span class="line">  STR X9, [X11]</span><br><span class="line">  CMP X12, #<span class="number">2</span>            <span class="comment">//控制循环次数</span></span><br><span class="line">  BGE out                <span class="comment">//跳出循环</span></span><br><span class="line">  CMP X10, #<span class="number">2</span>            <span class="comment">//控制循环次数</span></span><br><span class="line">  BGE out                <span class="comment">//跳出循环</span></span><br><span class="line">  B   code               <span class="comment">//指定次数内的循环调回去</span></span><br><span class="line">  out:</span><br><span class="line">  MOV W0, W12            <span class="comment">//取低32位值作为返回值</span></span><br><span class="line">  LDR X9, [SP, #<span class="number">8</span>]</span><br><span class="line">  LDR X10, [SP, #<span class="number">0x10</span>]</span><br><span class="line">  LDR X11, [SP, #<span class="number">0x18</span>]</span><br><span class="line">  LDR X12, [SP, #<span class="number">0x20</span>]</span><br><span class="line">  ADD SP, SP, #<span class="number">0x30</span>      <span class="comment">//出栈，恢复栈空间</span></span><br><span class="line">  RET</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<h3 id="申请权限"><a href="#申请权限" class="headerlink" title="申请权限"></a>申请权限</h3><p>这里会遇到个问题，就是我们是没有写代码段的权限的，所以需要将上面的汇编代码翻译成相应的机器码，再申请一块内存，将可执行代码段拷贝过去并执行。值得注意的是，如果用mmap映射会有bug，在真机上只能执行一次，第二次崩溃，可以通过如下方式解决：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> PAGE_START(addr) (~(getpagesize() - 1) &amp; (addr))</span></span><br><span class="line"><span class="type">void</span> *exec = <span class="built_in">malloc</span>(<span class="number">0x1000</span>);</span><br><span class="line"><span class="type">char</span> code[] = <span class="string">&quot;\xF0\x40\x2D\xE9\x00\x60\xA0\xE3\x0F\x70\xA0\xE1\x00\x40\xA0\xE3&quot;</span></span><br><span class="line">              <span class="string">&quot;\x01\x60\x86\xE2\x00\x50\x97\xE5\x01\x40\x84\xE2\x0F\x70\xA0\xE1&quot;</span></span><br><span class="line">              <span class="string">&quot;\x0C\x70\x47\xE2\x00\x50\x87\xE5\x02\x00\x54\xE3\x02\x00\x00\xAA&quot;</span></span><br><span class="line">              <span class="string">&quot;\x02\x00\x56\xE3\x00\x00\x00\xAA\xF6\xFF\xFF\xEA\x04\x00\xA0\xE1&quot;</span></span><br><span class="line">              <span class="string">&quot;\xF0\x80\xBD\xE8&quot;</span>;</span><br><span class="line"><span class="type">void</span> *page_start_addr = (<span class="type">void</span> *)<span class="built_in">PAGE_START</span>((<span class="type">uint32_t</span>)exec);</span><br><span class="line"><span class="built_in">memcpy</span>(exec, code, <span class="built_in">sizeof</span>(code)+<span class="number">1</span>);</span><br><span class="line"><span class="built_in">mprotect</span>(page_start_addr, <span class="built_in">getpagesize</span>(), PROT);</span><br><span class="line"><span class="built_in">LOGI</span>(<span class="string">&quot;magic_addr = %x&quot;</span>, exec);</span><br><span class="line">asmcheck = exec;</span><br><span class="line">status = <span class="built_in">asmcheck</span>();</span><br></pre></td></tr></table></figure>
+
+<h3 id="验证方式"><a href="#验证方式" class="headerlink" title="验证方式"></a>验证方式</h3><p>如果返回值等于2，说明执行的是旧指令，是arm架构；如果返回值等于1，说明执行的是新指令，是x86架构。最后，由于真机上存在I-Cache被洗掉的情况，也可能返回1，故需要通过多次循环执行对返回的结果进行统计，越靠近1~1000这个范围值的左侧，越可能是真机，反之应是模拟器。</p>
+<h2 id="备注"><a href="#备注" class="headerlink" title="备注"></a>备注</h2><p>最后，为了防止在真机上出现崩溃，最好还是单独开一个进程服务，通过进程间通信实现模拟器鉴别的查询。。</p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://bbs.pediy.com/thread-208471.htm">基于cache的模拟器检测</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.vuln.cn/6766">利用cache特性检测Android模拟器</a></li>
+</ol>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/" data-id="cl4bh2x10000p88w14m2oboff" data-title="基于Cache的Android模拟器检测" class="article-share-link">Share</a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/" rel="tag">模拟器检测</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          起底薅羊毛灰色产业链
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">六间房直播刷人气</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Android/">Android</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Web/">Web</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%99%BA%E8%83%BD%E8%AE%BE%E5%A4%87/">智能设备</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%89%A9%E8%81%94%E7%BD%91/">物联网</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E/">虚拟现实</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%BB%91%E4%BA%A7%E7%A0%94%E7%A9%B6/">黑产研究</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/BLE/" rel="tag">BLE</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ELF/" rel="tag">ELF</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ROM/" rel="tag">ROM</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%9A%E5%8A%A1%E5%AE%89%E5%85%A8/" rel="tag">业务安全</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8F%8D%E6%B7%B7%E6%B7%86/" rel="tag">反混淆</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" rel="tag">学习总结</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%81%B6%E6%84%8F%E4%BB%A3%E7%A0%81/" rel="tag">恶意代码</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" rel="tag">文件格式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/" rel="tag">模拟器检测</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" rel="tag">源码分析</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9B%B4%E6%92%AD%E4%BA%BA%E6%B0%94/" rel="tag">直播人气</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E6%A2%B3%E7%90%86/" rel="tag">知识梳理</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%B0%83%E7%A0%94/" rel="tag">调研</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%80%86%E5%90%91/" rel="tag">逆向</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%87%8D%E6%94%BE%E6%94%BB%E5%87%BB/" rel="tag">重放攻击</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/BLE/" style="font-size: 13.33px;">BLE</a> <a href="/tags/ELF/" style="font-size: 20px;">ELF</a> <a href="/tags/ROM/" style="font-size: 10px;">ROM</a> <a href="/tags/%E4%B8%9A%E5%8A%A1%E5%AE%89%E5%85%A8/" style="font-size: 10px;">业务安全</a> <a href="/tags/%E5%8F%8D%E6%B7%B7%E6%B7%86/" style="font-size: 10px;">反混淆</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" style="font-size: 10px;">学习总结</a> <a href="/tags/%E6%81%B6%E6%84%8F%E4%BB%A3%E7%A0%81/" style="font-size: 10px;">恶意代码</a> <a href="/tags/%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" style="font-size: 10px;">文件格式</a> <a href="/tags/%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/" style="font-size: 13.33px;">模拟器检测</a> <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" style="font-size: 16.67px;">源码分析</a> <a href="/tags/%E7%9B%B4%E6%92%AD%E4%BA%BA%E6%B0%94/" style="font-size: 10px;">直播人气</a> <a href="/tags/%E7%9F%A5%E8%AF%86%E6%A2%B3%E7%90%86/" style="font-size: 13.33px;">知识梳理</a> <a href="/tags/%E8%B0%83%E7%A0%94/" style="font-size: 13.33px;">调研</a> <a href="/tags/%E9%80%86%E5%90%91/" style="font-size: 13.33px;">逆向</a> <a href="/tags/%E9%87%8D%E6%94%BE%E6%94%BB%E5%87%BB/" style="font-size: 10px;">重放攻击</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">August 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/05/">May 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/04/">April 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">March 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/07/">July 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">March 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">August 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">June 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">April 2015</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/">OLLVM通用反平坦化研究</a>
+          </li>
+        
+          <li>
+            <a href="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/">Android模拟器检测体系梳理</a>
+          </li>
+        
+          <li>
+            <a href="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/">起底薅羊毛灰色产业链</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/">基于Cache的Android模拟器检测</a>
+          </li>
+        
+          <li>
+            <a href="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/">六间房直播刷人气</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2022 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

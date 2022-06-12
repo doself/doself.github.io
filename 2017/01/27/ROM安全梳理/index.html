@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>ROM安全梳理 | Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="定义智能手机配置中的ROM指的是EEProm（电擦除可写只读存储器），类似于计算机的硬盘，而一般手机刷机的过程，就是将只读内存镜像（ROM image）写入到只读内存（ROM）的过程。常见的ROM image有img、zip等格式，前者通常用fastboot程序通过数据线刷入（线刷），后者通常用recovery模式从SD卡刷入（卡刷），故img镜像也被称为线刷包，zip镜像被称为卡刷包。此外，因为">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ROM安全梳理">
+<meta property="og:url" content="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="定义智能手机配置中的ROM指的是EEProm（电擦除可写只读存储器），类似于计算机的硬盘，而一般手机刷机的过程，就是将只读内存镜像（ROM image）写入到只读内存（ROM）的过程。常见的ROM image有img、zip等格式，前者通常用fastboot程序通过数据线刷入（线刷），后者通常用recovery模式从SD卡刷入（卡刷），故img镜像也被称为线刷包，zip镜像被称为卡刷包。此外，因为">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/1.png">
+<meta property="og:image" content="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/2.png">
+<meta property="og:image" content="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/3.png">
+<meta property="og:image" content="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/4.png">
+<meta property="og:image" content="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/14.png">
+<meta property="og:image" content="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/5.png">
+<meta property="og:image" content="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/12.png">
+<meta property="og:image" content="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/13.png">
+<meta property="og:image" content="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/6.png">
+<meta property="og:image" content="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/7.png">
+<meta property="og:image" content="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/8.png">
+<meta property="og:image" content="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/9.png">
+<meta property="og:image" content="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/10.png">
+<meta property="og:image" content="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/11.png">
+<meta property="article:published_time" content="2017-01-27T05:43:15.000Z">
+<meta property="article:modified_time" content="2019-02-02T09:39:41.970Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="知识梳理">
+<meta property="article:tag" content="ROM">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/1.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 6.2.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-ROM安全梳理" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/" class="article-date">
+  <time class="dt-published" datetime="2017-01-27T05:43:15.000Z" itemprop="datePublished">2017-01-27</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/Android/">Android</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      ROM安全梳理
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>智能手机配置中的ROM指的是EEProm（电擦除可写只读存储器），类似于计算机的硬盘，而一般手机刷机的过程，就是将只读内存镜像（ROM image）写入到只读内存（ROM）的过程。常见的ROM image有img、zip等格式，前者通常用fastboot程序通过数据线刷入（线刷），后者通常用recovery模式从SD卡刷入（卡刷），故img镜像也被称为线刷包，zip镜像被称为卡刷包。<br>此外，因为ROM image是定制系统最常见的发布形式，所以ROM这个词有时也会被用来指代手机的操作系统。</p>
+<h2 id="分类"><a href="#分类" class="headerlink" title="分类"></a>分类</h2><p>因为Android系统的开放性，大多数情况下ROM都是指代Android系统的各种发行版，可将其分为两大类：</p>
+<ol>
+<li>一种是出自手机制造商官方的原版ROM，特点是稳定，功能上随厂商定制而各有不同；</li>
+<li>另一种是开发爱好者利用官方发布的源代码自主编译的原生ROM，特点是根据用户具体需求进行调整，使之更符合不同地区用户的使用习惯。</li>
+</ol>
+<h2 id="文件格式"><a href="#文件格式" class="headerlink" title="文件格式"></a>文件格式</h2><p>一个完整的ROM线刷包通常会包含以下镜像文件：<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/1.png" alt="ROM镜像文件"></p>
+<h3 id="boot-img-amp-amp-recovery-img"><a href="#boot-img-amp-amp-recovery-img" class="headerlink" title="boot.img&amp;&amp;recovery.img"></a>boot.img&amp;&amp;recovery.img</h3><p>boot和recovery镜像，它并不是普通意义上的文件系统，而是一种android自定义的文件格式。该格式包括了2K的文件头，后面紧跟着是用gzip压缩过的内核，再往后是一个ramdisk内存盘，然后紧跟着second stage loader（第二阶段的载入器程序）。此类文件头的具体结构可以从源代码system&#x2F;core&#x2F;mkbootimg&#x2F;bootimg.h中看到。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">boot_img_hdr</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">char</span> magic[BOOT_MAGIC_SIZE];</span><br><span class="line"></span><br><span class="line">    <span class="type">unsigned</span> kernel_size;  <span class="comment">/* size in bytes */</span></span><br><span class="line">    <span class="type">unsigned</span> kernel_addr;  <span class="comment">/* physical load addr */</span></span><br><span class="line"></span><br><span class="line">    <span class="type">unsigned</span> ramdisk_size; <span class="comment">/* size in bytes */</span></span><br><span class="line">    <span class="type">unsigned</span> ramdisk_addr; <span class="comment">/* physical load addr */</span></span><br><span class="line"></span><br><span class="line">    <span class="type">unsigned</span> second_size;  <span class="comment">/* size in bytes */</span></span><br><span class="line">    <span class="type">unsigned</span> second_addr;  <span class="comment">/* physical load addr */</span></span><br><span class="line"></span><br><span class="line">    <span class="type">unsigned</span> tags_addr;    <span class="comment">/* physical addr for kernel tags */</span></span><br><span class="line">    <span class="type">unsigned</span> page_size;    <span class="comment">/* flash page size we assume */</span></span><br><span class="line">    <span class="type">unsigned</span> unused[<span class="number">2</span>];    <span class="comment">/* future expansion: should be 0 */</span></span><br><span class="line"></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">char</span> name[BOOT_NAME_SIZE]; <span class="comment">/* asciiz product name */</span></span><br><span class="line"></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">char</span> cmdline[BOOT_ARGS_SIZE];</span><br><span class="line"></span><br><span class="line">    <span class="type">unsigned</span> id[<span class="number">8</span>]; <span class="comment">/* timestamp / checksum / sha1 / etc */</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">** +-----------------+</span></span><br><span class="line"><span class="comment">** | boot header     | 1 page</span></span><br><span class="line"><span class="comment">** +-----------------+</span></span><br><span class="line"><span class="comment">** | kernel          | n pages</span></span><br><span class="line"><span class="comment">** +-----------------+</span></span><br><span class="line"><span class="comment">** | ramdisk         | m pages</span></span><br><span class="line"><span class="comment">** +-----------------+</span></span><br><span class="line"><span class="comment">** | second stage    | o pages</span></span><br><span class="line"><span class="comment">** +-----------------+</span></span><br><span class="line"><span class="comment">**</span></span><br><span class="line"><span class="comment">** n = (kernel_size + page_size - 1) / page_size</span></span><br><span class="line"><span class="comment">** m = (ramdisk_size + page_size - 1) / page_size</span></span><br><span class="line"><span class="comment">** o = (second_size + page_size - 1) / page_size</span></span><br><span class="line"><span class="comment">**</span></span><br><span class="line"><span class="comment">** 0. all entities are page_size aligned in flash</span></span><br><span class="line"><span class="comment">** 1. kernel and ramdisk are required (size != 0)</span></span><br><span class="line"><span class="comment">** 2. second is optional (second_size == 0 -&gt; no second)</span></span><br><span class="line"><span class="comment">** 3. load each element (kernel, ramdisk, second) at</span></span><br><span class="line"><span class="comment">**    the specified physical address (kernel_addr, etc)</span></span><br><span class="line"><span class="comment">** 4. prepare tags at tag_addr.  kernel_args[] is</span></span><br><span class="line"><span class="comment">**    appended to the kernel commandline in the tags.</span></span><br><span class="line"><span class="comment">** 5. r0 = 0, r1 = MACHINE_TYPE, r2 = tags_addr</span></span><br><span class="line"><span class="comment">** 6. if second_size != 0: jump to second_addr</span></span><br><span class="line"><span class="comment">**    else: jump to kernel_addr</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+<p>boot中的ramdisk映像是一个最基础的小型文件系统，它包括了初始化系统所需要的全部核心文件，例如：初始化init进程以及init.rc（可以用于设置很多系统的参数）等文件，以下是一个典型的ramdisk中包含的文件列表：  </p>
+<blockquote>
+</blockquote>
+<p>.&#x2F;init.trout.rc<br>.&#x2F;default.prop<br>.&#x2F;proc<br>.&#x2F;dev<br>.&#x2F;init.rc<br>.&#x2F;init<br>.&#x2F;sys<br>.&#x2F;init.goldfish.rc<br>.&#x2F;sbin<br>.&#x2F;sbin&#x2F;adbd<br>.&#x2F;system<br>.&#x2F;data  </p>
+<p>recovery镜像包含了一些额外的文件，例如一个叫做recovery的二进制程序以及一些对该程序支持性的资源图片文件（当按下home+power组合键的时候就会运行该程序），典型的文件列表如下：</p>
+<blockquote>
+</blockquote>
+<p>.&#x2F;res&#x2F;images<br>.&#x2F;res&#x2F;images&#x2F;progress_bar_empty_left_round.bmp<br>.&#x2F;res&#x2F;images&#x2F;icon_firmware_install.bmp<br>.&#x2F;res&#x2F;images&#x2F;indeterminate3.bmp<br>.&#x2F;res&#x2F;images&#x2F;progress_bar_fill.bmp<br>.&#x2F;res&#x2F;images&#x2F;progress_bar_left_round.bmp<br>.&#x2F;res&#x2F;images&#x2F;icon_error.bmp<br>.&#x2F;res&#x2F;images&#x2F;indeterminate1.bmp<br>.&#x2F;res&#x2F;images&#x2F;progress_bar_empty_right_round.bmp<br>.&#x2F;res&#x2F;images&#x2F;icon_firmware_error.bmp<br>.&#x2F;res&#x2F;images&#x2F;progress_bar_right_round.bmp<br>.&#x2F;res&#x2F;images&#x2F;indeterminate4.bmp<br>.&#x2F;res&#x2F;images&#x2F;indeterminate5.bmp<br>.&#x2F;res&#x2F;images&#x2F;indeterminate6.bmp<br>.&#x2F;res&#x2F;images&#x2F;progress_bar_empty.bmp<br>.&#x2F;res&#x2F;images&#x2F;indeterminate2.bmp<br>.&#x2F;res&#x2F;images&#x2F;icon_unpacking.bmp<br>.&#x2F;res&#x2F;images&#x2F;icon_installing.bmp<br>.&#x2F;sbin&#x2F;recovery  </p>
+<h3 id="system-img"><a href="#system-img" class="headerlink" title="system.img"></a>system.img</h3><p>system.img是Android系统中存放系统文件的映像文件，文件格式为ext或yaff2，它将被init进程通过解析 init.rc 文件挂载 (mount) 到&#x2F;system分区下，内容如下：  </p>
+<blockquote>
+</blockquote>
+<ul>
+<li>build.prop：存储系统属性  </li>
+<li>system&#x2F;app：系统自带的一些应用程序  </li>
+<li>system&#x2F;app：系统自带的一些应用程序  </li>
+<li>system&#x2F;etc：保存系统配置文件，如APN接入点设置等核心配置  </li>
+<li>system&#x2F;fonts：字体文件夹  </li>
+<li>system&#x2F;framework：主要是一些核心的文件，从后缀名为jar可以看出是系统平台框架  </li>
+<li>system&#x2F;lib：目录中存放的主要是系统底层库，如平台运行时库  </li>
+<li>system&#x2F;media：铃声音乐文件夹，除了常规的铃声外还有一些系统提示事件音  </li>
+<li>system&#x2F;usr：用户文件夹，包含共享、键盘布局、时间区域文件等。</li>
+</ul>
+<h3 id="ramdisk-img"><a href="#ramdisk-img" class="headerlink" title="ramdisk.img"></a>ramdisk.img</h3><p>ramdisk.img是一个分区映像文件，它会在kernel启动的时候，以只读的方式将root file system（根文件系统）mount （挂载）起来。PS：其实ramdisk.img的内容就是&#x2F;out&#x2F;target&#x2F;product&#x2F;generic&#x2F;root目录的压缩而已。。</p>
+<blockquote>
+</blockquote>
+<p>&#x2F;system<br>&#x2F;sys<br>&#x2F;sbin<br>&#x2F;proc<br>init.rc<br>init.goldfish.rc<br>init<br>default.prop<br>&#x2F;dev<br>&#x2F;data  </p>
+<h3 id="userdata-img"><a href="#userdata-img" class="headerlink" title="userdata.img"></a>userdata.img</h3><p>userdata.img会被挂载到&#x2F;data分区下，包含了所有应用相关的配置文件，以及用户相关的数据。  </p>
+<blockquote>
+</blockquote>
+<p>&#x2F;misc<br>&#x2F;data<br>&#x2F;app-private<br>&#x2F;app<br>&#x2F;property<br>&#x2F;dalvik-cache<br>&#x2F;lost+found  </p>
+<h3 id="cache-img"><a href="#cache-img" class="headerlink" title="cache.img"></a>cache.img</h3><p>cache.img映像文件的内容如下：  </p>
+<blockquote>
+</blockquote>
+<ul>
+<li>&#x2F;recovery：recovery操作的日志文件</li>
+<li>&#x2F;backup：备份文件</li>
+<li>&#x2F;lost+found</li>
+</ul>
+<h2 id="运行时的挂载顺序"><a href="#运行时的挂载顺序" class="headerlink" title="运行时的挂载顺序"></a>运行时的挂载顺序</h2><p>当PC启动的时候，首先执行的是在BIOS上的代码，然后再由BIOS负责将Kernel加载起来执行。在嵌入式世界里，BootLoader的作用就相当于PC的BIOS。手机开机会先进入Bootloader，然后判断是正常启动还是进入recovery，若正常启动则对boot.img解压并将执行权限交给zImage，zImage挂载ramdisk.img执行其中的init进程，init进程进一步挂载system.img、cache.img、userdata.img文件系统镜像。<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/2.png" alt="挂载顺序"></p>
+<h2 id="Android攻击面"><a href="#Android攻击面" class="headerlink" title="Android攻击面"></a>Android攻击面</h2><p>在学习ROM安全之前，先让我们试着对整个Android设备的攻击面做下了解（参考《Android安全攻防权威指南》）：<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/3.png" alt="Android攻击面梳理"></p>
+<h3 id="远程攻击面"><a href="#远程攻击面" class="headerlink" title="远程攻击面"></a>远程攻击面</h3><p>最巨大的、最危险的、最有吸引力的攻击界面，攻击者无需本地物理接触受害者。</p>
+<h4 id="网络协议栈"><a href="#网络协议栈" class="headerlink" title="网络协议栈"></a>网络协议栈</h4><p>安全漏洞研究中的”圣杯”是这样的一种远程攻击，它不需要与目标交互就可以实施，就能获取系统的完全访问权限。在这种攻击场景中，攻击者通常只需能在因特网上与目标主机进行通信即可。这类攻击可以简单到发送单个数据包，也可能需要一长串复杂的协议谈判过程。由于防火墙和NAT技术的广泛使用，这一攻击面变得更难可达，因此在这些底层代码中的安全漏洞往往只暴露给网络邻居攻击者。<br>在Android系统上，符合这一描述的主要攻击面是Linux内核中的网络协议栈：  </p>
+<ul>
+<li>Linux底层的网络协议栈由C&#x2F;C++编写，其存在的“缓冲区溢出”等代码问题可能导致远程执行任意代码</li>
+<li>协议处理过程中的某些字段没有作判断而导致拒绝服务</li>
+<li>…</li>
+</ul>
+<p>检查方法：代码review，并搜索不安全函数</p>
+<h4 id="暴露的网络服务"><a href="#暴露的网络服务" class="headerlink" title="暴露的网络服务"></a>暴露的网络服务</h4><p>无需目标用户交互的联网服务是第二位有吸引力的攻击面，这些服务通常在用户空间中执行，消除了获得内核空间代码执行的可能性。但是仍然有一些潜在的网络服务，如果被成功利用攻击面中的安全漏洞，就可以获取到root权限，不过这类网络服务在Android系统上极少的，多是由应用程序暴露，如开启WIFI热点功能后，会监听TCP 53端口。<br>检查方法：通过nmap扫描或者本地执行netstat -na|grep LISTEN可以获得暴露的服务，再进行分析。</p>
+<h4 id="移动技术"><a href="#移动技术" class="headerlink" title="移动技术"></a>移动技术</h4><p>这里指SMS、MMS、电话等蜂窝网络服务暴露的攻击面。<br>SMS、MMS服务使用WAP协议，其中的WAP PUSH消息可被用来发送Service Loading request (SL消息)，SL消息可以去调用USSD(Unstructured Supplementary Service Data)功能来执行充值、语音邮箱查询等操作。<br>已知攻击：发送tel:&#x2F;&#x2F;开头的SL指令可触发手机打电话。</p>
+<h4 id="客户端攻击面"><a href="#客户端攻击面" class="headerlink" title="客户端攻击面"></a>客户端攻击面</h4><p>手机上安装的客户端软件引入的的攻击界面：  </p>
+<ul>
+<li>浏览器攻击面：主要有URL钓鱼、MitM、XSS、CSRF这些方面的威胁</li>
+<li>Web引擎的移动应用：使用webview技术而引入的攻击面</li>
+<li>广告</li>
+<li>媒体推送：处理图片、文档的开源库，如libjpeg，包括png攻击和stagefright攻击</li>
+<li>电子邮件：电邮应用引入的漏洞</li>
+</ul>
+<h4 id="谷歌的基础设施"><a href="#谷歌的基础设施" class="headerlink" title="谷歌的基础设施"></a>谷歌的基础设施</h4><p>Google体系中的后端云服务引入的攻击面：  </p>
+<ul>
+<li>Google Play：Google应用市场中可能存在恶意APP</li>
+<li>第三方应用市场：非官方应用市场中可能存在伪装为热门APP的恶意程序，以及在热门APP中注入的后门软件</li>
+<li>Google Phones Home：GTalkService是google云服务中的重要组件，允许google在用户不知情的情况下在用户设备上安装或卸载应用</li>
+</ul>
+<h3 id="物理邻接攻击"><a href="#物理邻接攻击" class="headerlink" title="物理邻接攻击"></a>物理邻接攻击</h3><p>攻击者与被攻击对象在一定范围内，如GPS、WIFI</p>
+<h4 id="无线通信"><a href="#无线通信" class="headerlink" title="无线通信"></a>无线通信</h4><ul>
+<li>GPS：用户位置信息被APP滥用，泄露用户隐私；发送虚假GPS信号导致GPS设备定位错误</li>
+<li>Baseband：伪基站、针对RIL层的攻击</li>
+<li>Bluetooth</li>
+<li>Wi-Fi</li>
+<li>NFC</li>
+<li>…</li>
+</ul>
+<h4 id="其他技术"><a href="#其他技术" class="headerlink" title="其他技术"></a>其他技术</h4><p>除了无线通信技术之外，还有两个技术也与Android的整体攻击面相关。具体而言，QR码（快速响应矩阵码）和语言指令在理论上可以导致设备被攻破。</p>
+<h3 id="本地攻击面"><a href="#本地攻击面" class="headerlink" title="本地攻击面"></a>本地攻击面</h3><p>攻击者可以达到实现任意代码执行和提权的目的，这种攻击界面在测试新root方法时最为明显。</p>
+<h4 id="探索文件系统"><a href="#探索文件系统" class="headerlink" title="探索文件系统"></a>探索文件系统</h4><p>Android的Unix血统意味着许多攻击面都是通过文件系统条目暴露的，这些条目包括内核空间和用户空间的端点。在内核空间，设备驱动节点与特殊的虚拟文件系统提供与内核空间驱动代码进行直接交互的访问点。许多用户空间的组件，如特权服务，通过PF_UNIX族的套接字暴露进程间通信功能。甚至，一些普通文件与目录条目如果没有进行充分的权限限制，也会为几种攻击类型提供攻击路径。这部分的攻击面包括：文件系统访问权限设置、SUID&#x2F;SGUID设置、Owner设置等。</p>
+<h4 id="应用生命周期"><a href="#应用生命周期" class="headerlink" title="应用生命周期"></a>应用生命周期</h4><p>程序应用生命周期中引入的攻击面。</p>
+<h5 id="install"><a href="#install" class="headerlink" title="install"></a>install</h5><p>安装流程中引入的攻击面，如超长应用名攻击、畸形AndroidManifest.xml标签、APK占位攻击、签名漏洞等。</p>
+<h5 id="Application-run"><a href="#Application-run" class="headerlink" title="Application run"></a>Application run</h5><p>应用运行流程中引入的攻击面。</p>
+<h5 id="backup"><a href="#backup" class="headerlink" title="backup"></a>backup</h5><p>应用备份恢复时引入的攻击面，如ALLOW-BACKUP漏洞。</p>
+<h4 id="找到其他的本地攻击面"><a href="#找到其他的本地攻击面" class="headerlink" title="找到其他的本地攻击面"></a>找到其他的本地攻击面</h4><p>其他的本地攻击面是由Linux内核暴露的，包括系统调用和套接字实现等。Android系统中的许多服务和应用通过不同类型的IPC（包括套接字与共享内存）暴露着本地攻击面。。</p>
+<ul>
+<li>System Calls：Linux内核在执行系统调用时可能还会处理一些潜在的恶意数据，因此内核中的系统调用函数是一个值得关注的攻击面。要想找到这些函数，可以简单的在源代码中检索“SYSCALL_DEFINE”字符串</li>
+<li>Sockets：sockets恶意调用</li>
+<li>Binder</li>
+<li>Shared Memory</li>
+<li>Baseband Interface</li>
+<li>Attacking Hardware Support Services</li>
+<li>JAVA Native Interface：JNI恶意调用、JNI-DOS</li>
+<li>AIDL service Calls</li>
+<li>TrustZone Proxy：TurstZone Proxy是链接非安全世界和安全世界的代理</li>
+</ul>
+<h3 id="物理攻击面"><a href="#物理攻击面" class="headerlink" title="物理攻击面"></a>物理攻击面</h3><p>攻击需要物理接触设备，虽然大部分物理攻击可防御，但仍很严重因为有些攻击会在瞬间完成。</p>
+<h4 id="拆解设备"><a href="#拆解设备" class="headerlink" title="拆解设备"></a>拆解设备</h4><p>打开一个硬件设备通常能发现：  </p>
+<ul>
+<li>暴露的串口，允许接收调试信息，或者在某些情况下，提供设备的shell访问</li>
+<li>暴露的JTAG调试端口，允许对设备的固件进行调试、重刷或访问</li>
+</ul>
+<p>极少数情况下，攻击者无法找到这些通用接口，但是其他攻击仍然是可能的。一个非常实用和真实的攻击是物理性地移除闪存或核心CPU（通常包含着内部内存）。一旦被移除，攻击者可以轻易地从设备中读取引导装载程序、启动配置和完整的闪存文件系统。攻击者完全占有设备后，能够实施许多攻击，这些只是其中的一部分。</p>
+<h4 id="USB"><a href="#USB" class="headerlink" title="USB"></a>USB</h4><h5 id="枚举USB攻击面"><a href="#枚举USB攻击面" class="headerlink" title="枚举USB攻击面"></a>枚举USB攻击面</h5><p>USB暴露的攻击面取决于设备支持哪些USB模式（ADB、存储、MTP等）。</p>
+<h5 id="ADB"><a href="#ADB" class="headerlink" title="ADB"></a>ADB</h5><p>通常使用adb shell，4.2.2之前 ADB shell不需要认证，之后需要。<br>攻击场景：Juice Jacking 假充电站攻击  </p>
+<h4 id="其他物理攻击面"><a href="#其他物理攻击面" class="headerlink" title="其他物理攻击面"></a>其他物理攻击面</h4><p>尽管USB是Android设备上最普遍存在的物理攻击面，但它并不是唯一的一个，其他物理攻击面包括手机SIM卡、SD卡、HDMI、暴露的测试点和对接连接器等。。</p>
+<h3 id="第三方修改"><a href="#第三方修改" class="headerlink" title="第三方修改"></a>第三方修改</h3><p>所有的第三方修改都可能会扩大设备的攻击面，而这种情况确实经常发生，主要包括：  </p>
+<ul>
+<li>OEM厂家定制的预装应用</li>
+<li>遗留的开发调测工具</li>
+<li>对Framework层的修改引入的新功能、API、JNI</li>
+<li>驱动层新增的驱动节点</li>
+</ul>
+<h2 id="Rom安全"><a href="#Rom安全" class="headerlink" title="Rom安全"></a>Rom安全</h2><h3 id="Rom攻击面"><a href="#Rom攻击面" class="headerlink" title="Rom攻击面"></a>Rom攻击面</h3><p>由于这里所说的ROM主要是指代手机系统，根据前面对Android设备的攻击面整理，从系统层面对ROM安全进行分析，梳理如下：<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/4.png" alt="ROM安全攻击面梳理"></p>
+<h3 id="安全现状"><a href="#安全现状" class="headerlink" title="安全现状"></a>安全现状</h3><p>下面我们将结合这两年的安全事件，从案例的角度对ROM安全的当前现状作简单介绍。。<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/14.png"></p>
+<h4 id="解锁BootLoader"><a href="#解锁BootLoader" class="headerlink" title="解锁BootLoader"></a>解锁BootLoader</h4><p>一般而言，通过在引导加载程序层次上实现一些限制，对引导加载程序进行锁定，可以防止终端用户修改设备固件，而这些限制取决于制造商的具体决策，可能会有所不同。解锁BootLoader能带来严重的安全隐患，如果这个设备丢失或者被盗，设备上的所有数据可以被攻击者轻易的恢复窃取。<br>PS：事实上在解锁BootLoader时，会执行一次恢复出厂设置，用以确保终端用户数据安全。尽管如此，对于一些设备，仍然有可能通过取证手段恢复被删数据，所以解锁BootLoader本身仍然带来了安全风险。。</p>
+<h5 id="老罗羞愧！盘古团队成功破解锤子手机Bootloader"><a href="#老罗羞愧！盘古团队成功破解锤子手机Bootloader" class="headerlink" title="老罗羞愧！盘古团队成功破解锤子手机Bootloader"></a>老罗羞愧！盘古团队成功破解锤子手机Bootloader</h5><p>2017年2月近日，国内著名的技术团队盘古团队发布长文称：可以利用bootloader里的两个漏洞对锤子T1&#x2F;2的bootloader进行解锁。<br>盘古团队在文章中称，和很多高通芯片的手机一样，T2的bootloader是基于高通开源的lk。所以参考源码可以很快梳理出bootloader的执行流程，并且进行后续的分析和多步的调试后完成了对bootloader的解锁。<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/5.png" alt="破解Blootloader">最后，盘古团队也对此次破解进行了说明：对于T1和T2，锤子OS v2.6.7是最后一个可以解锁的ROM版本号，v2.6.8后由于大部分指令的被阉，盘古团队提供的方法就无法解锁锤子手机的bootloader。从这里也可以看出锤子在2016年8月推出的v2.6.8的时候应该是发现了此问题并对此进行了修复。</p>
+<h4 id="Root提权"><a href="#Root提权" class="headerlink" title="Root提权"></a>Root提权</h4><h5 id="Linux-全版本提权漏洞-Dirty-COW"><a href="#Linux-全版本提权漏洞-Dirty-COW" class="headerlink" title="Linux 全版本提权漏洞 Dirty COW"></a>Linux 全版本提权漏洞 Dirty COW</h5><h6 id="漏洞概要"><a href="#漏洞概要" class="headerlink" title="漏洞概要"></a>漏洞概要</h6><ul>
+<li>漏洞编号：CVE-2016-5195</li>
+<li>漏洞类型：内核竞态条件漏洞</li>
+<li>漏洞危害：本地提权</li>
+<li>影响范围：Linux kernel&gt;2.6.22 (released in 2007)</li>
+</ul>
+<p>这个漏洞是在2016年10月18号被Phil Oester提交，被Linux的创始人Linus亲自修复。同年10月20号，漏洞的发现者Phil Oester将漏洞的部分细节提交到github上。当天朋友圈就被这个漏洞刷屏了，毕竟是几乎是通杀全版本linux的本地提权的神洞，这种漏洞还是很少见的。</p>
+<h4 id="预装应用"><a href="#预装应用" class="headerlink" title="预装应用"></a>预装应用</h4><h5 id="安卓曝ROM木马万蓝-超10万部手机受影响"><a href="#安卓曝ROM木马万蓝-超10万部手机受影响" class="headerlink" title="安卓曝ROM木马万蓝 超10万部手机受影响"></a>安卓曝ROM木马万蓝 超10万部手机受影响</h5><p>2015年5月中旬，360手机安全中心收到用户反馈称自己的手机经常自动安装新的游戏应用，经分析排查发现，该用户中招的是一个名为“万蓝”的ROM级别手机木马，该木马主要通过联网下载shell脚本文件进行静默安装推广应用，并可以实现自身升级。<br>传播方式主要是通过植入ROM，利用刷机网站进行传播。到目前为止，恶意样本主要是植入为夏新、联想、小采等手机开发的三方ROM进行传播，受影响用户达10万以上。已知的ROM下载渠道有：<br>ROM基地 <a target="_blank" rel="noopener" href="http://www.romjd.com/Rom/Detail/16229">http://www.romjd.com/Rom/Detail/16229</a><br>ROM之家 <a target="_blank" rel="noopener" href="http://www.romzj.com/rom/10300.htm">http://www.romzj.com/rom/10300.htm</a><br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/12.png"><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/13.png">用户手机刷入被感染的ROM后，木马便疯狂地开始推广传播各种应用。<br>从后台挖掘出的脚本发现被推广的应用至少有近百个，以下是部分推广软件的包名（包名是Android软件一个标识），可以看到包括UC浏览器、百度浏览器、QQ浏览器、豌豆荚、100tv播放器、百度团购、折800、腾讯新闻等知名应用也在推广的名单内。</p>
+<h5 id="来自中国的秘密：预装木马的安卓平板正在销往全世界"><a href="#来自中国的秘密：预装木马的安卓平板正在销往全世界" class="headerlink" title="来自中国的秘密：预装木马的安卓平板正在销往全世界"></a>来自中国的秘密：预装木马的安卓平板正在销往全世界</h5><p>2015年双十一来临之际，猎豹移动安全实验室发现了一个危险系数较高的木马，该木马被称为Cloudsota。研究发现该木马是被预装在一些Android平板上的，而从当时的情况来看，遭受该木马感染的平板依然放置在亚马逊的购物架上，并且处于销售状态。</p>
+<h6 id="发现之路：起于受害用户的抱怨"><a href="#发现之路：起于受害用户的抱怨" class="headerlink" title="发现之路：起于受害用户的抱怨"></a>发现之路：起于受害用户的抱怨</h6><p>通过对收集的信息进行分析，该木马其实已经存在有一段时间了，而其间也有不少受害用户一直在 XDA、TechKnow等网上交流论坛上寻求帮助。<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/6.png">而在亚马逊上也发现了一些购买了平板的用户的抱怨。<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/7.png"></p>
+<h6 id="恶意行径：Cloudsota木马伸出了恶魔之手"><a href="#恶意行径：Cloudsota木马伸出了恶魔之手" class="headerlink" title="恶意行径：Cloudsota木马伸出了恶魔之手"></a>恶意行径：Cloudsota木马伸出了恶魔之手</h6><p>经过分析发现，Cloudsota木马能够远程控制受感染的设备，可在在未经用户允许的情况下，进行带有目的性的恶意操作。以下为该木马的主要行为轨迹：<br>首先，它可以直接将恶意广告软件或者其他的恶意软件安装到设备上。同时在初始阶段，该木马会先将杀毒应用卸载掉，从而方便进行其他的恶意操作。我们也发现，在root权限下，它不但能够自动打开所有安装在设备上的应用，而且经过检测，该木马会将开机动画和壁纸都替换成广告。和众多恶意广告软件一样，Cloudsota还会将浏览器的默认主页篡改，并重定向到一个广告页面上，绑定用户进行浏览。</p>
+<h6 id="影响：超过153个国家地区的用户受到影响"><a href="#影响：超过153个国家地区的用户受到影响" class="headerlink" title="影响：超过153个国家地区的用户受到影响"></a>影响：超过153个国家地区的用户受到影响</h6><p>根据初步的估算，至少有17,233台受感染的平板被线下的用户购买，并已经通过物流交付到用户手中。此外，由于目前许多平板是不受杀毒应用的保护，实际上感染设备的数量可能比我们预计要多得多。<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/8.png">其中最令人担心的是，这些平板电脑在许多电商平台都有出售，不乏零售巨头，如亚马逊。从当前的情况来看，显然大多数人都不知道cloudsota的潜在风险和破坏性，而在这里，必须提醒广大用户，可以说，这是一个定时炸弹，随时都有可能威胁个人隐私和财产安全。根据跟踪研究发现，目前有超过30个品牌的平板被预装了该木马，相对于大型品牌的平板电脑，影响最大的是一些小众品牌的平板。据统计，超过4000台受影响的小众品牌平板已经被出售到全球各地。<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/9.png">在遭受该木马感染的超过153个国家和地区中，美国、墨西哥和土耳其的情况是最为严重的。<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/10.png">我们可以在网上看到许多用户纷纷在亚马逊上评论，抱怨设备经常出现广告和弹窗。根据对收集到的信息进行统计，发现这些预装该木马的平板都有一定的相同之处，就是所有的这些平板，它们的价格都是比较廉价的，并且可以追溯到它们的制造商其实出自于一些不知名的小型车间。下面是一个不完整统计的在亚马逊上疑似预装木马的品牌列表：<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/11.png"></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/" data-id="cl4bh2x0w000c88w1hu23bn7l" data-title="ROM安全梳理" class="article-share-link">Share</a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ROM/" rel="tag">ROM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E6%A2%B3%E7%90%86/" rel="tag">知识梳理</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          六间房直播刷人气
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">低功耗蓝牙（BLE）安全初探</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Android/">Android</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Web/">Web</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%99%BA%E8%83%BD%E8%AE%BE%E5%A4%87/">智能设备</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%89%A9%E8%81%94%E7%BD%91/">物联网</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E/">虚拟现实</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%BB%91%E4%BA%A7%E7%A0%94%E7%A9%B6/">黑产研究</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/BLE/" rel="tag">BLE</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ELF/" rel="tag">ELF</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ROM/" rel="tag">ROM</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%9A%E5%8A%A1%E5%AE%89%E5%85%A8/" rel="tag">业务安全</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8F%8D%E6%B7%B7%E6%B7%86/" rel="tag">反混淆</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" rel="tag">学习总结</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%81%B6%E6%84%8F%E4%BB%A3%E7%A0%81/" rel="tag">恶意代码</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" rel="tag">文件格式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/" rel="tag">模拟器检测</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" rel="tag">源码分析</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9B%B4%E6%92%AD%E4%BA%BA%E6%B0%94/" rel="tag">直播人气</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E6%A2%B3%E7%90%86/" rel="tag">知识梳理</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%B0%83%E7%A0%94/" rel="tag">调研</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%80%86%E5%90%91/" rel="tag">逆向</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%87%8D%E6%94%BE%E6%94%BB%E5%87%BB/" rel="tag">重放攻击</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/BLE/" style="font-size: 13.33px;">BLE</a> <a href="/tags/ELF/" style="font-size: 20px;">ELF</a> <a href="/tags/ROM/" style="font-size: 10px;">ROM</a> <a href="/tags/%E4%B8%9A%E5%8A%A1%E5%AE%89%E5%85%A8/" style="font-size: 10px;">业务安全</a> <a href="/tags/%E5%8F%8D%E6%B7%B7%E6%B7%86/" style="font-size: 10px;">反混淆</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" style="font-size: 10px;">学习总结</a> <a href="/tags/%E6%81%B6%E6%84%8F%E4%BB%A3%E7%A0%81/" style="font-size: 10px;">恶意代码</a> <a href="/tags/%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" style="font-size: 10px;">文件格式</a> <a href="/tags/%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/" style="font-size: 13.33px;">模拟器检测</a> <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" style="font-size: 16.67px;">源码分析</a> <a href="/tags/%E7%9B%B4%E6%92%AD%E4%BA%BA%E6%B0%94/" style="font-size: 10px;">直播人气</a> <a href="/tags/%E7%9F%A5%E8%AF%86%E6%A2%B3%E7%90%86/" style="font-size: 13.33px;">知识梳理</a> <a href="/tags/%E8%B0%83%E7%A0%94/" style="font-size: 13.33px;">调研</a> <a href="/tags/%E9%80%86%E5%90%91/" style="font-size: 13.33px;">逆向</a> <a href="/tags/%E9%87%8D%E6%94%BE%E6%94%BB%E5%87%BB/" style="font-size: 10px;">重放攻击</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">August 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/05/">May 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/04/">April 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">March 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/07/">July 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">March 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">August 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">June 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">April 2015</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/">OLLVM通用反平坦化研究</a>
+          </li>
+        
+          <li>
+            <a href="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/">Android模拟器检测体系梳理</a>
+          </li>
+        
+          <li>
+            <a href="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/">起底薅羊毛灰色产业链</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/">基于Cache的Android模拟器检测</a>
+          </li>
+        
+          <li>
+            <a href="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/">六间房直播刷人气</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2022 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

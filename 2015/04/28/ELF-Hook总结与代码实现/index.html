@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>ELF Hook总结与代码实现 | Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="什么是HookHook，中文又译为“挂钩”或“钩子”。这里可以首先从字面上做了解，钩子是干什么的呢？日常生活中，我们的钩子是用来钩住某种东西的，比如说，鱼钩是用来钓鱼的，一旦鱼咬了钩，钩子就一直钩住鱼了，任凭鱼在水里怎么游，也逃不出鱼钩的控制。同样的，Android、IOS中的钩子Hook也是用来钩东西的，比较抽象的是它是用来钩函数或者变量的。举个例子，Hook钩子钩住键盘事件相关的函数，那么当有">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ELF Hook总结与代码实现">
+<meta property="og:url" content="http://example.com/2015/04/28/ELF-Hook%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="什么是HookHook，中文又译为“挂钩”或“钩子”。这里可以首先从字面上做了解，钩子是干什么的呢？日常生活中，我们的钩子是用来钩住某种东西的，比如说，鱼钩是用来钓鱼的，一旦鱼咬了钩，钩子就一直钩住鱼了，任凭鱼在水里怎么游，也逃不出鱼钩的控制。同样的，Android、IOS中的钩子Hook也是用来钩东西的，比较抽象的是它是用来钩函数或者变量的。举个例子，Hook钩子钩住键盘事件相关的函数，那么当有">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/2015/04/28/ELF-Hook%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/1.png">
+<meta property="og:image" content="http://example.com/2015/04/28/ELF-Hook%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/2.png">
+<meta property="og:image" content="http://example.com/2015/04/28/ELF-Hook%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/3.png">
+<meta property="og:image" content="http://example.com/2015/04/28/ELF-Hook%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/4.png">
+<meta property="og:image" content="http://example.com/2015/04/28/ELF-Hook%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/5.png">
+<meta property="og:image" content="http://example.com/2015/04/28/ELF-Hook%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/6.png">
+<meta property="og:image" content="http://example.com/2015/04/28/ELF-Hook%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/7.png">
+<meta property="article:published_time" content="2015-04-28T02:07:12.000Z">
+<meta property="article:modified_time" content="2019-02-28T02:35:58.870Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="ELF">
+<meta property="article:tag" content="源码分析">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2015/04/28/ELF-Hook%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/1.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 6.2.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-ELF-Hook总结与代码实现" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2015/04/28/ELF-Hook%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/" class="article-date">
+  <time class="dt-published" datetime="2015-04-28T02:07:12.000Z" itemprop="datePublished">2015-04-28</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/Android/">Android</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      ELF Hook总结与代码实现
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="什么是Hook"><a href="#什么是Hook" class="headerlink" title="什么是Hook"></a>什么是Hook</h2><p>Hook，中文又译为“挂钩”或“钩子”。这里可以首先从字面上做了解，钩子是干什么的呢？日常生活中，我们的钩子是用来钩住某种东西的，比如说，鱼钩是用来钓鱼的，一旦鱼咬了钩，钩子就一直钩住鱼了，任凭鱼在水里怎么游，也逃不出鱼钩的控制。同样的，Android、IOS中的钩子Hook也是用来钩东西的，比较抽象的是它是用来钩函数或者变量的。举个例子，Hook钩子钩住键盘事件相关的函数，那么当有任何相应的键盘操作时，通过Hook就能知道用户都输入了些什么，多么形象啊，把老鼠Mouse钩住了，不管你干什么，都逃不过我钩子Hook的手掌心。</p>
+<h2 id="Native-Hook"><a href="#Native-Hook" class="headerlink" title="Native Hook"></a>Native Hook</h2><p>掌握ELF Hook，有必要先了解下ELF文件格式，特别是对于符号表、GOT（全局偏移表）、PLT（过程链接表）、重定位表需要有个清晰的认识。至于这部分在之前的博文中就已做了详细介绍。。</p>
+<h3 id="Hook-方式"><a href="#Hook-方式" class="headerlink" title="Hook 方式"></a>Hook 方式</h3><p>So的Hook手法大体来说，一共有3种方式：导入表、导出表及Inline Hook。</p>
+<h4 id="导入表Hook"><a href="#导入表Hook" class="headerlink" title="导入表Hook"></a>导入表Hook</h4><p>前面已经提到过“.rel.dyn”和“.rel.plt”两个段中分别保存了该模块所需要导入的变量、函数符号以及其所在模块等信息，而“.got”和“.got.plt”则是保存着这些变量和函数的真正地址。所以，导入表hook的原理主要就是替换.GOT表中外部函数地址（还有一部分被保存在data数据段，比如使用全局函数指针调用外部函数时）</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * hook rel.plt</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">plt_hook</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* selfso,<span class="type">const</span> <span class="type">char</span>* funcName, <span class="type">void</span>* realFunc, <span class="type">void</span>** orgFunc)</span></span>&#123;</span><br><span class="line">    <span class="type">void</span>* handle  = <span class="built_in">dlopen</span>(selfso, RTLD_GLOBAL);</span><br><span class="line">    <span class="keyword">if</span>(!handle)</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    soinfo* si = (soinfo*)handle;</span><br><span class="line">    Elf32_Sym* symtab = si-&gt;symtab;</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>* strtab = si-&gt;strtab;</span><br><span class="line">    Elf32_Rel* rel = si-&gt;plt_rel;</span><br><span class="line">    <span class="type">unsigned</span> count = si-&gt;plt_rel_count;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">LOGW</span>(<span class="string">&quot;realFunc:0x%08X&quot;</span>,realFunc);</span><br><span class="line">    <span class="type">bool</span> flag = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">unsigned</span> idx = <span class="number">0</span>; idx &lt; count; idx++)&#123;<span class="comment">//外部依赖函数在rel_plt中</span></span><br><span class="line">        <span class="type">unsigned</span> type = <span class="built_in">ELF32_R_TYPE</span>(rel-&gt;r_info);</span><br><span class="line">        <span class="type">unsigned</span> sym = <span class="built_in">ELF32_R_SYM</span>(rel-&gt;r_info);</span><br><span class="line">        <span class="type">unsigned</span> reloc = (<span class="type">unsigned</span>)(rel-&gt;r_offset + si-&gt;base);</span><br><span class="line">        <span class="keyword">if</span>(*((<span class="type">unsigned</span> <span class="type">int</span>*)reloc) == (<span class="type">unsigned</span> <span class="type">int</span>)realFunc)&#123;</span><br><span class="line">            <span class="built_in">LOGW</span>(<span class="string">&quot;addr had been replace.&quot;</span>);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="type">char</span>* sym_name = (<span class="type">char</span>*)(strtab + symtab[sym].st_name);</span><br><span class="line">        <span class="built_in">LOGI</span>(<span class="string">&quot;sym_name:%s, reloc_addr = %p&quot;</span>,sym_name,reloc - (si-&gt;base));</span><br><span class="line">        <span class="keyword">if</span>(<span class="built_in">strcmp</span>(sym_name, funcName)==<span class="number">0</span>)&#123;</span><br><span class="line">            <span class="built_in">LOGD</span>(<span class="string">&quot;found %s in plt_rel&quot;</span>,funcName);</span><br><span class="line">            <span class="keyword">if</span>(!<span class="built_in">replaceFunc</span>((<span class="type">void</span>*)reloc,realFunc,orgFunc))&#123;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        rel++;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(flag)&#123;</span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;not find :%s in plt_rel&quot;</span>,funcName);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">dlclose</span>(handle);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>具体思路为：当用dlopen打开一个so时，实际返回的是一个soinfo结构体，这里已经包含了so的相关信息。之后，直接根据“.rel.plt”重定位表中的offset定位到“.got.plt”，进行修改替换即可。<br>如果细心观察的话，就会注意到上面的代码是有所遗漏的。它仅针对了直接调用外部函数的情况，当使用全局函数指针调用外部函数时（重定位类型为R_ARM_ABS32），用的是”.rel.dyn”重定位表，其下的offset会定位到data段，数据段的该地址下保存着实际外部函数的真正地址。对应实现上，只需补个重定位类型的判断，其余代码都是类似的，将”.rel.plt”换成”.rel.dyn”即可，有兴趣的同学可以自己动手试试。</p>
+<h5 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h5><p>导入表 HOOK的本质其实就是”改自身”，即修改当前应用进程下的Got表中外部符号地址。所以它的功能是很有限的，不会影响到其他进程。此外，对于通过dlopen 动态获得并调用外部符号这种情形是无效的。<br>特点：即时生效。因为是直接改的Got表、修改了外部函数的调用地址，所以在进行测试时是hook后可直接看到效果的。。</p>
+<h4 id="导出表Hook"><a href="#导出表Hook" class="headerlink" title="导出表Hook"></a>导出表Hook</h4><p>ELF文件中的符号表有说明该符号为导入符号还是导出符号，这点在linker.c源码中可以看到。linker将so加载到内存后，在最后阶段是有对符号进行重定位的。在重定位过程中，如果发现符号为外部符号，会去解析相应的依赖库，获取外部符号的地址。所以，导出表Hook的原理就是修改要hook的函数所在so中的符号表中的值，并对其进行替换。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * hook symtab</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">sym_hook</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* hookso,<span class="type">const</span> <span class="type">char</span>* funcName, <span class="type">void</span>* realFunc, <span class="type">void</span>** orgFunc)</span></span>&#123;</span><br><span class="line">    <span class="type">void</span>* handle  = <span class="built_in">dlopen</span>(hookso, RTLD_GLOBAL);</span><br><span class="line">    <span class="keyword">if</span>(!handle)</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    soinfo* si = (soinfo*)handle;</span><br><span class="line">    Elf32_Sym* symtab = si-&gt;symtab;</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>* strtab = si-&gt;strtab;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">unsigned</span> idx = <span class="number">0</span>; idx &lt; si-&gt;nchain; idx++)&#123;<span class="comment">//自定义函数在symtab中</span></span><br><span class="line">        <span class="type">char</span>* sym_name = (<span class="type">char</span>*)(strtab + symtab[idx].st_name);</span><br><span class="line">        <span class="built_in">LOGI</span>(<span class="string">&quot;sym_name in exports:%s, func_addr:0x%08X&quot;</span>,sym_name,symtab[idx].st_value);</span><br><span class="line">        <span class="keyword">if</span>(<span class="built_in">strcmp</span>(sym_name, funcName)==<span class="number">0</span>)&#123;</span><br><span class="line">            <span class="built_in">LOGD</span>(<span class="string">&quot;found %s in exports&quot;</span>,funcName);</span><br><span class="line">            <span class="type">void</span>* funcAddr = (<span class="type">void</span>*)(symtab[idx].st_value + si-&gt;base);</span><br><span class="line">            <span class="keyword">if</span>((&amp;symtab[idx])-&gt;st_value == (Elf32_Addr)((<span class="type">unsigned</span>)realFunc-(si-&gt;base)))&#123;</span><br><span class="line">                <span class="built_in">LOGW</span>(<span class="string">&quot;addr had been replace.&quot;</span>);</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            *orgFunc = funcAddr;</span><br><span class="line">            <span class="built_in">LOGW</span>(<span class="string">&quot;base_addr:0x%08X&quot;</span>,si-&gt;base);</span><br><span class="line">            <span class="built_in">LOGW</span>(<span class="string">&quot;OldFun:0x%08X&quot;</span>,*orgFunc);</span><br><span class="line">            <span class="keyword">if</span>(<span class="built_in">modifyMemAccess</span>(&amp;symtab[idx], PROT_EXEC|PROT_READ|PROT_WRITE))&#123;</span><br><span class="line">                <span class="built_in">LOGE</span>(<span class="string">&quot;[-] modifymemAccess fails, error %s.&quot;</span>, <span class="built_in">strerror</span>(errno));</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            (&amp;symtab[idx])-&gt;st_value = (Elf32_Addr)((<span class="type">unsigned</span>)realFunc - (si-&gt;base));</span><br><span class="line">            <span class="built_in">clearCache</span>(symtab, <span class="built_in">getpagesize</span>());</span><br><span class="line">            <span class="built_in">LOGW</span>(<span class="string">&quot;st_value:0x%08X, NewFun:0x%08X&quot;</span>,symtab[idx].st_value,realFunc);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">dlclose</span>(handle);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>具体思路为：用dlopen打开一个so，根据返回的soinfo结构体定位到符号表。在符号表中查找要hook的函数名，并修改该符号的st_value值为NewFunc – BaseAddr（st_value保存的是偏移地址）</p>
+<h5 id="小结-1"><a href="#小结-1" class="headerlink" title="小结"></a>小结</h5><p>导出表Hook和导入表Hook的代码实现其实比较类似，本质都是修改函数地址，但却能起到较好的效果。因为它是直接改的要hook的函数所在so中的符号表，其他库要调用该so中的方法，都会从它的符号表下进行引用，并填充到自身的Got表下，所以能够起到一次Hook，永久替换的效果。当然，其拦截效果还是不如inline这种方式。不过由于inline hook会受到函数字节数的轻微限制，导出表hook也可视为一种对Inline的补充。此外，导出表Hook只能Hook导出的符号，对偏移函数没有办法。<br>特点：不能即时生效。因为改的是符号表，当前运行的程序已经加载完成，调用外部函数时，是直接走的Got。所以进行测试时，在hook完成后，还需要再loadlibrary一次，让修改过的符号重新导入到Got表。说到这里，其实也能dlopen、dlsym来进行测试，让dlsym来检验是否已修改目标的st_value。。</p>
+<h4 id="Inline-Hook"><a href="#Inline-Hook" class="headerlink" title="Inline Hook"></a>Inline Hook</h4><p>Inline hook其实就是直接修改函数指令，对代码的调用流程进行替换，它的基本流程如下所示：<br><img src="/2015/04/28/ELF-Hook%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/1.png" alt="Inline Hook">这部分的代码实现，个人是直接参考的<a target="_blank" rel="noopener" href="https://github.com/crmulliner/adbi%E8%BF%99%E4%B8%AA%E5%BC%80%E6%BA%90%E7%9A%84hook">https://github.com/crmulliner/adbi这个开源的hook</a> 框架。不过，它有个bug，注意到这个问题是在<a target="_blank" rel="noopener" href="http://drops.wooyun.org/tips/5409%E6%94%BE%E5%87%BA%E9%98%BF%E9%87%8C%E4%B8%BE%E5%8A%9E%E7%9A%84%E5%AE%89%E5%85%A8%E6%8C%91%E6%88%98%E8%B5%9B%E7%9A%84%E8%A7%A3%E9%A2%98%E6%80%9D%E8%B7%AF%E6%97%B6%EF%BC%88%E5%85%B6%E5%AE%9E%E4%BA%86%E8%A7%A3%E5%88%B0adbi">http://drops.wooyun.org/tips/5409放出阿里举办的安全挑战赛的解题思路时（其实了解到adbi</a> hook也是这个时间）。<br><img src="/2015/04/28/ELF-Hook%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/2.png" alt="阿里安全挑战赛">对adbi hook源码中的这一部分进行修改后，再来分析下它的实现原理。先看看hook.h头文件中定义的hook_t结构体，具体结构如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">hook_t</span> &#123;</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span> jump[<span class="number">3</span>];         <span class="comment">//要修改的Hook指令(ARM)</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span> store[<span class="number">3</span>];        <span class="comment">//被修改的原指令(ARM)</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">char</span> jumpt[<span class="number">20</span>];      <span class="comment">//要修改的Hook指令(Thumb)</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">char</span> storet[<span class="number">20</span>];     <span class="comment">//被修改的原指令(Thumb)</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span> orig;            <span class="comment">//被Hook的函数地址</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span> patch;           <span class="comment">//Hook的函数地址</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">char</span> thumb;          <span class="comment">//表明要Hook函数所使用的指令集，1为Thumb，0为Arm</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">char</span> name[<span class="number">128</span>];      <span class="comment">//被Hook的函数名</span></span><br><span class="line">    <span class="type">void</span> *data;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>可以注意到，inline hook是有判断原函数所使用的指令模式的。这是因为Arm处理器支持两种指令集，一个基本的Arm指令集，另一个是Thumb指令集。而hook的函数有可能是被编译成Arm指令集的，也有可能是被编译成Thumb指令集的。若一个用Arm指令集编译的函数被用Thumb指令集的指令给修改了，那必定会崩溃，反之亦然。。<br>那么要如何判断hook的函数用的是哪种指令集呢？代码中是这么判断的：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 使用Arm指令集的情况 */</span>  </span><br><span class="line"><span class="keyword">if</span> (addr % <span class="number">4</span> == <span class="number">0</span>) &#123;  </span><br><span class="line">    ......  </span><br><span class="line">&#125;   </span><br><span class="line"><span class="comment">/* 使用Thumb指令集的情况 */</span>  </span><br><span class="line"><span class="keyword">else</span> &#123;  </span><br><span class="line">    ......  </span><br><span class="line">&#125;  </span><br></pre></td></tr></table></figure>
+<p>这是因为Arm与Thumb之间的状态切换是通过专用的转移交换指令BX来实现。BX指令以通用寄存器（R0~R15）为操作数，通过拷贝Rn到PC实现绝对跳转。BX利用Rn寄存器中目的地址值的最后一位来判断跳转后的状态，如果为“1”表示跳转到Thumb指令集的函数中，如果为“0”则表示跳转到Arm指令集的函数中。而Arm指令集的每条指令是32位，即4个字节，也就是说 Arm指令的地址肯定是4的倍数，最后两位必定为“00”。所以，可直接将从符号表中获得的调用地址对4求余，看是否为0来判断要hook的函数用的是Arm指令集还是Thumb指令集。<br>需要说明的是，这里的调用地址与函数的映射地址是不一样的概念。所谓调用地址，是从ELF文件中的符号表里获得的。但是Thumb指令集是16位的，也就意味着其不可能映射到奇数地址上，映射地址的最后一位肯定不为“1”。关于这点，还是拿前面用来分析ELF文件格式的例子so来进行说明：<br><img src="/2015/04/28/ELF-Hook%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/3.png" alt="ELF文件格式例子so">以registerNatives方法为例，其符号值为0x00000dad，最后一位是“1”，表示其是用Thumb指令集编译的。这个函数在内存中的映射地址为0x400D1DAC - 0x400D1000 &#x3D; 0x00000DAC，最后一位是“0”。通过这个比较可以看出，编译器如果用Thumb指令编译了一个函数，会自动将该函数的符号地址设置为“真正映射地址 -1”，这样可以实现无缝的Thumb指令集函数与Arm指令集代码混编。<br><img src="/2015/04/28/ELF-Hook%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/4.png" alt="so动态调试">再回来看下对Arm的处理，先将hook函数和要被hook的函数地址保留下来。然后生成hook代码，只用到了3 * 4 &#x3D; 12个字节。其中，第一个字节是代码“LDR pc, [pc, #0]”，由于pc寄存器读出的值实际上是当前指令地址加8（预取2条指令，2*4），所以这里是把jump[2]的值加载进pc寄存器，而jump[2]处保存的是hook函数的地址。因此，jump[0]到jump[3]实际上保存的是跳转到hook函数的指令。然后，将原函数的前3 * 4个字节保存下来，方便以后做恢复。最后，将跳转指令写入到被hook函数（原函数）的前12个字节。这样，当要调用被hook函数的时候，实际执行的指令就是跳转到hook函数。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (addr % <span class="number">4</span> == <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="built_in">log</span>(<span class="string">&quot;ARM using 0x%x\n&quot;</span>, hook_arm)</span><br><span class="line">    h-&gt;thumb = <span class="number">0</span>;</span><br><span class="line">    h-&gt;patch = (<span class="type">unsigned</span> <span class="type">int</span>)hook_arm;</span><br><span class="line">    h-&gt;orig = addr;</span><br><span class="line">    h-&gt;jump[<span class="number">0</span>] = <span class="number">0xe59ff000</span>; <span class="comment">// LDR pc, [pc, #0]</span></span><br><span class="line">    h-&gt;jump[<span class="number">1</span>] = h-&gt;patch;</span><br><span class="line">    h-&gt;jump[<span class="number">2</span>] = h-&gt;patch;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; <span class="number">3</span>; i++)</span><br><span class="line">        h-&gt;store[i] = ((<span class="type">int</span>*)h-&gt;orig)[i];</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; <span class="number">3</span>; i++)</span><br><span class="line">        ((<span class="type">int</span>*)h-&gt;orig)[i] = h-&gt;jump[i];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对Thumb指令的处理，与对Arm的处理稍有不同，是通过pop指令来修改PC寄存器。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> ((<span class="type">unsigned</span> <span class="type">long</span> <span class="type">int</span>)hook_thumb % <span class="number">4</span> == <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">log</span>(<span class="string">&quot;warning hook is not thumb 0x%x\n&quot;</span>, hook_thumb)</span><br><span class="line">    h-&gt;thumb = <span class="number">1</span>;</span><br><span class="line">    <span class="built_in">log</span>(<span class="string">&quot;THUMB using 0x%x\n&quot;</span>, hook_thumb)</span><br><span class="line">    h-&gt;patch = (<span class="type">unsigned</span> <span class="type">int</span>)hook_thumb;</span><br><span class="line">    h-&gt;orig = addr; </span><br><span class="line">    h-&gt;jumpt[<span class="number">1</span>] = <span class="number">0xb4</span>;</span><br><span class="line">    h-&gt;jumpt[<span class="number">0</span>] = <span class="number">0x60</span>; <span class="comment">// push &#123;r5,r6&#125;</span></span><br><span class="line">    h-&gt;jumpt[<span class="number">3</span>] = <span class="number">0xa5</span>;</span><br><span class="line">    h-&gt;jumpt[<span class="number">2</span>] = <span class="number">0x03</span>; <span class="comment">// add r5, pc, #12</span></span><br><span class="line">    h-&gt;jumpt[<span class="number">5</span>] = <span class="number">0x68</span>;</span><br><span class="line">    h-&gt;jumpt[<span class="number">4</span>] = <span class="number">0x2d</span>; <span class="comment">// ldr r5, [r5]</span></span><br><span class="line">    h-&gt;jumpt[<span class="number">7</span>] = <span class="number">0xb0</span>;</span><br><span class="line">    h-&gt;jumpt[<span class="number">6</span>] = <span class="number">0x02</span>; <span class="comment">// add sp,sp,#8</span></span><br><span class="line">    h-&gt;jumpt[<span class="number">9</span>] = <span class="number">0xb4</span>;</span><br><span class="line">    h-&gt;jumpt[<span class="number">8</span>] = <span class="number">0x20</span>; <span class="comment">// push &#123;r5&#125;</span></span><br><span class="line">    h-&gt;jumpt[<span class="number">11</span>] = <span class="number">0xb0</span>;</span><br><span class="line">    h-&gt;jumpt[<span class="number">10</span>] = <span class="number">0x81</span>; <span class="comment">// sub sp,sp,#4</span></span><br><span class="line">    h-&gt;jumpt[<span class="number">13</span>] = <span class="number">0xbd</span>;</span><br><span class="line">    h-&gt;jumpt[<span class="number">12</span>] = <span class="number">0x20</span>; <span class="comment">// pop &#123;r5, pc&#125;</span></span><br><span class="line">    h-&gt;jumpt[<span class="number">15</span>] = <span class="number">0x46</span>;</span><br><span class="line">    h-&gt;jumpt[<span class="number">14</span>] = <span class="number">0xaf</span>; <span class="comment">// mov pc, r5 ; just to pad to 4 byte boundary</span></span><br><span class="line">    <span class="built_in">memcpy</span>(&amp;h-&gt;jumpt[<span class="number">16</span>], (<span class="type">unsigned</span> <span class="type">char</span>*)&amp;h-&gt;patch, <span class="built_in">sizeof</span>(<span class="type">unsigned</span> <span class="type">int</span>));</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span> orig = addr - <span class="number">1</span>; <span class="comment">// sub 1 to get real address</span></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; <span class="number">20</span>; i++) &#123;</span><br><span class="line">        h-&gt;storet[i] = ((<span class="type">unsigned</span> <span class="type">char</span>*)orig)[i];</span><br><span class="line">        <span class="comment">//log(&quot;%0.2x &quot;, h-&gt;storet[i])</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//log(&quot;\n&quot;)</span></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; <span class="number">20</span>; i++) &#123;</span><br><span class="line">        ((<span class="type">unsigned</span> <span class="type">char</span>*)orig)[i] = h-&gt;jumpt[i];</span><br><span class="line">        <span class="comment">//log(&quot;%0.2x &quot;, ((unsigned char*)orig)[i])</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先，压栈r5、r6寄存器，将r5压栈是因为后面修改了r5寄存器的值，压栈方便以后做恢复，而将r6寄存器压栈则是为了要保留一个位置。接着，将PC寄存器的值加上12赋值给r5。然后，读出的PC寄存器的值是当前指令地址加上4（预取2条指令，2*2）。于是，r5寄存器的值指向的应该是jumpt[18]，但果真如此么？jumpt[16]中存放着hook函数地址，如果要做跳转的话，应该是指向jumpt[16]才对。在翻看Thumb&amp;ARM指令文档后，才明白中间缘由。主要就是，thmub模式下的”ADD Rd, PC, #立即数”这条语句有点特殊：1、加上的立即数必须是4的倍数；2、加完后需要与0xFFFFFFFc进行与运算、将地址的最后2位清零。也就是，(2 + 4)&amp;0xFFFFFFFc 等于4，4再加上12指向jumpt[16]。<br><img src="/2015/04/28/ELF-Hook%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/5.png" alt="arm指令汇编文档"><img src="/2015/04/28/ELF-Hook%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/6.png" alt="arm指令汇编文档">再下面的指令”ldr r5, [r5]” 就是将保存在jumpt[16]处的hook函数地址加载到r5寄存器中，后面则是一些栈操作，大致的流程图如下：<br><img src="/2015/04/28/ELF-Hook%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/7.png" alt="指令栈操作">所以，下面的”pop {r5, pc}”指令刚好可以完成恢复r5寄存器并且修改PC寄存器，从而跳转到hook函数的操作。接下来的指令（jumpt[14]到jumpt[15]）其实是多余的了，根本不会执行到，只是因为前面的add指令只能加4的倍数。另外，还有一点不同的是，因为被hook函数是Thumb指令集，所以其真正的内存映射地址是其符号地址减1。<br>经过上面的处理，被hook函数的前几条指令已经被修改成跳转到hook函数的指令了，接下来被hook函数如果被调用到了，实际上就会跳转到指定的hook函数上去。</p>
+<h5 id="小结-2"><a href="#小结-2" class="headerlink" title="小结"></a>小结</h5><p>Inline Hook是直接改的函数运行代码，能够即时生效，且拦截性高。缺点是实现较为复杂，与硬件平台相关。另外inline的替换字节为12到16个字节左右，当函数比较简短的时候，会无法发挥效果。。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2015/04/28/ELF-Hook%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/" data-id="cl4bh2x0t000588w1eskwf6rm" data-title="ELF Hook总结与代码实现" class="article-share-link">Share</a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ELF/" rel="tag">ELF</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" rel="tag">源码分析</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2015/06/04/360%E9%80%9A%E8%AE%AF%E5%BD%95%E7%BD%91%E7%BB%9C%E5%8A%A0%E5%AF%86%E5%8D%8F%E8%AE%AE%E5%88%86%E6%9E%90/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          360通讯录网络加密协议分析
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2015/04/17/%E6%B5%85%E8%B0%88ELF%E5%8F%AF%E6%89%A7%E8%A1%8C%E6%96%87%E4%BB%B6%E7%9A%84%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">浅谈ELF可执行文件的启动流程</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Android/">Android</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Web/">Web</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%99%BA%E8%83%BD%E8%AE%BE%E5%A4%87/">智能设备</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%89%A9%E8%81%94%E7%BD%91/">物联网</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E/">虚拟现实</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%BB%91%E4%BA%A7%E7%A0%94%E7%A9%B6/">黑产研究</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/BLE/" rel="tag">BLE</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ELF/" rel="tag">ELF</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ROM/" rel="tag">ROM</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%9A%E5%8A%A1%E5%AE%89%E5%85%A8/" rel="tag">业务安全</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8F%8D%E6%B7%B7%E6%B7%86/" rel="tag">反混淆</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" rel="tag">学习总结</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%81%B6%E6%84%8F%E4%BB%A3%E7%A0%81/" rel="tag">恶意代码</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" rel="tag">文件格式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/" rel="tag">模拟器检测</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" rel="tag">源码分析</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9B%B4%E6%92%AD%E4%BA%BA%E6%B0%94/" rel="tag">直播人气</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E6%A2%B3%E7%90%86/" rel="tag">知识梳理</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%B0%83%E7%A0%94/" rel="tag">调研</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%80%86%E5%90%91/" rel="tag">逆向</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%87%8D%E6%94%BE%E6%94%BB%E5%87%BB/" rel="tag">重放攻击</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/BLE/" style="font-size: 13.33px;">BLE</a> <a href="/tags/ELF/" style="font-size: 20px;">ELF</a> <a href="/tags/ROM/" style="font-size: 10px;">ROM</a> <a href="/tags/%E4%B8%9A%E5%8A%A1%E5%AE%89%E5%85%A8/" style="font-size: 10px;">业务安全</a> <a href="/tags/%E5%8F%8D%E6%B7%B7%E6%B7%86/" style="font-size: 10px;">反混淆</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" style="font-size: 10px;">学习总结</a> <a href="/tags/%E6%81%B6%E6%84%8F%E4%BB%A3%E7%A0%81/" style="font-size: 10px;">恶意代码</a> <a href="/tags/%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" style="font-size: 10px;">文件格式</a> <a href="/tags/%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/" style="font-size: 13.33px;">模拟器检测</a> <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" style="font-size: 16.67px;">源码分析</a> <a href="/tags/%E7%9B%B4%E6%92%AD%E4%BA%BA%E6%B0%94/" style="font-size: 10px;">直播人气</a> <a href="/tags/%E7%9F%A5%E8%AF%86%E6%A2%B3%E7%90%86/" style="font-size: 13.33px;">知识梳理</a> <a href="/tags/%E8%B0%83%E7%A0%94/" style="font-size: 13.33px;">调研</a> <a href="/tags/%E9%80%86%E5%90%91/" style="font-size: 13.33px;">逆向</a> <a href="/tags/%E9%87%8D%E6%94%BE%E6%94%BB%E5%87%BB/" style="font-size: 10px;">重放攻击</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">August 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/05/">May 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/04/">April 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">March 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/07/">July 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">March 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">August 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">June 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">April 2015</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/">OLLVM通用反平坦化研究</a>
+          </li>
+        
+          <li>
+            <a href="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/">Android模拟器检测体系梳理</a>
+          </li>
+        
+          <li>
+            <a href="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/">起底薅羊毛灰色产业链</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/">基于Cache的Android模拟器检测</a>
+          </li>
+        
+          <li>
+            <a href="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/">六间房直播刷人气</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2022 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

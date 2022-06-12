@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>低功耗蓝牙（BLE）安全初探 | Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="BLE概述“蓝牙”，即Bluetooth，是斯堪的纳维亚语中 Blåtand &#x2F; Blåtann 的英化版本。该词是十世纪的一位国王Harald Bluetooth的绰号，相传他将纷争不断的丹麦部落统一为一个王国，并引入了基督教。蓝牙技术开发者Jim Kardach于1997年提出用Bluetooth这个名词，据说他当时正在读一本名为The Long Ships的小说，讲述的就是维京人和">
+<meta property="og:type" content="article">
+<meta property="og:title" content="低功耗蓝牙（BLE）安全初探">
+<meta property="og:url" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="BLE概述“蓝牙”，即Bluetooth，是斯堪的纳维亚语中 Blåtand &#x2F; Blåtann 的英化版本。该词是十世纪的一位国王Harald Bluetooth的绰号，相传他将纷争不断的丹麦部落统一为一个王国，并引入了基督教。蓝牙技术开发者Jim Kardach于1997年提出用Bluetooth这个名词，据说他当时正在读一本名为The Long Ships的小说，讲述的就是维京人和">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/1.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/2.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/3.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/4.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/5.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/6.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/7.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/8.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/9.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/10.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/11.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/12.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/13.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/14.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/15.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/16.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/17.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/18.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/19.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/20.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/21.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/22.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/23.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/24.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/25.png">
+<meta property="og:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/26.png">
+<meta property="article:published_time" content="2016-07-25T12:28:43.000Z">
+<meta property="article:modified_time" content="2019-02-02T09:44:49.710Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="BLE">
+<meta property="article:tag" content="学习总结">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/1.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 6.2.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-低功耗蓝牙（BLE）安全初探" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/" class="article-date">
+  <time class="dt-published" datetime="2016-07-25T12:28:43.000Z" itemprop="datePublished">2016-07-25</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E7%89%A9%E8%81%94%E7%BD%91/">物联网</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      低功耗蓝牙（BLE）安全初探
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="BLE概述"><a href="#BLE概述" class="headerlink" title="BLE概述"></a>BLE概述</h2><p>“蓝牙”，即Bluetooth，是斯堪的纳维亚语中 Blåtand &#x2F; Blåtann 的英化版本。该词是十世纪的一位国王Harald Bluetooth的绰号，相传他将纷争不断的丹麦部落统一为一个王国，并引入了基督教。蓝牙技术开发者Jim Kardach于1997年提出用Bluetooth这个名词，据说他当时正在读一本名为The Long Ships的小说，讲述的就是维京人和Harald Bluetooth国王的故事。他认为蓝牙可以把各种不同的通信协议统一在一起，诚如这位国王做的事情一样。至于蓝牙的logo，取自国王Harald Bluetooth名字中的【H】和【B】两个字母的组合，用古北欧文字来表示：<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/1.png" alt="蓝牙起源">蓝牙技术发展至今衍生出了多个版本，“低功耗蓝牙”（Bluetooth Low Energy）是演化过程当中的一次颠覆性改变。与前面几代不同的是，蓝牙4.0版引入的BLE协议更注重功耗问题，而非通信速率的提升。这也使得低功耗蓝牙更加节能，能使设备的电池维持很长时间，因此在很多可穿戴设备中得到了应用。</p>
+<h2 id="BLE协议栈"><a href="#BLE协议栈" class="headerlink" title="BLE协议栈"></a>BLE协议栈</h2><p>BLE协议栈的结构图如下所示，详细可参考<a target="_blank" rel="noopener" href="https://www.bluetooth.com/specifications">蓝牙4.2官方文档</a><br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/2.png" alt="BLE协议栈"></p>
+<h3 id="Physical-Layer"><a href="#Physical-Layer" class="headerlink" title="Physical Layer"></a>Physical Layer</h3><p>任何一个通信系统，首先要确定的就是通信介质（物理通道，Physical Channel），BLE也不例外。在BLE协议中，“通信介质”的定义是由Physical Layer（其它通信协议也类似）负责。<br>Physical Layer是这样描述BLE的通信介质的：</p>
+<blockquote>
+</blockquote>
+<p>由于BLE属于无线通信，则其通信介质是一定频率范围下的频带资源（Frequency Band）；<br>BLE的市场定位是个体和民用，因此使用免费的ISM频段（频率范围是2.400-2.4835 GHz）；<br>为了同时支持多个设备，将整个频带分为40份，每份的带宽为2MHz，称作RF Channel。</p>
+<p>经过上面的定义之后，BLE的物理通道已经出来了，即“频道分别是‘f&#x3D;2402 +k * 2 MHz, k&#x3D;0, … ,39’，带宽为2MHz”的40个RF Channel。其中，有3个信道是advertising channel（广播通道），分别是37、38、39，用于发现设备（Scanning devices）、初始化连接（initiating a connection）和广播数据（broadcasting date）；剩下的37个信道为data channel（数据通道），用于两个连接的设备间的通讯。<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/3.png" alt="信道"></p>
+<h3 id="Link-Layer"><a href="#Link-Layer" class="headerlink" title="Link Layer"></a>Link Layer</h3><p>Link Layer用于控制设备的射频状态，设备将处于Standby（待机）、Advertising（通告）、Scanning（扫描）、Initiating（初始化）、Connection（连接）这五种状态中的一种。<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/4.png" alt="设备状态"></p>
+<ul>
+<li>待机状态（Standby State）：此时即不发送数据，也不接收数据，对设备来所也是最节能的状态；</li>
+<li>通告状态（Advertising State）：通告状态下的设备一般也被称为“通告者”（Advertiser），它会通过advertising channel（广播通道）周期性发送数据，广播的数据可以由处于Scanning state或Initiating state的实体接收；</li>
+<li>扫描状态（Scanning State）：可以通过advertising channel（广播通道）接收数据的状态，该状态下的设备又被称为“扫描者”（Scanner）。此外，根据advertiser所广播的数据类型，有些Scanner还可以主动向Advertiser请求一些额外数据；</li>
+<li>初始化状态（Initiating State）：和Scanning State类似，不过是一种特殊的状态。Scanner会侦听所有的advertising channel，而Initator（初始化者）则只侦听某个特定设备的的广播，并在接收到数据后，发送连接请求，以便和Advertiser建立连接；</li>
+<li>连接状态（Connection State）：由Initiating State或Advertising State自动切换而来，处于Connection State的双方，分别有两种角色。其中，Initiater方被称为Mater（主设备），Advertiser方则称作Slave（从设备）。</li>
+</ul>
+<h3 id="HCI"><a href="#HCI" class="headerlink" title="HCI"></a>HCI</h3><p>主机控制接口层（Host Controller Interface，简写 HCI）：定义Host（主机）和Controller（控制器）之间的通信协议，这一层可以是软件或者硬件接口，如UART、SPI、USB等。</p>
+<h3 id="Generic-Access-Profile（GAP）"><a href="#Generic-Access-Profile（GAP）" class="headerlink" title="Generic Access Profile（GAP）"></a>Generic Access Profile（GAP）</h3><p>前面Link Layer虽然对连接建立的过程做了定义，但它并没有体现到Application（或者Profile）层面，而GAP则是直接与应用程序或配置文件通信的接口，它实现了如下功能：</p>
+<ul>
+<li><p>定义GAP层的蓝牙设备角色（role）</p>
+<blockquote>
+</blockquote>
+<ul>
+<li>Broadcaster（广播者）：设备正在发送advertising events  </li>
+<li>Observer（观察者）：设备正在接收advertising events  </li>
+<li>Peripheral（外设）：设备接受Link Layer连接（对应Link Layer的slave角色）  </li>
+<li>Central（主机）：设备发起Link Layer连接（对应Link Layer的master角色）</li>
+</ul>
+</li>
+<li><p>定义GAP层的用于实现各种通信的操作模式（Operational Mode）和过程（Procedures）</p>
+<blockquote>
+</blockquote>
+<ul>
+<li>Broadcast mode and observation procedure，实现单向的、无连接的通信方式  </li>
+<li>Discovery modes and procedures，实现蓝牙设备的发现操作  </li>
+<li>Connection modes and procedures，实现蓝牙设备的连接操作  </li>
+<li>Bonding modes and procedures，实现蓝牙设备的配对操作</li>
+</ul>
+</li>
+<li><p>定义User Interface有关的蓝牙参数，包括蓝牙地址、蓝牙名称、蓝牙的PIN码等</p>
+</li>
+<li><p>Security相关的定义。。</p>
+</li>
+</ul>
+<h3 id="L2CAP-Protocol"><a href="#L2CAP-Protocol" class="headerlink" title="L2CAP Protocol"></a>L2CAP Protocol</h3><p>逻辑链路控制及自适应协议层（Logical Link Control and Adaptation Protocol）：为上层提供数据封装服务，允许逻辑上的点对点数据通信。</p>
+<h3 id="Attribute-protocol（ATT）"><a href="#Attribute-protocol（ATT）" class="headerlink" title="Attribute protocol（ATT）"></a>Attribute protocol（ATT）</h3><p>在BLE协议栈中，Physical Layer负责提供一系列的Physical Channel；基于这些Physical Channel，Link Layer可在两个设备之间建立用于点对点通信的Logical Channel；而L2CAP则将这个Logical Channel换分为一个个的L2CAP Channel，以便提供应用程序级别的通道复用。到此之后，基本协议栈已经构建完毕，应用程序已经可以基于L2CAP欢快的run起来了。<br>谈起应用程序，就不得不说BLE的初衷—-物联网。物联网中传输的数据和传统的互联网有什么区别呢？抛开其它不谈，物联网中最重要、最广泛的一类应用是：信息的采集。</p>
+<blockquote>
+</blockquote>
+<p>这些信息往往都很简单，如温度、湿度、速度、位置信息、电量、水压、等等。<br>采集的过程也很简单，节点设备定时的向中心设备汇报信息数据，或者，中心设备在需要的时候主动查询。</p>
+<p>基于信息采集的需求，BLE抽象出一个协议：Attribute protocol，该协议将这些“信息”以“Attribute（属性）”的形式抽象出来，并提供一些方法，供远端设备（remote device）读取、修改这些属性的值（Attribute value）。<br>Attribute Protocol的主要思路包括：</p>
+<ol>
+<li><p>基于L2CAP，使用固定的Channel ID</p>
+</li>
+<li><p>采用client-server的形式。提供信息（以后都将其称为Attribute）的一方称作ATT server（一般是那些传感器节点），访问信息的一方称作ATT client。</p>
+</li>
+<li><p>一个Attribute由Attribute Type、Attribute Handle和Attribute Value组成。</p>
+<blockquote>
+</blockquote>
+<ul>
+<li>Attribute Type用以标示Attribute的类型，类似于我们常说的“温度”、“湿度”等人类可识别的术语，通过UUID进行区分。</li>
+<li>Attribute Handle是一个16-bit的数值，用作唯一识别Attribute server上的所有Attribute。Attribute Handle的存在有如下意义：<ul>
+<li>一个server上可能存在多个相同type的Attribute，显然，client有区分这些Attribute的需要。</li>
+<li>同一类型的多个Attribute，可以组成一个Group，client可以通过这个Group中的起、始handle访问所有的Attributes。</li>
+</ul>
+</li>
+<li>Attribute Value代表Attribute的值，可以是任何固定长度或者可变长度的octet array。</li>
+</ul>
+</li>
+<li><p>Attribute能够定义一些权限（Permissions），以便server控制client的访问行为，包括：</p>
+<blockquote>
+</blockquote>
+<ul>
+<li>访问有关的权限（access permissions），Readable、Writeable以及Readable and writable；  </li>
+<li>加密有关的权限（encryption permissions），Encryption required和No encryption required；  </li>
+<li>认证有关的权限（authentication permissions），Authentication Required和No Authentication Required；  </li>
+<li>授权有关的权限（authorization permissions），Authorization Required和No Authorization Required。</li>
+</ul>
+</li>
+<li><p>根据所定义的Attribute PDU的不同，client可以对server有多种访问方式，包括：</p>
+<blockquote>
+</blockquote>
+<ul>
+<li>Find Information，获取Attribute type和Attribute Handle的对应关系；  </li>
+<li>Reading Attributes，有Read by type、Read by handle、Read by blob（只读取部分信息）、Read Multiple（读取多个handle的value）等方式；  </li>
+<li>Writing Attributes，包括需要应答的writing、不需要应答的writing等。</li>
+</ul>
+</li>
+</ol>
+<h3 id="Generic-Attribute-profile（GATT）"><a href="#Generic-Attribute-profile（GATT）" class="headerlink" title="Generic Attribute profile（GATT）"></a>Generic Attribute profile（GATT）</h3><p>ATT之所以称作“protocol”，是因为它还比较抽象，仅仅定义了一套机制，允许client和server通过Attribute的形式共享信息。至于具体共享哪些信息，ATT并不关心，这是GATT（Generic Attribute Profile）的主场。GATT相对ATT只多了一个‘G‘，然含义却大不同，因为GATT是一个profile（更准确的说是profile framework）。<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/5.png" alt="GATT">由上图可知，GATT中的三个要素Profile、Service、Characteristic以及他们的层级关系。值得注意的是，“Profile”是基于GATT所派生出的真正的Profile，乃SIG蓝牙技术联盟对一些同范畴内的Service打包后的集合，如电池、心率、血压等，可参照<a target="_blank" rel="noopener" href="https://www.bluetooth.com/specifications/gatt">官方Profiles Overview</a>，对我们的分析并无大用。<br>Service和Characteristic则是比较重要的，Service可以理解为PHP中的“类”、功能对象的集合。Characteristic可以理解为PHP的“函数”，是GATT中具体的功能对象，每个Service都可以包含一个或多个Characteristic（特征）。Characteristic是GATT profile中最基本的数据单位，由一个Properties、一个Value、一个或者多个Descriptor组成。<br>以上除“Profile”外的每一个定义，Service、Characteristic、Characteristic Properties、Characteristic Value、Characteristic Descriptor等等，都是作为一个Attribute存在的，具备前面所描述的Attribute的所有特征：Attribute Handle、Attribute Types、Attribute Value和Attribute Permissions。<br>在理解了GATT后，就已经能够分析或是“黑掉”一些BLE设备了。这里拿小米手环做例子，当LightBlue连上小米手环后，可以看到一个名为FEE7的UUID，如下所示：<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/6.png" alt="LightBlue">其中，FEE7是一个私有Service的UUID，里面的0xFE**则是私有Characteristic的UUID。下面的Immediate Alert 显示出了名称，代表其不是小米私有的Service，而是官方公开定义的Service。点击进入这个Characteristic，看到它的UUID为2A06。然后我们到蓝牙官网定义的列表<a target="_blank" rel="noopener" href="https://www.bluetooth.com/specifications/gatt/characteristics">Characteristics</a>搜索2A06，进入Characteristic的详情页面。<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/7.png" alt="Alert Level">于是，该Characteristic操作定义非常明确了。点击“Write new value”，可以写入新的值。若写入1或2，则可以引起手环的震动。。</p>
+<h3 id="Security-Manager（SM）"><a href="#Security-Manager（SM）" class="headerlink" title="Security Manager（SM）"></a>Security Manager（SM）</h3><p>Security Manager负责BLE通信中有关安全的内容，包括配对（pairing,）、认证（authentication）和加密（encryption）等过程。</p>
+<h2 id="BLE数据包格式"><a href="#BLE数据包格式" class="headerlink" title="BLE数据包格式"></a>BLE数据包格式</h2><p>在低功耗蓝牙规范中，分广播报文和数据报文这两种。设备利用广播报文发现、连接其它设备，而在连接建立之后，便开始使用数据报文。无论是广播报文还是数据报文，链路层只使用一种数据包格式，它由“前导码”（preamble）、“访问码”（access code）、”有效载荷“和”循环冗余校验“（Cyclical Redundancy Check，CRC）校验码组成。其中，”访问码“有时又称为”访问地址“（access address）。<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/8.png" alt="BLE数据包格式"></p>
+<ol>
+<li>Preamble<br>1个字节长度，接受中用于频率同步、数据速率同步、自动增益控制调整，固定为01010101或者10101010序列</li>
+<li>Access Address<br>4个字节长度，广播报文接入地址为：0x8E89BED6，数据报文接入地址为：32bits随机数</li>
+<li>PDU  <ul>
+<li>广播报文（见协议BLUETOOTH SPECIFICATION Version 4.0 [Vol 6] Part B 2.3）<br> <img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/9.png" alt="广播报文"><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/10.png" alt="广播报文"><ul>
+<li>PDU Type：有效载荷内容的类型，通过这一字段确定该数据包是一个”通告“还是”扫描请求“或”响应“等<br>  <img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/11.png" alt="PDU Type"></li>
+<li>RFU 保留位</li>
+<li>TxAdd：发送地址字段</li>
+<li>RxAdd：接收地址字段</li>
+<li>Payload Length：用来表示”有效载荷数据“（payload data）的长度，不包括头部内容</li>
+</ul>
+</li>
+<li>数据报文（见协议BLUETOOTH SPECIFICATION Version 4.0 [Vol 6] Part B 2.4）<br> <img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/12.png" alt="数据报文"><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/13.png" alt="数据报文"><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/14.png" alt="数据报文"><ul>
+<li>LLID（逻辑链路ID）：0x01表示该数据包是一个帧的延续内容，或者这是一个空的“逻辑链路控制及适配协议”数据包；0x02表示一个“逻辑链路控制及适配协议”数据包的开始；0x03表示这是一个“逻辑链路控制”数据包的内容</li>
+<li>NESN：下一个期望的序列号，用于对接收到的数据包进行确认</li>
+<li>MD：更多数据字段，主要是为了说明发送方是否还有要发给接收者的数据</li>
+<li>RFU 保留位</li>
+<li>Payload Length：用以表示包含“信息完整性校验码”（Message Integrity Check，MIC）在内的“有效载荷数据”的长度</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>CRC<br>3个字节长度，“循环冗余校验”（Cyclical Redundancy Check，CRC），可检查数据的正确性</li>
+</ol>
+<h2 id="BLE通信协议分析"><a href="#BLE通信协议分析" class="headerlink" title="BLE通信协议分析"></a>BLE通信协议分析</h2><h3 id="逆向思路"><a href="#逆向思路" class="headerlink" title="逆向思路"></a>逆向思路</h3><p>Android系统自4.3版本开始，引入了对BLE的支持，详见Bluetooth Low Energy。通过浏览当中的信息，我们可以得知在app开发环节，需要做到如下几件事情：  </p>
+<ol>
+<li>BLE相关权限声明<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/15.png" alt="BLE权限声明"></li>
+<li>操作蓝牙之前，判断系统是否支持BLE<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/16.png" alt="BLE支持判断"></li>
+<li>获取本机的蓝牙适配器，BluetoothAdapter的获取依赖于bluetoothManager.getAdapter()实现<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/17.png" alt="获取蓝牙适配"></li>
+<li>发intent通知系统打开蓝牙<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/18.png" alt="打开蓝牙"></li>
+<li>使用startLeScan()函数获取外围设备，并实现BluetoothAdapter.LeScanCallback方法接受扫描结果<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/19.png" alt="扫描外围设备"><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/20.png" alt="扫描外围设备"></li>
+<li>调用connectGatt方法对设备进行连接，里面的BluetoothGattCallback对象用于交付操作结果给客户端。如果连接成功将返回BluetoothGatt实例，该实例是进行蓝牙控制的基础<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/21.png" alt="返回BluetoothGatt实例"></li>
+<li>成功建立连接后，便可对attributes（属性，参考前面的BLE协议栈）进行读写。利用getService、getCharacteristics获取外围设备的service和characteristic，对于其中支持写的characteristic在写入相应的数据，可实现外围设备的控制<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/22.png" alt="操作attributes属性">了解BLE app的开发步骤后，进行逆向时思路也就清晰了许多。首先，可以通过startLeScan、LeScanCallback等方法定位到扫描BLE外围设备的相关代码段；然后，根据connectGatt、BluetoothGattCallback等api锁定设备连接的相关函数，并找到指令交互部分，最后梳理出整个控制流程。。</li>
+</ol>
+<h3 id="BLE嗅探"><a href="#BLE嗅探" class="headerlink" title="BLE嗅探"></a>BLE嗅探</h3><p>除去静态分析外，我们还需要一些嗅探蓝牙通信的手段。目前，个人选用的是CC2540 USB Dongle配合官方的packet Sniffer程序，安装及使用方法详见<a target="_blank" rel="noopener" href="http://processors.wiki.ti.com/index.php/BLE_sniffer_guide">BLE sniffer guide</a>（要求Windows环境）。<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/23.png" alt="BLE嗅探"><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/24.png" alt="BLE嗅探"><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/25.png" alt="BLE嗅探">此外，需要注意的是，设备连接建立前，它会在3个信道发送广播（37、38、39），而sniffer只能监听三个频道中的任意一个，所以每次能抓到包的概率是三分之一。<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/26.png" alt="BLE嗅探"></p>
+<h2 id="实战"><a href="#实战" class="headerlink" title="实战"></a>实战</h2><p>关于这部分内容，可详见之前的文章：<a target="_blank" rel="noopener" href="http://www.wireghost.cn/2016/07/07/%E7%88%B1%E6%97%A0%E6%83%A7%E8%B7%9D%E7%A6%BB%EF%BC%8C%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%AF%B9%E6%99%BA%E8%83%BD%E8%B7%B3%E8%9B%8B%E7%9A%84%E5%85%A5%E4%BE%B5/">爱无惧距离，记一次对智能跳蛋的入侵</a></p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><ol>
+<li><a target="_blank" rel="noopener" href="http://www.wowotech.net/bluetooth/ble_stack_overview.html">蓝牙低功耗(BLE)协议栈介绍</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/eker_ch/article/details/50607683">蓝牙学习之旅——低功耗蓝牙之报文（广播报文&amp;数据报文）</a></li>
+<li><a target="_blank" rel="noopener" href="https://developer.android.com/guide/topics/connectivity/bluetooth-le.html#read">Bluetooth开发指南</a></li>
+<li><a target="_blank" rel="noopener" href="http://drops.wooyun.org/tips/10109">物联网安全拔“牙”实战——低功耗蓝牙（BLE）初探</a></li>
+<li>BLUETOOTH SPECIFICATION Version 4.0</li>
+</ol>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/" data-id="cl4bh2x0y000i88w1777dfxi2" data-title="低功耗蓝牙（BLE）安全初探" class="article-share-link">Share</a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/BLE/" rel="tag">BLE</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" rel="tag">学习总结</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          ROM安全梳理
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2016/07/07/%E7%88%B1%E6%97%A0%E6%83%A7%E8%B7%9D%E7%A6%BB%EF%BC%8C%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%AF%B9%E6%99%BA%E8%83%BD%E8%B7%B3%E8%9B%8B%E7%9A%84%E5%85%A5%E4%BE%B5/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">爱无惧距离，记一次对智能跳蛋的入侵</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Android/">Android</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Web/">Web</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%99%BA%E8%83%BD%E8%AE%BE%E5%A4%87/">智能设备</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%89%A9%E8%81%94%E7%BD%91/">物联网</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E/">虚拟现实</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%BB%91%E4%BA%A7%E7%A0%94%E7%A9%B6/">黑产研究</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/BLE/" rel="tag">BLE</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ELF/" rel="tag">ELF</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ROM/" rel="tag">ROM</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%9A%E5%8A%A1%E5%AE%89%E5%85%A8/" rel="tag">业务安全</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8F%8D%E6%B7%B7%E6%B7%86/" rel="tag">反混淆</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" rel="tag">学习总结</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%81%B6%E6%84%8F%E4%BB%A3%E7%A0%81/" rel="tag">恶意代码</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" rel="tag">文件格式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/" rel="tag">模拟器检测</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" rel="tag">源码分析</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9B%B4%E6%92%AD%E4%BA%BA%E6%B0%94/" rel="tag">直播人气</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E6%A2%B3%E7%90%86/" rel="tag">知识梳理</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%B0%83%E7%A0%94/" rel="tag">调研</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%80%86%E5%90%91/" rel="tag">逆向</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%87%8D%E6%94%BE%E6%94%BB%E5%87%BB/" rel="tag">重放攻击</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/BLE/" style="font-size: 13.33px;">BLE</a> <a href="/tags/ELF/" style="font-size: 20px;">ELF</a> <a href="/tags/ROM/" style="font-size: 10px;">ROM</a> <a href="/tags/%E4%B8%9A%E5%8A%A1%E5%AE%89%E5%85%A8/" style="font-size: 10px;">业务安全</a> <a href="/tags/%E5%8F%8D%E6%B7%B7%E6%B7%86/" style="font-size: 10px;">反混淆</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" style="font-size: 10px;">学习总结</a> <a href="/tags/%E6%81%B6%E6%84%8F%E4%BB%A3%E7%A0%81/" style="font-size: 10px;">恶意代码</a> <a href="/tags/%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" style="font-size: 10px;">文件格式</a> <a href="/tags/%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/" style="font-size: 13.33px;">模拟器检测</a> <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" style="font-size: 16.67px;">源码分析</a> <a href="/tags/%E7%9B%B4%E6%92%AD%E4%BA%BA%E6%B0%94/" style="font-size: 10px;">直播人气</a> <a href="/tags/%E7%9F%A5%E8%AF%86%E6%A2%B3%E7%90%86/" style="font-size: 13.33px;">知识梳理</a> <a href="/tags/%E8%B0%83%E7%A0%94/" style="font-size: 13.33px;">调研</a> <a href="/tags/%E9%80%86%E5%90%91/" style="font-size: 13.33px;">逆向</a> <a href="/tags/%E9%87%8D%E6%94%BE%E6%94%BB%E5%87%BB/" style="font-size: 10px;">重放攻击</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">August 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/05/">May 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/04/">April 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">March 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/07/">July 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">March 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">August 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">June 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">April 2015</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/">OLLVM通用反平坦化研究</a>
+          </li>
+        
+          <li>
+            <a href="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/">Android模拟器检测体系梳理</a>
+          </li>
+        
+          <li>
+            <a href="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/">起底薅羊毛灰色产业链</a>
+          </li>
+        
+          <li>
+            <a href="/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/">基于Cache的Android模拟器检测</a>
+          </li>
+        
+          <li>
+            <a href="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/">六间房直播刷人气</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2022 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
