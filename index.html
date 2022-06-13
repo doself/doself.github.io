@@ -199,7 +199,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">Edited on</span>
-      <time title="Modified: 2022-01-23 23:36:44" itemprop="dateModified" datetime="2022-01-23T23:36:44+08:00">2022-01-23</time>
+      <time title="Modified: 2022-06-13 11:24:12" itemprop="dateModified" datetime="2022-06-13T11:24:12+08:00">2022-06-13</time>
     </span>
 
   
@@ -216,130 +216,14 @@
 <blockquote>
 <p>The LLVM Project is a collection of modular and reusable compiler and toolchain technologies. Despite its name, LLVM has little to do with traditional virtual machines. The name “LLVM” itself is not an acronym; it is the full name of the project.</p>
 </blockquote>
-<p>LLVM项目是一个模块化的、可重用的编译器和工具链集合。尽管它的名字与底层虚拟机（low level virtual machine）相似，但它并不是一个缩写，而是整个项目的全名。</p>
-<p><img src="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/llvm.png" alt="llvm"></p>
-<p>在LLVM架构下，不同的前端和后端使用统一的中间代码IR（InterMediate Representation）。由于采用了分离式架构，所以其复用性更强，增加语言&#x2F;平台支持也相对容易。</p>
-<p>Clang是LLVM架构下的C、C++及Objective-C的编译器前端，它主要负责通过词法、语法与语义分析建立AST，并生成IR（中间代码）。然后，优化器会加载当前LLVM IR所使用的Pass，对其进行层层优化。最后，由后端把优化后的代码转化为与平台相关的机器指令，流程如下所示：</p>
-<p><img src="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/compile.png" alt="llvm"></p>
-<p>需要说明的是，在LLVM中，优化以pass的形式实现，每个pass就代表一种优化，它分为三类:</p>
-<pre><code>1. Analysis Passes: 用于信息收集或计算，供其它Pass使用，调试相关信息或使程序可视化，对应路径为lib/Analysis
-2. Transform Passes: 以某种方式转换程序，通常用于改变程序的dataflow/controlflow，对应路径为lib/Transforms
-3. Utility Passes: 主要是提供了一些实用功能，不太适合划分到Analysis及Transform类别的passes就会被纳入其中
-</code></pre>
-<p>至于OLLVM（obfuscator-LLVM），则是基于LLVM Pass实现的开源代码混淆工具，用以增加逆向工程的难度。原版主要提供三种混淆模式，即控制流平坦化（Control Flow Flatten）、虚假控制流（Bogus Control Flow）及指令替换（Instruction Substitution）。尽管后期原作者不再维护该免费版本，但它提供的Pass混淆方案仍然具备很高的参考价值。目前，市面上对于原生代码的混淆技术主要都是在此基础上做的二次开发。</p>
-<h3 id="什么是控制流平坦化"><a href="#什么是控制流平坦化" class="headerlink" title="什么是控制流平坦化"></a>什么是控制流平坦化</h3><p>控制流平坦化就是在不改变函数功能的前提下，将源代码中的if、while、for等控制语句替换成switch-case分支语句，从而将原始的程序结构打平，达到模糊各代码块之间关系的目的。其模型如下图所示：<br><img src="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/model.png" alt="平坦化模型"></p>
-<p>此外，配合基本块分割以及多次的平坦化操作，能够大大降低代码的可读性，从而有效提高破解门槛、保护代码逻辑。<br><img src="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/fla.png" alt="平坦化前后对比"></p>
-<h4 id="Control-Flow-Flatten的实现原理"><a href="#Control-Flow-Flatten的实现原理" class="headerlink" title="Control Flow Flatten的实现原理"></a>Control Flow Flatten的实现原理</h4><p>接下来，将简单了解下平坦化的实现原理，在对它的混淆思路有较深的认识后，也能在一定程度上引导我们如何去做反混淆。原始的Ollvm中，平坦化Pass对应的代码路径为：&#x2F;lib&#x2F;Transforms&#x2F;Obfuscation&#x2F;Flattening.cpp。关于这部分的源码分析，网上有很多资料可以参考，这里就不再赘述。总的来说，大体流程如下: </p>
-<ul>
-<li>消除当前程序中的switch语句，并转换成if-else这种分支调用</li>
-<li>对所有的basic block进行遍历，放到一个容器中，并移除掉第一个基本块</li>
-<li>检查第一个基本块中是否包含条件跳转分支，如果是的话就获取该条指令的地址、进行代码块切割</li>
-<li>将第一个basic block与下一个basic block间的跳转关系删除，并在其末尾新建switchVar变量、赋予它一个随机值</li>
-<li>创建while循环所需要的”loopEntry”、”loopEnd”这两个basic block，并在loopEntry中读取switchVar的值</li>
-<li>创建switch语句中的default跳转对应的swDefault基本块，再通过建立以下连接，构成一个基于switch-case的大循环体<br>  <img src="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/loop.png" alt="main loop"></li>
-<li>把保存在容器中的所有basic block都填充到这个switch框架里，并给每个基本块分配一个随机数作为它的case值</li>
-<li>在每个case块下重设switchVar，使其执行完毕后再回到switch分支语句时，能顺利跳转到下一个case，直到程序结束<ul>
-<li>目标代码块没有后继块，意味着它是一个返回块，不需要处理</li>
-<li>目标代码块只有一个后继块，将switchVar直接更新成后继BB对应的case值即可</li>
-<li>目标代码块拥有两个后继块，也就是一个条件跳转分支，根据条件来选择下一条指令的blockId</li>
-</ul>
-</li>
-</ul>
-<h2 id="反混淆的基本思想"><a href="#反混淆的基本思想" class="headerlink" title="反混淆的基本思想"></a>反混淆的基本思想</h2><p>基于前面的认知，可以知道对抗时主要围绕以下几点：</p>
-<ol>
-<li>找到所有被碎片化的真实块</li>
-<li>有效分析出这些真实块间的关系</li>
-<li>对目标函数进行修复、恢复原始逻辑</li>
-</ol>
-<p>关于真实块的查找这部分，网上的很多资料分享都是通过如下思路来进行甄别：</p>
-<ul>
-<li>函数的开始地址为序言的地址</li>
-<li>序言的后继为主分发器</li>
-<li>后继为主分发器的块为预处理器</li>
-<li>后继为预处理器的块为真实块</li>
-<li>无后继的块为retn块</li>
-<li>剩下的为无用块</li>
-</ul>
-<p>这确实在某种程度上指明了参考方向，但它其实有个问题，就是当混淆很多次之后，这个结构会被破坏掉，并没有一个固定的模式，再加上些编译优化，类似预处理器这样具备明显特征的基本块就找不到了。所以，我们在实际应用中摒弃了这种通过相对关系来定位真实块的方法。</p>
-<p>此外，据说Angr和Miasm这两个符号执行框架对arm64位指令集支持都不是很好，于是最终采用Unicorn模拟执行的方式来确定真实块之间的关系。</p>
-<p>至于最后的修复环节，主要有两个方向：</p>
-<ol>
-<li>打patch，即通过jump指令或者一些条件跳转指令试图将它们重新连接起来</li>
-<li>提取出所有真实块的指令，并根据它们之间的关系，计算相对偏移，据此对函数进行重构</li>
-</ol>
-<p>其中前者是不可靠的，因为真实情况远要复杂的多。譬如当一个真实块拥有三个及以上后继节点（通常是一个公共基本块）时，就无法直接patch。故从长期来看，基于位置偏移的指令重编译才是终极的解决方案。但这块需要对指令集有较深的认识，并且工作量也很大，所以当下使用的是半自动化选择性修复，存在一定缺陷。</p>
-<h2 id="基于Unicorn模拟执行框架实现平坦化的去除"><a href="#基于Unicorn模拟执行框架实现平坦化的去除" class="headerlink" title="基于Unicorn模拟执行框架实现平坦化的去除"></a>基于Unicorn模拟执行框架实现平坦化的去除</h2><h3 id="找出所有的真实块"><a href="#找出所有的真实块" class="headerlink" title="找出所有的真实块"></a>找出所有的真实块</h3><p>结合前面对平坦化的原理分析，我们知道它的本质逻辑就是把原始的基本块都碎片化，再通过switch-case语句，对函数的执行流进行重建。那么，在做反混淆的时候，就可以尝试根据主分发器将这些执行链给一条条的拆解出来，具体划分为三类：</p>
-<ul>
-<li>入口链：原始函数代码的入口逻辑链，为序言到主分发器的执行路径</li>
-<li>循环链：入口及出口均为主分发器的流程链，对应混淆过程中的循环体</li>
-<li>Return链：指代入口为主分发器，出口为目标函数结束地址的流程链</li>
-</ul>
-<p>其中，入口链比较特殊，因为没有分发器这样的控制块，所以在不考虑虚假控制流的情况下，它里面的代码全都是真实指令。于是，问题就变成了如何找出循环链及Return链中的真实块。这里有个思路，就是由于在原始程序中，每个真实块都有唯一的随机数，所以我们可以反过来利用这种对应关系进行定位。</p>
-<p><img src="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/route.png" alt="分发器路由定位真实块"></p>
-<p>如上图所示，可以注意到尽管Ollvm在编译的时候会采用二分的思想做路径优化，进而产生很多类似BLE、BGT这样的区间判断指令来做分发、寻路，但若想要定位到一个真实块，就仍必须得有个绝对的比较指令，即 BEQ 或者 BNE。</p>
-<p>所以，针对那些非入口链的执行路径，我们可以从主分发器开始向下查找，当首次匹配到 BEQ 或者 BNE 这种绝对比较的跳转指令时，就能定位出对应流程链中的真实块入口地址。然后，基于真实块后面通常跟的也是真实块的逻辑，从而识别出全部的真实基本块。</p>
-<p>这里有个稍微需要注意的点，就是前面提到的”真实块连续性”问题。它其实是有例外的，因为每条循环链都要在末尾重新修改switchVar的值，用以指定下一条执行链。然后，这部分代码在优化时可能会脱离真实的指令部分，成为一个独立的块，如下：</p>
-<p><img src="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/fake.png" alt="流程链末尾基本块"></p>
-<p>这就导致我们找出来的”真实块”可能混有一部分的虚假块，针对这种情况，有个比较简单的思路，就是对每条循环链中的末位基本块进行过滤。如果它的指令个数小于3，那么它大概率就是在做一些跟switchVar相关的赋值操作，属于垃圾代码。但是也可能会带来一定的误伤，所以这块还是需要人工介入进行排查，或者后期引入机器学习来做特征码识别加以解决。</p>
-<p>至于如何确定主分发器，这个就非常简单啦，直接遍历目标函数下的所有基本块，并计算每一个Block的引用次数，数量最多的那个就是主分发器。</p>
-<h3 id="通过模拟执行确认各真实块之间的关系"><a href="#通过模拟执行确认各真实块之间的关系" class="headerlink" title="通过模拟执行确认各真实块之间的关系"></a>通过模拟执行确认各真实块之间的关系</h3><p>前面已经把所有的真实块都识别了出来，接下来就是要找出它们之间的关系。然后，由于每条执行链中的前后关系是已经明确下来的，所以我们只需确认这些流程链之间的顺序就好。这也就意味着上一步中可能携带的”虚假块”不会影响到这里的操作，它所带来的干扰主要是在修复层面，即一个无效块被认知为真实块的情况下，导致其拥有复数个后继节点时的Patch问题。</p>
-<p>继续回来看”真实块关系确认”的问题，方才已经提到主要思路就是要找出各流程链之间的执行顺序，那么具体要怎么操作呢？首先，我们已经知道了在每条执行流的末尾都会去重设switchVar，以指定它要去寻路的下一个真实块。然后，据此为突破点，通过对除Return链以外的流程链进行模拟执行，就可以计算出它回到主分发器时的值。根据这个值，就能把前面找到的流程链给关联起来，拼接、合并成由一系列真实块所组成的逻辑链。</p>
-<p>然后，需要注意的是，在ARM中有很多IT(T)、CSEL等条件指令，对应那种if-else分支语句。其出现的目的，主要就是能够起到指令压缩的作用，占用更小的空间、提高执行效率。但Unicorn框架是没法识别这类指令的，所以我们得先将这些条件选择指令转义成条件跳转指令，从而切割基本块，再去做模拟执行。</p>
-<p>此外，通过switchVar变量来关联各流程链在实际应用时会遇到个问题，就是其存储形态不确定。它有可能是个寄存器，也可能是个栈变量，这样就给自动化带来了困难。于是，我们又想到了一个替代方案，即利用执行流返回主分发器时的上下文环境来做关联，因为每条流程链的出口上下文环境里必然存在用于寻路的ID号。对比前者而言，通用性更强，实施步骤如下：</p>
-<ul>
-<li>在Unicorn虚拟机实例中自定义强制模式（force mode）及常规模式（nature mode），并添加指令级Hook回调<ul>
-<li><strong>强制模式（force mode）</strong>：若识别到当前指令是条跳转指令，则会根据当前地址和指令长度算出下一条指令的地址，写入到PC寄存器，从而实现对所有跳转指令的禁用，以确保代码能够按照既定的路径执行</li>
-<li><strong>常规模式（nature mode）</strong>：对比 force mode 而言，放开了前面的那种限制条件，允许跳转范围在函数内部的指令运行，并且当指令地址等于前面记录的真实块入口地址或函数的结束地址时，就自动停下、防止跑飞</li>
-</ul>
-</li>
-<li>将当前的虚拟机实例设置为 force mode，对所有的入口链进行模拟执行，从而获取其运行到主分发器时的上下文</li>
-<li>进一步的，再根据前面得到的上下文环境，对所有的循环链进行模拟执行，得到它们返回主分发器时的出口上下文</li>
-<li>模式切换到 nature mode，以每条循环链的出口上下文，调用主分发器做模拟执行，找出对应的下一个真实块入口地址</li>
-<li>根据上述信息，对所有的流程链进行合并、生成逻辑链，还原被替换的选择指令、恢复函数原始的CFG图</li>
-</ul>
-<p>如是一来，我们就成功的找出了所有真实块之间的关系。其实到这里，已经可以在一定程度上辅助做逆向分析，只是不能F5看伪代码。接下来，只需要将那些虚假块给NOP掉，再通过 patch 或者 rebuild 的方式对目标函数进行重建，就能够恢复函数的原始逻辑了。</p>
-<p>然后，还需要补充说明的是，做平坦化去除的时候，一定要先干掉虚假控制流！这点非常重要，否则将互相干扰，直接影响到该环节的输出。</p>
-<p><img src="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/bcf.png" alt="虚假控制流"></p>
-<p>如上图所示，若我们不去管这块，那么模拟的时候便会跑到一些原本根本不会执行到的假分支，这样在确认真实块之间的关系时，就会出现问题。怎么办呢？之前个人曾参考葫芦娃在看雪上发布的<a target="_blank" rel="noopener" href="https://bbs.pediy.com/thread-257213.htm">Hex-Rays: 十步杀一人，两步秒OLLVM-BCF</a>这篇文章，想到了一个临时的补救措施：</p>
-<ol>
-<li>先把这些不透明谓词对应的变量用<code>const</code>修饰为只读，然后把它的值改为0</li>
-<li>选择性的去拆解条件选择指令，只对覆盖到基本块尾部的条件选择指令进行转义</li>
-</ol>
-<p>考虑到switchVar通常都是在基本块的末尾被重新赋值，只有它会直接决定真实块的走向。至于其他的条件判断则不会在该时机产生影响，所以就可以不用拆解。这样做的好处是，一来能减少计算的复杂度，二来就是当存在上面的这种虚假控制流时，让Unicorn虚拟机直接略过ITT类条件选择指令，走向正确的分支。</p>
-<p><img src="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/itt.png" alt="条件选择指令"></p>
-<p>但它也随之带来了很多麻烦，因为后面发现在引入虚假控制流后，其整体结构变得非常复杂，经常出现如下这种情况：</p>
-<p><img src="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/after_branch.png" alt="分支后处理"></p>
-<p>以上图为例，loc_9E4E这个基本块的主要行为就是调用外部的偏移函数sub_753E8，检查它的返回值是否为0，然后据此存个布尔值到<code>[SP,#0x70+var_68]</code>变量中。需要注意的是，这段代码加了虚假控制流，其出口ID固定为0x64E831A8，这说明它的后继节点只有一个。然后，通过分发寻路找到了loc_9FF0基本块，它的作用就是读取<code>[SP,#0x70+var_68]</code>变量，并左移31位，再根据这个条件判断赋给switchVar不同的值。于是，这就产生了一个问题，即前面的补救措施反而不能处理这种需要去拆解的条件指令了。</p>
-<p>像上面那种情况，其实可以发现原本的条件判断就在loc_9E4E中，但因为加了虚假控制流，多了些假分支。所以在做平坦化的时候，就会先去打平那些由BCF所带来的分支块，以至于原始的条件判断被压缩到了一个临时变量里，再到新的基本块中进行处理。然后，这时候我们发现会影响到出口ID的条件选择指令不一定刚好覆盖到基本块的末尾，它下面可能还有2、3条指令。</p>
-<p>既然如此，就说明前面那种临时的解决方案是行不通的。在处理平坦化之前，必须要先搞定虚假控制流的问题。葫芦娃的那篇文章，角度虽然清奇，但只能从借由IDA的F5功能优化掉这部分的伪代码。从CFG的角度，虚假块依然存在，并没有被消除。这样当我们通过模拟执行所有路径获取对应的出口上下文时，就会把一些假分支也带上，从而返回个错误的输出结果。所以，目前对于那些同时上了平坦化和虚假控制流的样本，处理能力就比较受限。当下能想到的办法，就是先结合伪代码把基本块中跟虚假指令相关的条件分支给过滤掉，然后再按照前面的思路分割基本块、模拟执行找关系。然而，当处理一个大型函数时，光是这种人工操作就很费事。。</p>
-<h3 id="重建各真实块之间的联系、恢复原始逻辑"><a href="#重建各真实块之间的联系、恢复原始逻辑" class="headerlink" title="重建各真实块之间的联系、恢复原始逻辑"></a>重建各真实块之间的联系、恢复原始逻辑</h3><p>在经过前面两轮的分析后，我们终于走到了修复阶段。然后，早前就已经说明，Patch这种方案是不可靠的，没法完全自动化。但由于目前不具备指令重编译的能力，所以只能先选用这种方案，再结合具体场景选择性是否要人工介入，步骤如下：</p>
-<ul>
-<li>NOP掉分发器、公共前缀基本块（指代switch结构预处理基本块）等虚假块</li>
-<li>根据逻辑链，找出每个真实块的所有后继，并根据它们的数量以及跳转范围，来判断是否可直接Patch<ul>
-<li>目标真实块只有一个后继，这种就很简单了，直接在该基本块的末尾进行patch、指向下一个节点的地址就好</li>
-<li>目标真实块拥有两个后继，到这里就得看情况了，不一定能自动修复的，大体可分为两类：<ol>
-<li>该真实块中包含条件选择指令，那么在该条指令地址及基本块尾部进行patch即可<ul>
-<li>这里需要注意的是，诸如BGT这样的条件跳转是有长度限制的，所以得先计算下条件分支指令所在的地址与目标地址的偏移值，如果过大就要做指令分割</li>
-</ul>
-</li>
-<li>该真实块中不包含条件选择指令，说明让它产生分歧的原因不在其内部，而是由于它的前驱。也就是说，它存在代码复用的情形，不同的调用者会得到不同后继。<ul>
-<li>这种情况，我们只能让它先指向一个后继块，然后在Nop后的空白区域里把这部分代码给拷贝一遍，并重新建立它跟另一个前驱块和后继块之间的联系</li>
-</ul>
-</li>
-</ol>
-</li>
-<li>至于那种存在3个及以上后继节点的真实块，几乎可直接判定它就是一个公共块，处理思路与前面类似</li>
-</ul>
-</li>
-</ul>
-<p><img src="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/patch.png" alt="Patch公共基本块"></p>
-<p>最后，我们再来简单处理一个带有虚假控制流的反混淆案例，测试下效果：</p>
-<p><img src="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/anti_confuse.png" alt="反混淆"></p>
-<p>这个函数比较简单，所以虚假控制流基本没带来什么影响，对应的伪代码如下：</p>
-<p><img src="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/F5.png" alt="伪代码"></p>
-<p>当然，我们其实是可以处理一些复杂函数的，但前提是要先去过滤掉虚假控制流，人工介入的成本较高，这里就不展示了。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>由于反混淆本身是套链式操作，每一步的输出结果都会对后面的输入造成影响，而这些过程中又有很多的细节以及需要注意的问题，所以可能就是无法完全自动化。但这种去平坦化的思路确实是比较通用的，只是在引入虚假控制流等其他混淆模式后，复杂度又上升了一个层次。所以实际应用时，必须要先去除掉虚假控制流所带来的干扰，再来做反平坦化。</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -401,7 +285,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">Edited on</span>
-      <time title="Modified: 2018-05-15 22:40:34" itemprop="dateModified" datetime="2018-05-15T22:40:34+08:00">2018-05-15</time>
+      <time title="Modified: 2022-06-13 11:27:05" itemprop="dateModified" datetime="2022-06-13T11:27:05+08:00">2022-06-13</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -424,83 +308,14 @@
     
     <div class="post-body" itemprop="articleBody">
           <p>模拟器作为一种虚拟机，配合改机工具，能够以较低成本实现设备多开，因此而备受黑灰产的青睐。如何准确识别模拟器成为App开发中的一个重要模块，目前也有专门的公司提供相应的SDK供开发者识别模拟器。通过前段时间对模拟器检测技术的调研，希望能总结出一套特征挖掘的体系化方案。</p>
-<h2 id="模拟器概述"><a href="#模拟器概述" class="headerlink" title="模拟器概述"></a>模拟器概述</h2><h3 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h3><p>安卓模拟器是一种可以运行在电脑上的虚拟设备，通过它可以实现应用的跨平台操作，让移动端APP无需任何改动即可在PC上执行。</p>
-<h3 id="特性"><a href="#特性" class="headerlink" title="特性"></a>特性</h3><h4 id="优势"><a href="#优势" class="headerlink" title="优势"></a>优势</h4><p>随着技术的不断发展，目前模拟器基本已经能够完成手机90%以上的功能。此外，由于在PC端工作，与传统手机相比，具有以下几点优势：</p>
-<ul>
-<li><strong>更炫</strong>：支持大屏幕、提供更炫酷的视觉效果，从而能够天然的将一些移动端由于适配成客户端应用；</li>
-<li><strong>易上手</strong>：支持鼠标、键盘、手柄、摄像头等众多硬件外设，将操作方式从手指运动中解放出来，发挥外设的优势；</li>
-<li><strong>更强的性能</strong>：通过模拟器可自定义配置性能参数，发挥PC硬件性能优势，跑分数据远超手机，使得高配游戏运行不再卡顿；</li>
-<li><strong>更好的操控性</strong>：通过虚拟按键功能，能够将任意点触操作、震动、摇摇等手机独有操作映射到键盘的自定义按键，更加简易、便捷；</li>
-<li><strong>使用PC工具</strong>：利用PC端其他辅助工具完成对移动端应用的支持，如通过按键精灵完成自动挂机等操作，解放双手；</li>
-<li><strong>模拟多人操作</strong>：通过模拟器多开功能，零成本体验同时多部手机、多个账户开小黑屋，实现刷单的快感；</li>
-<li><strong>更便捷的虚拟定位功能</strong>：通过模拟器虚拟定位，让你轻松落脚五湖四海；</li>
-<li><strong>再也不用担心电池电量、手机流量了…</strong></li>
-</ul>
-<h4 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h4><p>此外，Android模拟器鉴于自身技术瓶颈，也存在以下普遍问题：</p>
-<ul>
-<li><strong>性能</strong>：运行时普遍需要占据较大的CPU、内存等资源，导致低配机运行不流畅。此外，即便是高配机，多开也很容易出现卡顿等现象；</li>
-<li><strong>稳定性</strong>：模拟器技术本身的BUG导致的闪退、花屏、无响应等现象；</li>
-<li><strong>兼容性</strong><ul>
-<li><strong>硬件兼容性</strong>：主要表现为大部分模拟器对AMD架构PC的不支持；</li>
-<li><strong>应用兼容性</strong>：比如部分模拟器尚不兼容ARM架构的APP，又或者某些应用对安卓内核、虚拟机的调用方式比较底层，当模拟器对这些接口支持的不好时，表现为该类程序无法在模拟器上运行；</li>
-<li><strong>PC系统兼容性</strong>：表现为模拟器主要适配Windows主流平台，而能在Mac下运行的很少，且过低、过高版本支持的不好（如XP之前版本、Win 10，市面上某些定制的平板系统等）；</li>
-<li><strong>安卓系统兼容性</strong>：目前模拟器上的Android系统仍然停留在4.x，部分达到5.1，使得部分对安卓版本有要求的应用或游戏在模拟器上运行体验不好。</li>
-</ul>
-</li>
-</ul>
-<h2 id="底层关键技术"><a href="#底层关键技术" class="headerlink" title="底层关键技术"></a>底层关键技术</h2><h3 id="虚拟化技术"><a href="#虚拟化技术" class="headerlink" title="虚拟化技术"></a>虚拟化技术</h3><p>模拟器是用软件来模拟硬件操作，这就需要用到虚拟化技术。广义的虚拟化，是指将网络、CPU、内存及存储等各种实体资源，予以抽象、转换后呈现出来，进而打破实体结构间不可切割的障碍，使用户可以比原本的组态更好的方式来应用这些资源。我们所熟知的虚拟机就是虚拟化技术中的一种，通常来说它们只是模拟了一套与Host主机相同架构、相同指令集的硬件平台，不涉及内存和CPU的虚拟化。所有的Android模拟器都在不同程度上运用了虚拟化技术，比如雷电、夜神，包括Bluestack模拟器是基于Virtualbox虚拟机，谷歌原生模拟器和红手指云模拟器则是应用了Qemu的虚拟化技术。</p>
-<h4 id="CPU虚拟化"><a href="#CPU虚拟化" class="headerlink" title="CPU虚拟化"></a>CPU虚拟化</h4><p>目前，已知的所有ARM架构的模拟器都是基于Qemu虚拟机。Qemu采用的是纯软件模拟，在物理机的操作系统上创建一个模拟硬件的程序来仿真所有想要的硬件，然后在上面跑ARM运行时。在这种环境下，由于程序每次执行都需要将其翻译成宿主机（X86）的指令，导致性能非常低下，这也是原生模拟器不够流畅的原因之一。</p>
-<h4 id="ARM-Translation"><a href="#ARM-Translation" class="headerlink" title="ARM Translation"></a>ARM Translation</h4><p>当下主流的Android模拟器都是X86架构，基于Virtualbox虚拟机。由于不需要做CPU虚拟化，少了一层指令集转换过程，因此在运行支持X86架构的app时，就和普通的虚拟机没有区别，速度也就明显提高了很多。<br>此外，针对ARM架构的兼容性问题，普遍采用的是半虚拟化，根据二进制翻译技术将ARM指令动态翻译成X86指令。</p>
-<h2 id="黑产常用的模拟器"><a href="#黑产常用的模拟器" class="headerlink" title="黑产常用的模拟器"></a>黑产常用的模拟器</h2><p>目前市面上安卓模拟器软件种类繁多，有51、mumu、蓝叠、夜神、逍遥、海马玩、雷电等等。通过在黑产聚集论坛、QQ群等多个渠道进行调研，我们发现黑产当下常用的是夜神、雷电和逍遥模拟器。<br><img src="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/3.png"><img src="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/1.png"><img src="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/2.png">可以注意到，这些模拟器的共通点是都自带修改设备参数、多开、操作录制和虚拟定位等功能。<br><img src="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/5.png"><img src="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/4.png"><img src="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/6.png"><img src="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/7.png"></p>
-<h2 id="模拟器检测技术框架"><a href="#模拟器检测技术框架" class="headerlink" title="模拟器检测技术框架"></a>模拟器检测技术框架</h2><p>模拟器检测的本质就是要利用模拟器和真机之间的微小差异，从而判断当前设备是否为模拟器，具体检测技术框架整理如下：<br><img src="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/8.png"></p>
-<h3 id="如何挖掘特征"><a href="#如何挖掘特征" class="headerlink" title="如何挖掘特征"></a>如何挖掘特征</h3><p>结合前面梳理出的模拟器检测框架，后续在做相应的特征挖掘时，可直接根据该脑图做进一步的完善和加强。</p>
-<table><tr><td>特征项</td><td colspan="2">细分点</td><td>描述</td><td>备注</td></tr><tr><td rowspan="2">软件信息</td><td>应用层</td><td></td><td></td> <td></td></tr><tr><td>系统库</td><td></td><td></td><td></td></tr><tr><td rowspan="3">无线射频</td><td>WIFI</td><td></td><td></td><td></td></tr><tr><td>GPS</td><td></td><td></td><td></td></tr><tr><td>…</td><td></td><td></td><td></td></tr><tr><td rowspan="9">硬件信息</td><td rowspan="3">底层硬件</td><td>CPU</td><td></td><td></td></tr><tr><td>电池</td><td></td><td></td></tr><tr><td>设备参数</td><td></td><td></td></tr><tr><td rowspan="6">硬件抽象层</td><td>图形</td><td></td><td></td></tr><tr><td>相机</td><td></td><td></td></tr><tr><td>蓝牙</td><td></td><td></td></tr><tr><td>输入</td><td></td><td></td></tr><tr><td>存储</td><td></td><td></td></tr><tr><td>传感器</td><td></td><td></td></tr><tr><td rowspan="4">文件系统（重点关注Linux内核相关）</td><td>检查/sys硬件驱动信息</td><td></td><td></td><td></td></tr><tr><td>检查/dev设备节点特征</td><td></td><td></td><td></td></tr><tr><td>检查/proc运行时的内核信息映射</td><td></td><td></td><td></td></tr><tr><td>…</td><td></td><td></td><td></td></tr></table>
-
-<p>此外，基于文件系统差异的特征挖掘，具体可参考Android根目录文件结构进行操作，以下是几个重要的目录&#x2F;文件的说明：</p>
-<ul>
-<li>&#x2F;mnt：挂载点目录</li>
-<li>&#x2F;etc：指向 &#x2F;system&#x2F;etc ，系统配置文件所在目录</li>
-<li>&#x2F;data：存放用户安装的应用以及各种数据</li>
-<li>&#x2F;system：Android系统目录文件夹</li>
-<li>&#x2F;dev：设备节点文件存放地</li>
-<li>&#x2F;sys：用于挂载 sysfs文件系统，在设备模型中，sysfs文件系统用来表示设备的结构，将设备的层次结构形象的反应到用户空间中</li>
-<li>&#x2F;proc：这是一个虚拟的文件系统，不占用实际存储空间。它以文件系统的方式为访问系统内核的操作提供接口，动态从系统内核中读出所需信息</li>
-<li>init.rc：启动脚本</li>
-<li>default.prop：系统属性配置文件</li>
-</ul>
-<h3 id="对应的检测弱点"><a href="#对应的检测弱点" class="headerlink" title="对应的检测弱点"></a>对应的检测弱点</h3><h4 id="基于模拟器结构特征"><a href="#基于模拟器结构特征" class="headerlink" title="基于模拟器结构特征"></a>基于模拟器结构特征</h4><h4 id="利用任务调度检测模拟器"><a href="#利用任务调度检测模拟器" class="headerlink" title="利用任务调度检测模拟器"></a>利用任务调度检测模拟器</h4><h5 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h5><p>模拟器与真机的本质区别在于运行载体，市面上已知的ARM模拟器都是基于qemu虚拟机。由于qemu在执行程序时实际上是将其翻译成宿主机的指令，比如将安卓的arm指令翻译成PC的x86指令。为了效率上的考虑，qemu在翻译执行arm指令时并没有实时更新模拟的pc寄存器值，只会在一段代码翻译执行完之后再更新，而真机中pc寄存器是一直在更新的。根据这一点，可以设计一段CPU任务调度程序来检测模拟器。<br><img src="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/9.png"></p>
-<h5 id="优缺点"><a href="#优缺点" class="headerlink" title="优缺点"></a>优缺点</h5><p>优点：因为是基于qemu的二进制翻译技术来做特征检测，所以能够很好的识别这类Android模拟器。<br>缺点：</p>
-<ol>
-<li>需要自己设计反应离散程度的算法来统计任务调度的地址分布情况，想要实际应用到SDK有些困难</li>
-<li>会执行汇编代码，在不同的机器设备上需要考虑稳定性和兼容性等问题</li>
-</ol>
-<h4 id="利用cache特性检测Android模拟器"><a href="#利用cache特性检测Android模拟器" class="headerlink" title="利用cache特性检测Android模拟器"></a>利用cache特性检测Android模拟器</h4><h5 id="原理-1"><a href="#原理-1" class="headerlink" title="原理"></a>原理</h5><p>由于绝大部分手机都是基于ARM架构，而模拟器几乎全部是运行在PC的X86架构上。因此，可以利用ARM与X86的底层缓存行为差异来判断是否为真机。<br>具体来说，ARM采用的是将指令存储与数据存储分开的哈佛架构，L1 Cache（一级缓存）被分成了平行的两块，即I-Cache（指令缓存）和D-Cache（数据缓存），而X86采用的是将指令存储和数据存储合并在一起的冯•诺伊曼结构，L1 Cache是连续的一块缓存。所以，如果我们通过读写地址指令的方式对一段可执行代码进行动态修改，那么在执行的时候，X86架构上的指令缓存会被同步修改，而对ARM架构而言，这种数据读写操作修改的只是D-Cache中的内容，此时I-Cache中的指令并不会被更新。<br><img src="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/10.png"></p>
-<h5 id="优缺点-1"><a href="#优缺点-1" class="headerlink" title="优缺点"></a>优缺点</h5><p>优点：能够准确的识别arm和x86架构。<br>缺点：要执行汇编代码，在不同的机器设备上需要考虑稳定性和兼容性等问题。实测发现容易引起崩溃，需要配合多进程予以解决。</p>
-<h4 id="基于Android体系架构"><a href="#基于Android体系架构" class="headerlink" title="基于Android体系架构"></a>基于Android体系架构</h4><h5 id="应用层行为数据"><a href="#应用层行为数据" class="headerlink" title="应用层行为数据"></a>应用层行为数据</h5><p>这种检测方案本质上是对正常用户的行为模式进行统计分析，它也许不能有效的对真机和模拟器进行区分，但可以作为风险设备画像的一个参考维度。</p>
-<h5 id="无线射频"><a href="#无线射频" class="headerlink" title="无线射频"></a>无线射频</h5><h6 id="WIFI"><a href="#WIFI" class="headerlink" title="WIFI"></a>WIFI</h6><p>检查WIFI列表这种方式，目前没发现明显缺点。当正常手机接入WIFI的时候，周边往往有复数的WIFI信号，而模拟器由于不具备检索周边WIFI的能力，其WIFI列表通常为空或者只有一个WIFI。</p>
-<h6 id="GPS"><a href="#GPS" class="headerlink" title="GPS"></a>GPS</h6><p>这种检测手法的原理是基于模拟器没有真实的GPS模块，通常无法获取到地理位置信息。缺点是部分用户在实际使用中可能会关闭该权限，导致获取不到数据。</p>
-<h5 id="硬件信息"><a href="#硬件信息" class="headerlink" title="硬件信息"></a>硬件信息</h5><h6 id="底层硬件"><a href="#底层硬件" class="headerlink" title="底层硬件"></a>底层硬件</h6><ul>
-<li>CPU  <ol>
-<li>型号：正常x86手机的cpu型号为intel atom，arm则是联发科，高通，麒麟等。缺点是需要大盘做数据分析，另外可能要结合手机型号等其他维度才能做一个比较好的识别。  </li>
-<li>温度：目前来看应该是比较靠谱的，缺点是需要大量的数据统计做支撑，不排除有误杀的可能。</li>
-</ol>
-</li>
-<li>电池<br>  需要在后台多次采集数据，检验电压、电量是否有实时变化，实际应用起来有些困难。。</li>
-<li>设备<br>  通过系统API获取手机硬件参数，可以说是非常传统的模拟器检测方案了。也正是因为传统，基本上都知道会获取哪些信息，所以缺点是很容易遭到篡改。</li>
-</ul>
-<h6 id="硬件抽象层"><a href="#硬件抽象层" class="headerlink" title="硬件抽象层"></a>硬件抽象层</h6><ul>
-<li>相机<br>  通过提取摄像头参数信息，可以有效的识别当前设备是否为“主流手机”。缺点是考虑到平板、学习机等“冷门设备”的存在，不能直接区分出模拟器，需要结合其他维度一起使用，且需要接入的APP有打开摄像头的权限。</li>
-<li>蓝牙<br>  若想从API层面进行检测，那就必须先开启蓝牙，而这个需要弹框让用户确认。</li>
-<li>输入<br>  缺点是对触摸事件的处理是在前台完成的，如果是作为SDK可能不是很好接入和应用。</li>
-<li>存储  <ol>
-<li>闪存分区<br> Android系统的更新以及刷机等方式都有可能导致分区的变化，目前来看，在高版本的机器上检查mmcblk、dm-x分区并不是一个靠谱的特征，需要配合其它维度一起使用。</li>
-<li>&#x2F;mnt挂载<br> 这种文件名的检测手法只能针对性的做特定模拟器检测、不通用，且很容易通过版本更新、改名等手段进行绕过。</li>
-</ol>
-</li>
-<li>传感器<br>  除判断设备有支持哪些传感器外，若想要做更进一步的验证，就仍然绕不开多次采集数据的问题。</li>
-</ul>
-<h5 id="文件系统"><a href="#文件系统" class="headerlink" title="文件系统"></a>文件系统</h5><p>特点是用于做特征检出的目录文件与底层硬件的关联性越强，其效果越好，反之越可能失效。建议尽量提取和虚拟机、硬件驱动相关的文件特征，缺点是部分特征可能需要结合大量的机型数据做可靠性验证。</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -562,7 +377,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">Edited on</span>
-      <time title="Modified: 2019-02-02 17:12:16" itemprop="dateModified" datetime="2019-02-02T17:12:16+08:00">2019-02-02</time>
+      <time title="Modified: 2022-06-13 11:27:40" itemprop="dateModified" datetime="2022-06-13T11:27:40+08:00">2022-06-13</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -585,38 +400,14 @@
     
     <div class="post-body" itemprop="articleBody">
           <h2 id="薅羊毛的概念与发展"><a href="#薅羊毛的概念与发展" class="headerlink" title="薅羊毛的概念与发展"></a>薅羊毛的概念与发展</h2><h3 id="薅羊毛的由来与概念"><a href="#薅羊毛的由来与概念" class="headerlink" title="薅羊毛的由来与概念"></a>薅羊毛的由来与概念</h3><p>上世纪末，宋丹丹和赵本山在央视春晚舞台出演了一个小品——《昨天、今天、明天》。在小品中，宋丹丹饰演的白云利用自己给生产队放羊的便利条件，揪羊毛搓毛线，给老板黑土织了一件毛衣，被扣上“薅社会主义羊毛”的罪名，这便是“薅羊毛的鼻祖”。<br>现实生活中，普通的薅羊毛行为指消费者通过领取优惠券、获得折扣或返现等方式从交易活动中获取实惠，这种属于正常的交易行为，没有上升到业务欺诈的层次。<br>本文接下来探讨的薅羊毛均指羊毛党以营利为目的，有组织地针对商家活动进行大规模的薅羊毛攻击行为。</p>
-<h3 id="羊毛党的发展历程"><a href="#羊毛党的发展历程" class="headerlink" title="羊毛党的发展历程"></a>羊毛党的发展历程</h3><h4 id="起源"><a href="#起源" class="headerlink" title="起源"></a>起源</h4><p>羊毛党，起源于互联网金融的P2P平台，指代那些专门选择互联网渠道的优惠促销活动，以低成本甚至零成本换取物质上的实惠的人。初级羊毛党多是一些“爱占小便宜”的散客，凡有活动就薅，不计风险，只赚取返现和注册金。它们常常是零散的进行薅羊毛活动，盈利也比较低。<br><img src="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/1.png" alt="羊毛党"></p>
-<h4 id="发展"><a href="#发展" class="headerlink" title="发展"></a>发展</h4><h5 id="组织化"><a href="#组织化" class="headerlink" title="组织化"></a>组织化</h5><p>中级羊毛党常通过一些羊毛群获得相关资讯，积极参加薅羊毛活动，开始呈现出一种松散的组织形态。这个阶段，它们不仅赚返现，对于一些收益高又可靠的平台，也会投入一些资金进去。比如，投2000元一月标，收益率为9%，除掉网贷平台的中介费用，额外赚14元左右，再加上投资额的1%返利和100元的直接返现，总收益大约134元。以此计算，则平均到年化收益高达80%。</p>
-<h5 id="专业化"><a href="#专业化" class="headerlink" title="专业化"></a>专业化</h5><p>初级和中级羊毛党本质上都属于第一代羊毛党，是精打细算的“业余玩家”。现在要说的是“专职羊毛党”，他们是工具化的“职业玩家”，属于第二代羊毛党。小号软件、虚拟号注册器等工具可以自动注册大量的新号码，接码平台可以专门接收验证码，代理IP使其落脚五湖四海。</p>
-<h5 id="集团化"><a href="#集团化" class="headerlink" title="集团化"></a>集团化</h5><p>累积了大量的资源，有组织有纪律、分工明确、规模感人的羊毛党公司、团伙出现了。不再满足于只在底端薅羊毛，他们开始着手养小号、开发短信收发平台、制作刷单软件、规模化组织刷单、变卖套现等环节，逐渐形成一条完备的产业链。<br>比较专业的羊毛党，通常都是以集团的方式出现的，羊毛党群体之间交流的信息都大量的集中在各类网赚论坛、QQ群或暗网中。只要在搜索框内输入“羊毛”两个字，就会出现一堆薅羊毛的公众号和网赚论坛，而且这些论坛和公众号的用户几乎都属于羊毛党。不信？截图给你们看：<br><img src="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/2.png" alt="羊毛党"></p>
-<h2 id="运作模式与角色分工"><a href="#运作模式与角色分工" class="headerlink" title="运作模式与角色分工"></a>运作模式与角色分工</h2><h3 id="薅羊毛地下产业运作模型"><a href="#薅羊毛地下产业运作模型" class="headerlink" title="薅羊毛地下产业运作模型"></a>薅羊毛地下产业运作模型</h3><p>实施一次完整的薅羊毛攻击，需要跑通以下几个环节：评估风险找到适合下手的活动 -&gt; 获取到大量的对应平台账号 -&gt; 通过购置真机并结合其他技术手段得到大量的设备 -&gt; 购买代理软件获取大量的IP池 -&gt; 购买各种自动化工具进行批量操作 -&gt; 执行薅羊毛 -&gt; 利益变现 -&gt; 分赃。<br>进一步的，我们可以拆解出整个薅羊毛地下产业链的运作模型，如下图所示：<br><img src="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/3.png" alt="薅羊毛产业运作模型"></p>
-<h3 id="主要角色"><a href="#主要角色" class="headerlink" title="主要角色"></a>主要角色</h3><h4 id="黑客"><a href="#黑客" class="headerlink" title="黑客"></a>黑客</h4><p>黑客基本贯穿在整个薅羊毛产业链中：</p>
-<ul>
-<li>到各大平台挖掘漏洞</li>
-<li>编写恶意程序，钓鱼盗号</li>
-<li>破解协议算法，绕过各种设备验证</li>
-<li>通过社工或撞库，获取黑卡资料、身份信息</li>
-<li>开发制作各种软件，如自动注册机、自动刷单器、改机工具、按键精灵脚本等</li>
-<li>与代理或者广告商（团伙工作室）合作，维护接码、打码平台及代理的公司网站</li>
-</ul>
-<h4 id="平台-x2F-代理商"><a href="#平台-x2F-代理商" class="headerlink" title="平台&#x2F;代理商"></a>平台&#x2F;代理商</h4><p>平台为了吸引活跃用户，获取到投资，往往会和广告公司或者CPS推广公司这类代理商合作，平台则按照用户的注册数量来进行费用结算。而当这些公司在短时间内难以达到平台的预期时，就会选择跟羊毛党合作，也就是所谓的找“刷子”。<br>此外，对于一些处于初创期间的互联网金融公司，为了能够快速积累用户规模和交易规模，有时候自己也会主动搭上羊毛党帮忙刷量，以期望推动平台快速发展。</p>
-<h4 id="线报员"><a href="#线报员" class="headerlink" title="线报员"></a>线报员</h4><p>遍布各大电商、直播等Q群及网赚论坛中，负责收集平台的优惠或奖励活动情报、提供羊毛信息。<br><img src="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/4.png" alt="线报"></p>
-<h4 id="卡商-x2F-号商"><a href="#卡商-x2F-号商" class="headerlink" title="卡商&#x2F;号商"></a>卡商&#x2F;号商</h4><p>卡商和号商是该产业中的关键角色，卡商以集团客户的身份批量购卡，然后在网络上销售；号商则将这些手机卡转化为可用的各类账号，包括电商平台注册用户账号、社交平台用户账号等等。在搜索引擎上搜索相关关键字，即可发现大量的卡商和号商信息：<br><img src="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/5.png" alt="卡商"><img src="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/6.png" alt="号商"></p>
-<h4 id="接码平台"><a href="#接码平台" class="headerlink" title="接码平台"></a>接码平台</h4><p>接码平台提供了短信验证码和语言验证码两种形式的验证码获取。通常，接码平台会向卡商提供客户端、API，甚至手机客户端，服务端根据预先设置好的短信模板对短信内容进行自动匹配，提取其中的验证码信息。接码平台的API，能对接到自动化脚本当中，实现批量化注册。<br>此外，在短信验证码的对抗中，出现了很多新的形式。比如，整个注册过程中，可能需要接收多验证码，或要求用户向指定的号码发送一条验证码，也有很多平台选择了语音验证码。而接码平台也在不断的改进，产生出了专门的发送验证码服务、语音验证码听码，还衍生出新的一种网赚项目——“听码”。<br><img src="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/7.png" alt="接码平台业务逻辑"><img src="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/8.png" alt="短信验证码"></p>
-<h4 id="打码平台"><a href="#打码平台" class="headerlink" title="打码平台"></a>打码平台</h4><p>“打码平台”则是提供批量自动化识别各类验证码的专业服务平台。<br><img src="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/10.png" alt="各种验证码"><img src="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/9.png" alt="各种验证码"></p>
-<h4 id="代理软件卖家"><a href="#代理软件卖家" class="headerlink" title="代理软件卖家"></a>代理软件卖家</h4><p>执行批量的注册、登录等操作，要用到庞大的代理IP池，这里就需要依赖代理软件卖家的供应。<br><img src="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/11.jpg" alt="代理软件"></p>
-<h4 id="羊毛党"><a href="#羊毛党" class="headerlink" title="羊毛党"></a>羊毛党</h4><p>羊毛党是最终执行薅羊毛攻击的前台黑手，他们通过社交软件、贴吧和电商平台获取大量账号，执行业务欺诈行为。</p>
-<h5 id="羊头"><a href="#羊头" class="headerlink" title="羊头"></a>羊头</h5><p>羊毛团体的领导者，也是平台与羊毛党之间信息的中介。它会从代理处接单，从黑客处获取工具、漏洞，并从各个群里获取线报。此外，它还会在自己的羊毛QQ群、微信公众号，抑或建立自己的羊毛平台进行资源整合，通过各个渠道带领众多羊毛党对平台进行”群起而薅之”。</p>
-<h5 id="羊群"><a href="#羊群" class="headerlink" title="羊群"></a>羊群</h5><p>有一些是利用业余时间兼职赚些外快；还有一些是专职薅羊毛，整天靠刷单或秒杀活动等获取利益。</p>
-<h2 id="关键技术"><a href="#关键技术" class="headerlink" title="关键技术"></a>关键技术</h2><h3 id="猫池"><a href="#猫池" class="headerlink" title="猫池"></a>猫池</h3><p>猫池就是将相当数量的Modem使用特殊的拨号请求接入设备连接在一起，可以同时接受多个用户拨号连接的设备。猫池在连接到PC上之后，可以通过软件对手机卡进行集中管理，主要的功能包括：设置通道对应的手机号、自动读取短信、发送短信、拨打指定号码、批量设置呼叫转移等。在薅羊毛地下产业中，猫池被用来批量、集中模拟手机进行短信、验证码的收发。<br><img src="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/12.jpg" alt="猫池"><img src="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/13.jpg" alt="猫池软件"></p>
-<h3 id="注入-Hook"><a href="#注入-Hook" class="headerlink" title="注入\Hook"></a>注入\Hook</h3><p>Hook是一种运行时动态劫持目标函数，对内存中的数据进行篡改的技术手段。市面上的各种改机工具也都是基于Hook实现，通过这些工具可以对设备参数进行伪造，从而被识别为一台新的设备。<br>在薅羊毛地下产业中，可以利用Hook技术编写通用的改机工具，并收取注册费；也可以与羊毛党进行交易，针对性的破解特定的指纹算法；还能编写特定的Hook插件，实现一些自动化操作。</p>
-<h3 id="定制ROM刷机"><a href="#定制ROM刷机" class="headerlink" title="定制ROM刷机"></a>定制ROM刷机</h3><p>有别于Hook的动态篡改，通过定制ROM刷机可以直接对整个系统镜像进行修改和替换。该技术可以应用到模拟器和真机，从而产生大量的虚假设备。</p>
-<h3 id="模拟器"><a href="#模拟器" class="headerlink" title="模拟器"></a>模拟器</h3><p>模拟器作为一种虚拟机，配合改机工具，能够以较低成本实现设备多开，因此而备受黑灰产的青睐。然而由于Hook检测的对抗，黑产开始逐步转向自定制ROM的Android模拟器。这些模拟器具备一键新机的功能，每次启动所有的系统参数都会随机变化。由于它并没有安装Hook框架，也没有进行Hook操作，所以会比较难以识别。</p>
-<h3 id="多开沙箱"><a href="#多开沙箱" class="headerlink" title="多开沙箱"></a>多开沙箱</h3><p>多开软件提供了一个虚拟化的沙箱环境，这意味着它可以做到很多事情。比如，它可以直接把注入代码的窗口放在这里，从而实现应用启动时就加载外部的hook代码；还可以让每次虚拟空间中的系统参数随机变化，让目标应用以为自己运行在一个新的设备中。<br>多开虚拟化引擎配合Hook技术，有可能使设备指纹识别技术在未来面临更多的挑战。</p>
-<h3 id="群控系统"><a href="#群控系统" class="headerlink" title="群控系统"></a>群控系统</h3><p>群控系统能同时管理并操作多台设备，是模拟器作弊的升级手段。模拟器作弊和群控系统，都是为了打破越来越多的针对设备维度的限制技术而产生。区别在于，群控系统是使用真机来完成。<br>早期的群控系统功能，主要围绕微信营销展开，为微商服务。群控系统中，提供模拟定位、站街、摇一摇、批量导入通讯录等功能来大量添加微信好友，再通过朋友圈发布、消息群发等功能进行定向的消息推送。此后，大批的互联网公司通过微信来发布各种营销活动，这些欺诈份子就开始利用群控薅平台羊毛，攫取利益。<br>此外，某些群控系统还集成了图灵接口，可以和用户进行常规的对话，这大大增加了机器识别的难度。<br>至于群控系统的插件开发，很大程度上要受制于群控系统本身的功能和开发人员的技术水平。但绝大部分使用群控系统的人，其实并不具备开发能力，仅仅是单纯地使用群控系统进行营销。<br><img src="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/14.png" alt="设备群控"></p>
-<h3 id="按键精灵"><a href="#按键精灵" class="headerlink" title="按键精灵"></a>按键精灵</h3><p>按键精灵类自动化脚本，同时支持安卓和IOS设备，使用其特有的脚本语言（类似VB），能够模拟用户的输入操作和触摸轨迹，替代人工完成一些较复杂的操作。<br><img src="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/15.png" alt="按键精灵"></p>
-<h3 id="逆向破解"><a href="#逆向破解" class="headerlink" title="逆向破解"></a>逆向破解</h3><p>逆向破解在薅羊毛产业中也占据了很重要的一环，黑产会通过逆向分析的手段破解注册、登录协议及设备指纹算法等，并通过与羊毛党进行交易获取收益。<br><img src="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/16.png" alt="逆向破解"></p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -678,7 +469,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">Edited on</span>
-      <time title="Modified: 2019-02-02 17:21:16" itemprop="dateModified" datetime="2019-02-02T17:21:16+08:00">2019-02-02</time>
+      <time title="Modified: 2022-06-13 11:28:11" itemprop="dateModified" datetime="2022-06-13T11:28:11+08:00">2022-06-13</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -701,31 +492,14 @@
     
     <div class="post-body" itemprop="articleBody">
           <p>本文主要解决了ARM64位指令的兼容性问题，并通过进程间通信杜绝了崩溃现象，让这部分的检测代码更具有可操作性。。</p>
-<h2 id="ARM和X86"><a href="#ARM和X86" class="headerlink" title="ARM和X86"></a>ARM和X86</h2><p>目前，绝大部分手机都是基于ARM架构，其他CPU架构给忽略不计，模拟器全部运行在PC的X86架构上。因此，可以利用ARM与X86的区别来判断是否为真机。<br><img src="/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/1.png" alt="ELF"><br>从上图我们可以看出，在CPU和内存之间，可以存在几级Cache，这里是L1和L2。Cache的作用是加速，把特定地址的数据值缓存起来，这样就不用到低速的内存中去取了。其中，ARM采用的是将指令存储与数据存储分开的哈佛架构，L1 Cache（一级缓存）被分成了平行的两块，即I-Cache（指令缓存）和D-Cache（数据缓存），而X86采用的是将指令存储和数据存储合并在一起的冯•诺伊曼结构，L1 Cache是连续的一块缓存。<br>因此，如果我们通过读写地址指令的方式对一段可执行代码进行动态修改，那么在执行的时候，X86架构上的指令缓存会被同步修改，而对ARM架构而言，这种数据读写操作修改的只是D-Cahce中的内容，此时I-Cache中的指令并不会被更新。</p>
-<h2 id="设计思路"><a href="#设计思路" class="headerlink" title="设计思路"></a>设计思路</h2><p>先看下思路的流程图：<br><img src="/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/2.png" alt="ELF"><br>左边的是真机上发生的情况，右边是模拟器发生的情况，下面详述一下操作过程。  </p>
-<blockquote>
-</blockquote>
-<ol>
-<li>先执行一个地址上的指令，假设就是address这个地址。那么对于真机，指令将会写到I-Cache，而模拟器则会直接写到一整块Cache上;  </li>
-<li>向address写入一个新指令。注意，这就有区别了，真机上的新指令会写入D-Cache，而在模拟器直接写到Cache;  </li>
-<li>执行address的指令。此时在真机上，会从I-Cache读指令，也就是会执行第一步的指令。模拟器直接从Cache上读指令，会执行第二步的新指令。</li>
-</ol>
-<p>实际操作中，我们发现存在真机上的指令Cache被洗掉的情况，但总的来说这种可能性还是比较低的，可以通过对市面上的大量机型做多次重复实验，并统计它的大盘分布..</p>
-<h2 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h2><h3 id="测试代码"><a href="#测试代码" class="headerlink" title="测试代码"></a>测试代码</h3><h4 id="ARM32"><a href="#ARM32" class="headerlink" title="ARM32"></a>ARM32</h4><p>以下实现代码是测试代码的核心，主要就是将第8行地址的指令add r4, r4, #1，在运行中动态替换为第5行的指令add r6, r6, #1，这里的目标是ARM-V7架构的，要注意它采用的是三级流水，PC寄存器的值等于当前程序执行位置加8，代码如下：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">#!cpp</span><br><span class="line">__asm __volatile (</span><br><span class="line">  STMFD  SP!,&#123;R4-R7,LR&#125;</span><br><span class="line">  MOV  R6, #<span class="number">0</span>                  <span class="comment">//为r6赋初值</span></span><br><span class="line">  MOV  R7, PC                  <span class="comment">//PC指向第7行指令所在位置</span></span><br><span class="line">  MOV  R4, #<span class="number">0</span>      </span><br><span class="line">  ADD  R6, R6, #<span class="number">1</span>              <span class="comment">//用来覆盖$address的“新指令”</span></span><br><span class="line">  LDR  R5, [R7]      </span><br><span class="line">  code:      </span><br><span class="line">  ADD  R4, R4, #<span class="number">1</span>              <span class="comment">//这就是$address，是对r4加1</span></span><br><span class="line">  MOV  R7, PC                  <span class="comment">//10~13行的作用就是把第10行的指令写到第7行</span></span><br><span class="line">  SUB  R7, R7, #<span class="number">0xC</span>      </span><br><span class="line">  STR  R5, [R7]</span><br><span class="line">  CMP  R4, #<span class="number">2</span>                  <span class="comment">//控制循环次数</span></span><br><span class="line">  BGE  out      </span><br><span class="line">  CMP  R6, #<span class="number">2</span>                  <span class="comment">//控制循环次数</span></span><br><span class="line">  BGE  out                     <span class="comment">//不满足循环次数，则调回去</span></span><br><span class="line">  B    code </span><br><span class="line">  out:</span><br><span class="line">  MOV  R0, R4                  <span class="comment">//把r4的值作为返回值</span></span><br><span class="line">  LDMFD SP!,&#123;R4-R7,PC&#125;</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
-<h4 id="ARM64"><a href="#ARM64" class="headerlink" title="ARM64"></a>ARM64</h4><p>考虑到在64位的真机上可能会存在兼容性问题，需要针对arm64-v8a架构重新设计一段代码，原理同上。另外，由于arm64指令集中没有PC寄存器，这里选择用ADR指令做为替代方案。。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">#!cpp</span><br><span class="line">__asm __volatile (</span><br><span class="line">  SUB SP, SP, #<span class="number">0x30</span>       <span class="comment">//开辟栈空间</span></span><br><span class="line">  STR X9, [SP, #<span class="number">8</span>]</span><br><span class="line">  STR X10, [SP, #<span class="number">0x10</span>]</span><br><span class="line">  STR X11, [SP, #<span class="number">0x18</span>]</span><br><span class="line">  STR X12, [SP, #<span class="number">0x20</span>]</span><br><span class="line">  MOV X10, #<span class="number">0</span></span><br><span class="line">  _start:</span><br><span class="line">  ADR X11, _start        <span class="comment">//ADR指令，自动取_start的地址（相对于PC的），并存放到x11寄存器中</span></span><br><span class="line">  ADD X11, X11, #<span class="number">12</span>      <span class="comment">//x11加12，指向第13行指令</span></span><br><span class="line">  MOV X12, #<span class="number">0</span>            <span class="comment">//为x12赋初值</span></span><br><span class="line">  ADD X10, X10, #<span class="number">1</span>       <span class="comment">//用来覆盖$address的&quot;新指令&quot;</span></span><br><span class="line">  LDR X9, [X11]</span><br><span class="line">  code:</span><br><span class="line">  ADD X12, X12, #<span class="number">1</span>       <span class="comment">//这就是$address，是对x12加1</span></span><br><span class="line">  ADR X11, code          <span class="comment">//adr伪指令，自动取code的地址（相对于PC的，即第16行指令)</span></span><br><span class="line">  STR X9, [X11]</span><br><span class="line">  CMP X12, #<span class="number">2</span>            <span class="comment">//控制循环次数</span></span><br><span class="line">  BGE out                <span class="comment">//跳出循环</span></span><br><span class="line">  CMP X10, #<span class="number">2</span>            <span class="comment">//控制循环次数</span></span><br><span class="line">  BGE out                <span class="comment">//跳出循环</span></span><br><span class="line">  B   code               <span class="comment">//指定次数内的循环调回去</span></span><br><span class="line">  out:</span><br><span class="line">  MOV W0, W12            <span class="comment">//取低32位值作为返回值</span></span><br><span class="line">  LDR X9, [SP, #<span class="number">8</span>]</span><br><span class="line">  LDR X10, [SP, #<span class="number">0x10</span>]</span><br><span class="line">  LDR X11, [SP, #<span class="number">0x18</span>]</span><br><span class="line">  LDR X12, [SP, #<span class="number">0x20</span>]</span><br><span class="line">  ADD SP, SP, #<span class="number">0x30</span>      <span class="comment">//出栈，恢复栈空间</span></span><br><span class="line">  RET</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
-
-<h3 id="申请权限"><a href="#申请权限" class="headerlink" title="申请权限"></a>申请权限</h3><p>这里会遇到个问题，就是我们是没有写代码段的权限的，所以需要将上面的汇编代码翻译成相应的机器码，再申请一块内存，将可执行代码段拷贝过去并执行。值得注意的是，如果用mmap映射会有bug，在真机上只能执行一次，第二次崩溃，可以通过如下方式解决：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> PAGE_START(addr) (~(getpagesize() - 1) &amp; (addr))</span></span><br><span class="line"><span class="type">void</span> *exec = <span class="built_in">malloc</span>(<span class="number">0x1000</span>);</span><br><span class="line"><span class="type">char</span> code[] = <span class="string">&quot;\xF0\x40\x2D\xE9\x00\x60\xA0\xE3\x0F\x70\xA0\xE1\x00\x40\xA0\xE3&quot;</span></span><br><span class="line">              <span class="string">&quot;\x01\x60\x86\xE2\x00\x50\x97\xE5\x01\x40\x84\xE2\x0F\x70\xA0\xE1&quot;</span></span><br><span class="line">              <span class="string">&quot;\x0C\x70\x47\xE2\x00\x50\x87\xE5\x02\x00\x54\xE3\x02\x00\x00\xAA&quot;</span></span><br><span class="line">              <span class="string">&quot;\x02\x00\x56\xE3\x00\x00\x00\xAA\xF6\xFF\xFF\xEA\x04\x00\xA0\xE1&quot;</span></span><br><span class="line">              <span class="string">&quot;\xF0\x80\xBD\xE8&quot;</span>;</span><br><span class="line"><span class="type">void</span> *page_start_addr = (<span class="type">void</span> *)<span class="built_in">PAGE_START</span>((<span class="type">uint32_t</span>)exec);</span><br><span class="line"><span class="built_in">memcpy</span>(exec, code, <span class="built_in">sizeof</span>(code)+<span class="number">1</span>);</span><br><span class="line"><span class="built_in">mprotect</span>(page_start_addr, <span class="built_in">getpagesize</span>(), PROT);</span><br><span class="line"><span class="built_in">LOGI</span>(<span class="string">&quot;magic_addr = %x&quot;</span>, exec);</span><br><span class="line">asmcheck = exec;</span><br><span class="line">status = <span class="built_in">asmcheck</span>();</span><br></pre></td></tr></table></figure>
-
-<h3 id="验证方式"><a href="#验证方式" class="headerlink" title="验证方式"></a>验证方式</h3><p>如果返回值等于2，说明执行的是旧指令，是arm架构；如果返回值等于1，说明执行的是新指令，是x86架构。最后，由于真机上存在I-Cache被洗掉的情况，也可能返回1，故需要通过多次循环执行对返回的结果进行统计，越靠近1~1000这个范围值的左侧，越可能是真机，反之应是模拟器。</p>
-<h2 id="备注"><a href="#备注" class="headerlink" title="备注"></a>备注</h2><p>最后，为了防止在真机上出现崩溃，最好还是单独开一个进程服务，通过进程间通信实现模拟器鉴别的查询。。</p>
-<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><ol>
-<li><a target="_blank" rel="noopener" href="https://bbs.pediy.com/thread-208471.htm">基于cache的模拟器检测</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.vuln.cn/6766">利用cache特性检测Android模拟器</a></li>
-</ol>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -787,7 +561,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">Edited on</span>
-      <time title="Modified: 2019-02-02 17:33:13" itemprop="dateModified" datetime="2019-02-02T17:33:13+08:00">2019-02-02</time>
+      <time title="Modified: 2022-06-13 11:29:01" itemprop="dateModified" datetime="2022-06-13T11:29:01+08:00">2022-06-13</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -810,26 +584,14 @@
     
     <div class="post-body" itemprop="articleBody">
           <p>前端时间因工作业务需要，简单还原了下六间房的刷人气场景，这里主要对相关过程做下梳理，并尝试提出一些检出建议。。</p>
-<h2 id="破解登录协议"><a href="#破解登录协议" class="headerlink" title="破解登录协议"></a>破解登录协议</h2><p>用Fiddler对六间房的登录环节进行抓包，发现上传过程中对密码做了加密处理。<br><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/01.jpg" alt="登录网络包">在谷歌浏览器开发者模式下，检索”password”关键字，并通过JS调试定位到相应的加密函数：<img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/03.jpg" alt="JS调试"><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/02.jpg" alt="JS调试"><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/04.jpg" alt="JS调试">其中，servertime和nonce都是由<a target="_blank" rel="noopener" href="https://passport.6.cn/sso/prelogin.php?username=%E7%94%A8%E6%88%B7%E5%90%8D&domain=www.6.cn&c=1&_=%E6%97%B6%E9%97%B4%E6%88%B3">服务器</a>返回，这里我们只需要拷贝那段加密用的JS代码，通过Python调用JS获取加密后的数据，并模拟后续对应的<a target="_blank" rel="noopener" href="https://passport.6.cn/sso/login.php?username=%E7%94%A8%E6%88%B7%E5%90%8D&domain=www.6.cn">post请求</a>，即可成功登录。。<br><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/05.jpg" alt="登录网络包"><code>Python  def encode_pwd(self, pswd, st, nc):     f = open(&quot;./sha.js&quot;, &#39;r&#39;)     line = f.readline()     htmlstr = &#39;&#39;     while line:         htmlstr = htmlstr + line         line = f.readline()     ctx = execjs.compile(htmlstr)     return ctx.call(&#39;getpassword&#39;, pswd, st, nc)</code></p>
-<h2 id="获取登录Cookie"><a href="#获取登录Cookie" class="headerlink" title="获取登录Cookie"></a>获取登录Cookie</h2><p>由于HTTP是一种无状态协议，在数据交换完毕后，服务器端和客户端的链接就会关闭，即服务器不知道用户上一次的请求内容及次数，这严重阻碍了交互式web应用程序的实现。Cookie则是网站为了辨别用户身份，从而储存在用户本地终端上的数据（通常经过加密）。所以，我们还要获取登录相关的Cookie信息。<br><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/06.jpg" alt="登录页面">上图是发送登录请求后，服务器的响应内容，可以看到它返回了3个URL地址用于接下来的网络访问。通过分析发现<a target="_blank" rel="noopener" href="https://www.6.cn/login_test.php?username=ever17&callback=parent.SSOController.feedBackUrlCallBack&next_action=&p1=&p2=&p3=&retcode=0&ticket=fbq4EvQ8feoEJQ8bfgzLyPpmHDqDVvflbbyyG0w9o9irUbMsBL7ZZNuUsYi-H6ALvM0pxwLbIWIgsA8IPbp4oPkgwMVpQBxG9PqgAAHRspAqxVJMJiiKV9wdio8iV_X510003&prod=10003&un=ever17&savestate=0&reg=login&deviceId=WHJMrwNw1k/GhmV2u729g9Aizbh+Ool+DbTWdBes4Ke5f6bBPxWjs+X2oQji7oL67x0RooZlZIMtuWCr2JZoqisWiSnTMJkv5NfXRcmA/dolMZSN5aoyQfFm6zjYEzmcwSdFB3dHluPe2XjjYMVG2HqZvJshYmWrn7m1P2zMZrizrJ2n8tBLMUaFiwVCiDNOJzbQCr3JAl59y7Qyfzjfd7yL3e1v2U6NZAirC5Rb+JdXcLjlxvuKHBaTkjp7Yczxq1487582755342">redirect_url</a>才是最终用于设置Cookie的链接：<br><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/7.jpg" alt="设置Cookie">这些Cookie中，有两个字段值得特别注意下，一个是ticket_v，这个应该是服务器下发用于识别账户身份的登录口令，下面会做说明；另一个是_vinfo或者_coin6，它的前几位数字序列是用户的tokenid，这个可以在登录后跳转到用户的直播主页进行确认。之所以单独把它们列出来，是因为这些数据在之后的进房操作时还会用到。。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 解析JS资源</span></span><br><span class="line">soup = BeautifulSoup(html.decode(<span class="string">&quot;UTF-8&quot;</span>), <span class="string">&#x27;html.parser&#x27;</span>)</span><br><span class="line">jss = soup.find_all(<span class="string">&#x27;script&#x27;</span>)</span><br><span class="line">pattern = re.<span class="built_in">compile</span>(<span class="string">&quot;(?:\&quot;prod\&quot;:\&quot;)([^\&quot;]+)&quot;</span>)</span><br><span class="line">prod = pattern.findall(<span class="built_in">str</span>(jss))[<span class="number">0</span>]</span><br><span class="line"><span class="built_in">print</span>(prod)</span><br><span class="line"><span class="comment"># 设置Cookie</span></span><br><span class="line"><span class="keyword">if</span> rhead <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">    <span class="keyword">for</span> item <span class="keyword">in</span> rhead:</span><br><span class="line">        <span class="keyword">if</span> item[<span class="number">0</span>] == <span class="string">&#x27;Set-Cookie&#x27;</span>:</span><br><span class="line">            self._thisCookie += item[<span class="number">1</span>].split(<span class="string">&#x27;;&#x27;</span>)[<span class="number">0</span>] + <span class="string">&#x27;; &#x27;</span></span><br><span class="line"><span class="comment"># 从cookie中解析用户信息</span></span><br><span class="line">self._ticket = re.search(<span class="string">&#x27;ticket_v=[^\;]+&#x27;</span>, self._thisCookie).group().split(<span class="string">&#x27;=&#x27;</span>)[<span class="number">1</span>]</span><br><span class="line">self._puid = re.search(<span class="string">&#x27;_vinfo=[^\;]+&#x27;</span>, self._thisCookie).group().split(<span class="string">&#x27;%7C%7C&#x27;</span>)[<span class="number">0</span>].split(<span class="string">&#x27;=&#x27;</span>)[<span class="number">1</span>]</span><br><span class="line"><span class="built_in">print</span>(self._puid)</span><br><span class="line">self.currentlyin = self._puid + <span class="string">&quot;_&quot;</span> + self.getouterip()  <span class="comment"># 登录账号的用户ID加上它的外网IP地址，用于标识和验证一个登录账户</span></span><br><span class="line">self._thisCookie += <span class="string">&#x27;currentlyin=&#x27;</span> + self.currentlyin + <span class="string">&#x27;; &#x27;</span></span><br><span class="line">self._thisCookie = self._thisCookie[:-<span class="number">2</span>]</span><br><span class="line"><span class="built_in">print</span>(self._thisCookie)</span><br></pre></td></tr></table></figure>
-<h2 id="定位进房网络包"><a href="#定位进房网络包" class="headerlink" title="定位进房网络包"></a>定位进房网络包</h2><p>登录之后的下一步操作就是进指定的直播间了，下面我们以230676880这个房间为例：<br><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/13.jpg" alt="直播间"><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/14.jpg" alt="直播间">这里，我们同时使用Fiddler和WireShark对进房行为进行抓包。为什么呢？原因是这两个抓包工具各有特色，Fiddler的原理是把自身作为一个代理，所有的http请求在达到目标服务器之前都会经过Fiddler，同样的，所有的http响应也都会在返回客户端之前流经Fiddler，在目标设备安装并信任Fiddler的证书后，更是可以直接解密HTTPS，但也因此基本上只能够用来分析HTTP&#x2F;HTTPS网络协议；WireShark的功能则要更强大些，它的原理是直接基于网卡的，通过将其设置成混杂模式从而完成抓包。说简单点就是什么都抓，但配置及使用上比Fiddler要麻烦些。由于目前还无法确定进房间时会使用到哪些协议，所以都用。。<br><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/12.jpg" alt="Fiddler网络包">首先，对Fiddler抓取的数据包中疑似与进房行为有关的网络请求，逐一模拟，然而最终都没有显示成功进房。所以，这里我们可以初步判定是否进房的判断并不依赖于一个或多个HTTP\HTTPS请求的计算，它应该有着某种独立的关键性的进房数据包，并且为了让服务器知道是哪个用户要进哪个直播间，它应该包含用户的登录凭据以及主播的房间号或者主播ID才对。<br>根据前面的假设，尝试在Wireshark捕获的网络包中检索”230676880”（房间号）、”81041785”（主播ID）字符串，结果当查询”81041785”时，发现了以下数据包：<br><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/16.jpg" alt="WireShark网络包">从内容上来看，这个很可能和登录进房有关。其中，UID就是用户的tokenid，encpass后面跟的则是前面提到的登录口令即ticket_v这个Cookie的值，roomid则是我们检索用到的主播ID，它可以在前面的直播页面框架请求中通过正则匹配拿到。。<img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/17.jpg" alt="六间房Cookie">至于IP和端口号，在这个例子中是”61.137.182.37:12200”，它是从服务器返回的地址列表中随机获取到的。<img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/19.jpg" alt="获取聊天室地址列表">现在，我们尝试用socket通信的方式模拟该网络请求：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">tcpCliSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)</span><br><span class="line"><span class="keyword">try</span>:</span><br><span class="line">    tcpCliSock.connect((self._ip, <span class="built_in">int</span>(self._port)))</span><br><span class="line"><span class="keyword">except</span> socket.error:</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;fail to setup socket connection&#x27;</span>)</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;sending..........&#x27;</span>)</span><br><span class="line">    login_cmd = <span class="string">&#x27;command=login\r\n&#x27;</span> + <span class="string">&#x27;uid=&#x27;</span> + self._puid + <span class="string">&#x27;\r\n&#x27;</span> + <span class="string">&#x27;encpass=&#x27;</span> + self._ticket + <span class="string">&#x27;\r\n&#x27;</span> + <span class="string">&#x27;roomid=&#x27;</span> + self._rid + <span class="string">&#x27;\r\n&#x27;</span></span><br><span class="line">    self._login_cmd = <span class="string">&#x27;00000&#x27;</span> + <span class="built_in">str</span>(<span class="built_in">len</span>(login_cmd)) +<span class="string">&#x27;\r\n&#x27;</span> + login_cmd</span><br><span class="line">    <span class="built_in">print</span>(self._login_cmd)</span><br><span class="line">    tcpCliSock.send(self._login_cmd.encode())</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;reading...........&#x27;</span>)</span><br><span class="line">    <span class="built_in">print</span>(tcpCliSock.recv(<span class="number">4028</span>))</span><br></pre></td></tr></table></figure>
-<p>结果，我们确实收到了来自服务器的响应，提示已登录成功，但在直播页面上仍然没有显示进入房间。。<br><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/20.jpg" alt="程序运行结果">看来进房的关键包可能不只这一个，回到WireShark中继续分析，发现在这之后又发送了一个网络包，其内容做了加密处理，并且服务器连续返回了多条数据。于是我们怀疑，这个网络包可能也是进房算法的一部分。<br><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/23.jpg" alt="WireShark网络包">既然如此，那么就有必要对这个网络请求也做下模拟。但是在这之前，我们得知道它的消息格式与加密算法，这就只能在JS源码中去找了。遗憾的是，并没有找到(ㆁωㆁ)。。<br>这说明Web端很可能对这部分代码做了某种保护，那怎么办呢？这里有个思路，就是转移战场，到移动端Web或移动端APP上继续逆向。由于是同一个直播平台，即便是在不同的端上，其设计思路也应该雷同，并且移动端Web都是用的HTML5，分析起来可能会更容易些。此外，针对移动端Web的场景，倒也不必专门在手机浏览器上进行操作，我们可以直接利用谷歌浏览器的开发者工具对移动设备进行下模拟即可。<br><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/26.jpg" alt="JS调试移动端Web">看来移动端Web如预想的一样，直接就找到了相应的代码块：<br><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/24.jpg" alt="JS调试移动端Web"><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/25.jpg" alt="JS调试移动端Web">通过断点调试，确定发送的消息格式为：</p>
-<blockquote>
-<p>‘{“t”:”priv_info”, “content”:{“encpass”:”登录口令”}}’</p>
-</blockquote>
-<p><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/27.jpg" alt="JS调试移动端Web"><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/29.jpg" alt="JS调试移动端Web">加密算法如上，可以看到它先是用了某种算法(笔者简单阅读后，没能分辨出)，然后做base64加密，最后再对指定的一些字符进行替换。问题就出在第一步，现阶段我们并不知道它用的是什么算法。<br><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/30.jpg" alt="JS调试移动端Web">当然，理论上即便不知道其具体算法，仍然可以通过调JS的方式进行解决。只是这部分关联的代码较之前更加复杂，实现起来相对困难，并且我们还是有办法知道这块的原理的。<br>通过对六间房的Android客户端进行逆向，得知前面那段JS代码有可能是在做deflate压缩：<br><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/31.jpg" alt="Android端加密算法"><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/32.jpg" alt="Android端加密算法">消息格式和加密算法基本都弄清楚了，然而现在其实还有一个问题，就是这个消息格式是我们从移动端web分析过来的，加密算法也是参照了移动端APP的代码，但是真正的PC端Web场景和这个会不会存在差异呢？这里我们有必要编写相应的解密算法，对前面捕获的网络包解密，以做下确认。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title function_">decryptContent</span><span class="params">(String content, <span class="type">boolean</span> bool)</span> &#123;</span><br><span class="line">    <span class="type">String</span> <span class="variable">result</span> <span class="operator">=</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">source</span> <span class="operator">=</span> content.replaceAll(<span class="string">&quot;@&quot;</span>, <span class="string">&quot;=&quot;</span>).replaceAll(<span class="string">&quot;\\)&quot;</span>, <span class="string">&quot;/&quot;</span>).replaceAll(<span class="string">&quot;\\(&quot;</span>, <span class="string">&quot;+&quot;</span>);</span><br><span class="line">        <span class="type">byte</span>[] bit = <span class="keyword">new</span> <span class="title class_">BASE64Decoder</span>().decodeBuffer(source);</span><br><span class="line">        <span class="keyword">if</span>(bool) &#123;</span><br><span class="line">            result = <span class="keyword">new</span> <span class="title class_">String</span>(inflate(bit));</span><br><span class="line">            <span class="keyword">return</span> result;</span><br><span class="line">        &#125;</span><br><span class="line">        result = <span class="keyword">new</span> <span class="title class_">String</span>(bit);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span>(Exception e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="type">byte</span>[] inflate(<span class="type">byte</span>[] ori) &#123;</span><br><span class="line">    <span class="type">Inflater</span> <span class="variable">inflate</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Inflater</span>(<span class="literal">true</span>);</span><br><span class="line">    inflate.setInput(ori);</span><br><span class="line">    <span class="type">ByteArrayOutputStream</span> <span class="variable">output</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ByteArrayOutputStream</span>(ori.length);</span><br><span class="line">    <span class="type">int</span> count;</span><br><span class="line">    <span class="type">byte</span>[] array = <span class="keyword">new</span> <span class="title class_">byte</span>[<span class="number">1024</span>];</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">do</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (inflate.finished()) &#123;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            count = inflate.inflate(array);</span><br><span class="line">            output.write(array, <span class="number">0</span>, count);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">while</span> (count != <span class="number">0</span>);</span><br><span class="line">        output.close();</span><br><span class="line">        array = output.toByteArray();</span><br><span class="line">        inflate.end();</span><br><span class="line">        <span class="keyword">return</span> array;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (DataFormatException e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String args[])</span>&#123;</span><br><span class="line">    <span class="type">String</span> <span class="variable">decrypt</span> <span class="operator">=</span> decryptContent(<span class="string">&quot;DcpLE0JAAADgv9LsucNar3STUZmV12aki5GQ0q68CuO)5)rNN4EWbEFVF31U0IyB9QokjLYpXXgCKU2quGmW0W9083o82Y3OE4J1P8Of3xgw7n6LC6Xk9qIamsHT8Dwk4s6S3LHOeCyPdcrUsy9oXwtFovOp7IS4(fWOWAF3UVweFO81NO6j613jncPIgZaK3pKkDfKFdpjqKmK1T6ow4SCEApjnPw@@&quot;</span>,<span class="literal">true</span>);</span><br><span class="line">    System.out.println(decrypt);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>程序运行结果与我们之前模拟移动端Web所调试出来的完全一致，说明算法和消息格式都没有问题，接下来就只需模拟该网络行为即可。。<br><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/33.jpg" alt="Android端解密算法">继续发送以下数据包：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 发送的第二个数据包</span></span><br><span class="line">authkey = <span class="string">&#x27;&#123;&quot;t&quot;:&quot;priv_info&quot;, &quot;content&quot;:&#123;&quot;encpass&quot;:&quot;[token]&quot;&#125;&#125;&#x27;</span></span><br><span class="line">authkey = authkey.replace(<span class="string">&#x27;[token]&#x27;</span>,self._ticket)</span><br><span class="line">enc_content = self.encryptcontent(authkey.encode())</span><br><span class="line">getauthkey_cmd = <span class="string">&#x27;command=sendmessage\r\n&#x27;</span> + <span class="string">&#x27;content=&#x27;</span> + enc_content + <span class="string">&#x27;\r\n&#x27;</span></span><br><span class="line">self._getauthkey_cmd = <span class="string">&#x27;00000&#x27;</span> + <span class="built_in">str</span>(<span class="built_in">len</span>(getauthkey_cmd)) + <span class="string">&#x27;\r\n&#x27;</span> + getauthkey_cmd</span><br><span class="line"><span class="built_in">print</span>(self._getauthkey_cmd)</span><br><span class="line">tcpCliSock.send(self._getauthkey_cmd.encode())</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&#x27;reading...........&#x27;</span>)</span><br><span class="line"><span class="built_in">print</span>(tcpCliSock.recv(<span class="number">4028</span>))</span><br></pre></td></tr></table></figure>
-<p>这一次，我们终于成功进入房间了！！！<br><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/34.jpg" alt="脚本成功进房"></p>
-<h2 id="发送心跳"><a href="#发送心跳" class="headerlink" title="发送心跳"></a>发送心跳</h2><p>仅仅只是登录进房还不够，因为不过多久就会掉线了。为此，我们需要持续向服务器发送心跳，以证明自己仍在房间。继续分析WireShark网络包，发现每隔一段时间就会发送如下数据：<br><img src="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/35.jpg" alt="WireShark网络包">这个很可能就是心跳包了，尝试每隔10s发送一次并验证效果。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 成功进房后，开始发心跳包</span></span><br><span class="line">heartbeat = <span class="string">&#x27;command=sendmessage\r\ncontent=y8vPLwAA\r\n&#x27;</span></span><br><span class="line">self._heartbeat = <span class="string">&#x27;000000&#x27;</span> + <span class="built_in">str</span>(<span class="built_in">len</span>(heartbeat)) + <span class="string">&#x27;\r\n&#x27;</span> + heartbeat</span><br><span class="line"><span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">    time.sleep(<span class="number">10</span>)</span><br><span class="line">    <span class="built_in">print</span>(self._heartbeat)</span><br><span class="line">    tcpCliSock.send(self._heartbeat.encode())</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;reading...........&#x27;</span>)</span><br><span class="line">    <span class="built_in">print</span>(tcpCliSock.recv(<span class="number">4028</span>))</span><br></pre></td></tr></table></figure>
-<p>在等待1个小时左右的时间后，发现测试账号仍然在观众列表中，证明我们已能稳定挂机，实现至少一个人气。。</p>
-<h2 id="关于人气算法"><a href="#关于人气算法" class="headerlink" title="关于人气算法"></a>关于人气算法</h2><p>事实上，直播平台的真实人气算法绝不只是计算观众数量这一个维度。稍微想想就能明白的，它与用户的活跃度，如弹幕、礼物等等亦应有所关联。只是考虑到我们的分析场景，对于黑产及普通用户而言，所谓的”直播刷人气”其实就是狭义的指代”刷观众数”。</p>
-<h2 id="如何防范"><a href="#如何防范" class="headerlink" title="如何防范"></a>如何防范</h2><p>这类直播刷人气的原理本质上就是分析对方的Web请求然后重写，并对部分行为做了些精简，相当于是模拟实现了一个小型客户端。从这个角度出发，在代码层面几乎是无法检测的，只能够依赖业务逻辑。这里有一个思路，就是正常用户进直播间，通常是会先浏览主页的直播信息，然后找到自己想要看的房间，再点击进入。所以我们可以尝试去采集页面上的鼠标轨迹，这是机器行为所没有的特征。此外，这类代刷人气的目标都是很明确的，一般来说不会特意去模拟获取房间列表的网络请求。目前的思路就这两个，希望能够抛砖引玉。。</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -891,7 +653,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">Edited on</span>
-      <time title="Modified: 2019-02-02 17:39:41" itemprop="dateModified" datetime="2019-02-02T17:39:41+08:00">2019-02-02</time>
+      <time title="Modified: 2022-06-13 11:29:48" itemprop="dateModified" datetime="2022-06-13T11:29:48+08:00">2022-06-13</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -914,140 +676,14 @@
     
     <div class="post-body" itemprop="articleBody">
           <h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>智能手机配置中的ROM指的是EEProm（电擦除可写只读存储器），类似于计算机的硬盘，而一般手机刷机的过程，就是将只读内存镜像（ROM image）写入到只读内存（ROM）的过程。常见的ROM image有img、zip等格式，前者通常用fastboot程序通过数据线刷入（线刷），后者通常用recovery模式从SD卡刷入（卡刷），故img镜像也被称为线刷包，zip镜像被称为卡刷包。<br>此外，因为ROM image是定制系统最常见的发布形式，所以ROM这个词有时也会被用来指代手机的操作系统。</p>
-<h2 id="分类"><a href="#分类" class="headerlink" title="分类"></a>分类</h2><p>因为Android系统的开放性，大多数情况下ROM都是指代Android系统的各种发行版，可将其分为两大类：</p>
-<ol>
-<li>一种是出自手机制造商官方的原版ROM，特点是稳定，功能上随厂商定制而各有不同；</li>
-<li>另一种是开发爱好者利用官方发布的源代码自主编译的原生ROM，特点是根据用户具体需求进行调整，使之更符合不同地区用户的使用习惯。</li>
-</ol>
-<h2 id="文件格式"><a href="#文件格式" class="headerlink" title="文件格式"></a>文件格式</h2><p>一个完整的ROM线刷包通常会包含以下镜像文件：<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/1.png" alt="ROM镜像文件"></p>
-<h3 id="boot-img-amp-amp-recovery-img"><a href="#boot-img-amp-amp-recovery-img" class="headerlink" title="boot.img&amp;&amp;recovery.img"></a>boot.img&amp;&amp;recovery.img</h3><p>boot和recovery镜像，它并不是普通意义上的文件系统，而是一种android自定义的文件格式。该格式包括了2K的文件头，后面紧跟着是用gzip压缩过的内核，再往后是一个ramdisk内存盘，然后紧跟着second stage loader（第二阶段的载入器程序）。此类文件头的具体结构可以从源代码system&#x2F;core&#x2F;mkbootimg&#x2F;bootimg.h中看到。</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">boot_img_hdr</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">char</span> magic[BOOT_MAGIC_SIZE];</span><br><span class="line"></span><br><span class="line">    <span class="type">unsigned</span> kernel_size;  <span class="comment">/* size in bytes */</span></span><br><span class="line">    <span class="type">unsigned</span> kernel_addr;  <span class="comment">/* physical load addr */</span></span><br><span class="line"></span><br><span class="line">    <span class="type">unsigned</span> ramdisk_size; <span class="comment">/* size in bytes */</span></span><br><span class="line">    <span class="type">unsigned</span> ramdisk_addr; <span class="comment">/* physical load addr */</span></span><br><span class="line"></span><br><span class="line">    <span class="type">unsigned</span> second_size;  <span class="comment">/* size in bytes */</span></span><br><span class="line">    <span class="type">unsigned</span> second_addr;  <span class="comment">/* physical load addr */</span></span><br><span class="line"></span><br><span class="line">    <span class="type">unsigned</span> tags_addr;    <span class="comment">/* physical addr for kernel tags */</span></span><br><span class="line">    <span class="type">unsigned</span> page_size;    <span class="comment">/* flash page size we assume */</span></span><br><span class="line">    <span class="type">unsigned</span> unused[<span class="number">2</span>];    <span class="comment">/* future expansion: should be 0 */</span></span><br><span class="line"></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">char</span> name[BOOT_NAME_SIZE]; <span class="comment">/* asciiz product name */</span></span><br><span class="line"></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">char</span> cmdline[BOOT_ARGS_SIZE];</span><br><span class="line"></span><br><span class="line">    <span class="type">unsigned</span> id[<span class="number">8</span>]; <span class="comment">/* timestamp / checksum / sha1 / etc */</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">** +-----------------+</span></span><br><span class="line"><span class="comment">** | boot header     | 1 page</span></span><br><span class="line"><span class="comment">** +-----------------+</span></span><br><span class="line"><span class="comment">** | kernel          | n pages</span></span><br><span class="line"><span class="comment">** +-----------------+</span></span><br><span class="line"><span class="comment">** | ramdisk         | m pages</span></span><br><span class="line"><span class="comment">** +-----------------+</span></span><br><span class="line"><span class="comment">** | second stage    | o pages</span></span><br><span class="line"><span class="comment">** +-----------------+</span></span><br><span class="line"><span class="comment">**</span></span><br><span class="line"><span class="comment">** n = (kernel_size + page_size - 1) / page_size</span></span><br><span class="line"><span class="comment">** m = (ramdisk_size + page_size - 1) / page_size</span></span><br><span class="line"><span class="comment">** o = (second_size + page_size - 1) / page_size</span></span><br><span class="line"><span class="comment">**</span></span><br><span class="line"><span class="comment">** 0. all entities are page_size aligned in flash</span></span><br><span class="line"><span class="comment">** 1. kernel and ramdisk are required (size != 0)</span></span><br><span class="line"><span class="comment">** 2. second is optional (second_size == 0 -&gt; no second)</span></span><br><span class="line"><span class="comment">** 3. load each element (kernel, ramdisk, second) at</span></span><br><span class="line"><span class="comment">**    the specified physical address (kernel_addr, etc)</span></span><br><span class="line"><span class="comment">** 4. prepare tags at tag_addr.  kernel_args[] is</span></span><br><span class="line"><span class="comment">**    appended to the kernel commandline in the tags.</span></span><br><span class="line"><span class="comment">** 5. r0 = 0, r1 = MACHINE_TYPE, r2 = tags_addr</span></span><br><span class="line"><span class="comment">** 6. if second_size != 0: jump to second_addr</span></span><br><span class="line"><span class="comment">**    else: jump to kernel_addr</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
-<p>boot中的ramdisk映像是一个最基础的小型文件系统，它包括了初始化系统所需要的全部核心文件，例如：初始化init进程以及init.rc（可以用于设置很多系统的参数）等文件，以下是一个典型的ramdisk中包含的文件列表：  </p>
-<blockquote>
-</blockquote>
-<p>.&#x2F;init.trout.rc<br>.&#x2F;default.prop<br>.&#x2F;proc<br>.&#x2F;dev<br>.&#x2F;init.rc<br>.&#x2F;init<br>.&#x2F;sys<br>.&#x2F;init.goldfish.rc<br>.&#x2F;sbin<br>.&#x2F;sbin&#x2F;adbd<br>.&#x2F;system<br>.&#x2F;data  </p>
-<p>recovery镜像包含了一些额外的文件，例如一个叫做recovery的二进制程序以及一些对该程序支持性的资源图片文件（当按下home+power组合键的时候就会运行该程序），典型的文件列表如下：</p>
-<blockquote>
-</blockquote>
-<p>.&#x2F;res&#x2F;images<br>.&#x2F;res&#x2F;images&#x2F;progress_bar_empty_left_round.bmp<br>.&#x2F;res&#x2F;images&#x2F;icon_firmware_install.bmp<br>.&#x2F;res&#x2F;images&#x2F;indeterminate3.bmp<br>.&#x2F;res&#x2F;images&#x2F;progress_bar_fill.bmp<br>.&#x2F;res&#x2F;images&#x2F;progress_bar_left_round.bmp<br>.&#x2F;res&#x2F;images&#x2F;icon_error.bmp<br>.&#x2F;res&#x2F;images&#x2F;indeterminate1.bmp<br>.&#x2F;res&#x2F;images&#x2F;progress_bar_empty_right_round.bmp<br>.&#x2F;res&#x2F;images&#x2F;icon_firmware_error.bmp<br>.&#x2F;res&#x2F;images&#x2F;progress_bar_right_round.bmp<br>.&#x2F;res&#x2F;images&#x2F;indeterminate4.bmp<br>.&#x2F;res&#x2F;images&#x2F;indeterminate5.bmp<br>.&#x2F;res&#x2F;images&#x2F;indeterminate6.bmp<br>.&#x2F;res&#x2F;images&#x2F;progress_bar_empty.bmp<br>.&#x2F;res&#x2F;images&#x2F;indeterminate2.bmp<br>.&#x2F;res&#x2F;images&#x2F;icon_unpacking.bmp<br>.&#x2F;res&#x2F;images&#x2F;icon_installing.bmp<br>.&#x2F;sbin&#x2F;recovery  </p>
-<h3 id="system-img"><a href="#system-img" class="headerlink" title="system.img"></a>system.img</h3><p>system.img是Android系统中存放系统文件的映像文件，文件格式为ext或yaff2，它将被init进程通过解析 init.rc 文件挂载 (mount) 到&#x2F;system分区下，内容如下：  </p>
-<blockquote>
-</blockquote>
-<ul>
-<li>build.prop：存储系统属性  </li>
-<li>system&#x2F;app：系统自带的一些应用程序  </li>
-<li>system&#x2F;app：系统自带的一些应用程序  </li>
-<li>system&#x2F;etc：保存系统配置文件，如APN接入点设置等核心配置  </li>
-<li>system&#x2F;fonts：字体文件夹  </li>
-<li>system&#x2F;framework：主要是一些核心的文件，从后缀名为jar可以看出是系统平台框架  </li>
-<li>system&#x2F;lib：目录中存放的主要是系统底层库，如平台运行时库  </li>
-<li>system&#x2F;media：铃声音乐文件夹，除了常规的铃声外还有一些系统提示事件音  </li>
-<li>system&#x2F;usr：用户文件夹，包含共享、键盘布局、时间区域文件等。</li>
-</ul>
-<h3 id="ramdisk-img"><a href="#ramdisk-img" class="headerlink" title="ramdisk.img"></a>ramdisk.img</h3><p>ramdisk.img是一个分区映像文件，它会在kernel启动的时候，以只读的方式将root file system（根文件系统）mount （挂载）起来。PS：其实ramdisk.img的内容就是&#x2F;out&#x2F;target&#x2F;product&#x2F;generic&#x2F;root目录的压缩而已。。</p>
-<blockquote>
-</blockquote>
-<p>&#x2F;system<br>&#x2F;sys<br>&#x2F;sbin<br>&#x2F;proc<br>init.rc<br>init.goldfish.rc<br>init<br>default.prop<br>&#x2F;dev<br>&#x2F;data  </p>
-<h3 id="userdata-img"><a href="#userdata-img" class="headerlink" title="userdata.img"></a>userdata.img</h3><p>userdata.img会被挂载到&#x2F;data分区下，包含了所有应用相关的配置文件，以及用户相关的数据。  </p>
-<blockquote>
-</blockquote>
-<p>&#x2F;misc<br>&#x2F;data<br>&#x2F;app-private<br>&#x2F;app<br>&#x2F;property<br>&#x2F;dalvik-cache<br>&#x2F;lost+found  </p>
-<h3 id="cache-img"><a href="#cache-img" class="headerlink" title="cache.img"></a>cache.img</h3><p>cache.img映像文件的内容如下：  </p>
-<blockquote>
-</blockquote>
-<ul>
-<li>&#x2F;recovery：recovery操作的日志文件</li>
-<li>&#x2F;backup：备份文件</li>
-<li>&#x2F;lost+found</li>
-</ul>
-<h2 id="运行时的挂载顺序"><a href="#运行时的挂载顺序" class="headerlink" title="运行时的挂载顺序"></a>运行时的挂载顺序</h2><p>当PC启动的时候，首先执行的是在BIOS上的代码，然后再由BIOS负责将Kernel加载起来执行。在嵌入式世界里，BootLoader的作用就相当于PC的BIOS。手机开机会先进入Bootloader，然后判断是正常启动还是进入recovery，若正常启动则对boot.img解压并将执行权限交给zImage，zImage挂载ramdisk.img执行其中的init进程，init进程进一步挂载system.img、cache.img、userdata.img文件系统镜像。<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/2.png" alt="挂载顺序"></p>
-<h2 id="Android攻击面"><a href="#Android攻击面" class="headerlink" title="Android攻击面"></a>Android攻击面</h2><p>在学习ROM安全之前，先让我们试着对整个Android设备的攻击面做下了解（参考《Android安全攻防权威指南》）：<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/3.png" alt="Android攻击面梳理"></p>
-<h3 id="远程攻击面"><a href="#远程攻击面" class="headerlink" title="远程攻击面"></a>远程攻击面</h3><p>最巨大的、最危险的、最有吸引力的攻击界面，攻击者无需本地物理接触受害者。</p>
-<h4 id="网络协议栈"><a href="#网络协议栈" class="headerlink" title="网络协议栈"></a>网络协议栈</h4><p>安全漏洞研究中的”圣杯”是这样的一种远程攻击，它不需要与目标交互就可以实施，就能获取系统的完全访问权限。在这种攻击场景中，攻击者通常只需能在因特网上与目标主机进行通信即可。这类攻击可以简单到发送单个数据包，也可能需要一长串复杂的协议谈判过程。由于防火墙和NAT技术的广泛使用，这一攻击面变得更难可达，因此在这些底层代码中的安全漏洞往往只暴露给网络邻居攻击者。<br>在Android系统上，符合这一描述的主要攻击面是Linux内核中的网络协议栈：  </p>
-<ul>
-<li>Linux底层的网络协议栈由C&#x2F;C++编写，其存在的“缓冲区溢出”等代码问题可能导致远程执行任意代码</li>
-<li>协议处理过程中的某些字段没有作判断而导致拒绝服务</li>
-<li>…</li>
-</ul>
-<p>检查方法：代码review，并搜索不安全函数</p>
-<h4 id="暴露的网络服务"><a href="#暴露的网络服务" class="headerlink" title="暴露的网络服务"></a>暴露的网络服务</h4><p>无需目标用户交互的联网服务是第二位有吸引力的攻击面，这些服务通常在用户空间中执行，消除了获得内核空间代码执行的可能性。但是仍然有一些潜在的网络服务，如果被成功利用攻击面中的安全漏洞，就可以获取到root权限，不过这类网络服务在Android系统上极少的，多是由应用程序暴露，如开启WIFI热点功能后，会监听TCP 53端口。<br>检查方法：通过nmap扫描或者本地执行netstat -na|grep LISTEN可以获得暴露的服务，再进行分析。</p>
-<h4 id="移动技术"><a href="#移动技术" class="headerlink" title="移动技术"></a>移动技术</h4><p>这里指SMS、MMS、电话等蜂窝网络服务暴露的攻击面。<br>SMS、MMS服务使用WAP协议，其中的WAP PUSH消息可被用来发送Service Loading request (SL消息)，SL消息可以去调用USSD(Unstructured Supplementary Service Data)功能来执行充值、语音邮箱查询等操作。<br>已知攻击：发送tel:&#x2F;&#x2F;开头的SL指令可触发手机打电话。</p>
-<h4 id="客户端攻击面"><a href="#客户端攻击面" class="headerlink" title="客户端攻击面"></a>客户端攻击面</h4><p>手机上安装的客户端软件引入的的攻击界面：  </p>
-<ul>
-<li>浏览器攻击面：主要有URL钓鱼、MitM、XSS、CSRF这些方面的威胁</li>
-<li>Web引擎的移动应用：使用webview技术而引入的攻击面</li>
-<li>广告</li>
-<li>媒体推送：处理图片、文档的开源库，如libjpeg，包括png攻击和stagefright攻击</li>
-<li>电子邮件：电邮应用引入的漏洞</li>
-</ul>
-<h4 id="谷歌的基础设施"><a href="#谷歌的基础设施" class="headerlink" title="谷歌的基础设施"></a>谷歌的基础设施</h4><p>Google体系中的后端云服务引入的攻击面：  </p>
-<ul>
-<li>Google Play：Google应用市场中可能存在恶意APP</li>
-<li>第三方应用市场：非官方应用市场中可能存在伪装为热门APP的恶意程序，以及在热门APP中注入的后门软件</li>
-<li>Google Phones Home：GTalkService是google云服务中的重要组件，允许google在用户不知情的情况下在用户设备上安装或卸载应用</li>
-</ul>
-<h3 id="物理邻接攻击"><a href="#物理邻接攻击" class="headerlink" title="物理邻接攻击"></a>物理邻接攻击</h3><p>攻击者与被攻击对象在一定范围内，如GPS、WIFI</p>
-<h4 id="无线通信"><a href="#无线通信" class="headerlink" title="无线通信"></a>无线通信</h4><ul>
-<li>GPS：用户位置信息被APP滥用，泄露用户隐私；发送虚假GPS信号导致GPS设备定位错误</li>
-<li>Baseband：伪基站、针对RIL层的攻击</li>
-<li>Bluetooth</li>
-<li>Wi-Fi</li>
-<li>NFC</li>
-<li>…</li>
-</ul>
-<h4 id="其他技术"><a href="#其他技术" class="headerlink" title="其他技术"></a>其他技术</h4><p>除了无线通信技术之外，还有两个技术也与Android的整体攻击面相关。具体而言，QR码（快速响应矩阵码）和语言指令在理论上可以导致设备被攻破。</p>
-<h3 id="本地攻击面"><a href="#本地攻击面" class="headerlink" title="本地攻击面"></a>本地攻击面</h3><p>攻击者可以达到实现任意代码执行和提权的目的，这种攻击界面在测试新root方法时最为明显。</p>
-<h4 id="探索文件系统"><a href="#探索文件系统" class="headerlink" title="探索文件系统"></a>探索文件系统</h4><p>Android的Unix血统意味着许多攻击面都是通过文件系统条目暴露的，这些条目包括内核空间和用户空间的端点。在内核空间，设备驱动节点与特殊的虚拟文件系统提供与内核空间驱动代码进行直接交互的访问点。许多用户空间的组件，如特权服务，通过PF_UNIX族的套接字暴露进程间通信功能。甚至，一些普通文件与目录条目如果没有进行充分的权限限制，也会为几种攻击类型提供攻击路径。这部分的攻击面包括：文件系统访问权限设置、SUID&#x2F;SGUID设置、Owner设置等。</p>
-<h4 id="应用生命周期"><a href="#应用生命周期" class="headerlink" title="应用生命周期"></a>应用生命周期</h4><p>程序应用生命周期中引入的攻击面。</p>
-<h5 id="install"><a href="#install" class="headerlink" title="install"></a>install</h5><p>安装流程中引入的攻击面，如超长应用名攻击、畸形AndroidManifest.xml标签、APK占位攻击、签名漏洞等。</p>
-<h5 id="Application-run"><a href="#Application-run" class="headerlink" title="Application run"></a>Application run</h5><p>应用运行流程中引入的攻击面。</p>
-<h5 id="backup"><a href="#backup" class="headerlink" title="backup"></a>backup</h5><p>应用备份恢复时引入的攻击面，如ALLOW-BACKUP漏洞。</p>
-<h4 id="找到其他的本地攻击面"><a href="#找到其他的本地攻击面" class="headerlink" title="找到其他的本地攻击面"></a>找到其他的本地攻击面</h4><p>其他的本地攻击面是由Linux内核暴露的，包括系统调用和套接字实现等。Android系统中的许多服务和应用通过不同类型的IPC（包括套接字与共享内存）暴露着本地攻击面。。</p>
-<ul>
-<li>System Calls：Linux内核在执行系统调用时可能还会处理一些潜在的恶意数据，因此内核中的系统调用函数是一个值得关注的攻击面。要想找到这些函数，可以简单的在源代码中检索“SYSCALL_DEFINE”字符串</li>
-<li>Sockets：sockets恶意调用</li>
-<li>Binder</li>
-<li>Shared Memory</li>
-<li>Baseband Interface</li>
-<li>Attacking Hardware Support Services</li>
-<li>JAVA Native Interface：JNI恶意调用、JNI-DOS</li>
-<li>AIDL service Calls</li>
-<li>TrustZone Proxy：TurstZone Proxy是链接非安全世界和安全世界的代理</li>
-</ul>
-<h3 id="物理攻击面"><a href="#物理攻击面" class="headerlink" title="物理攻击面"></a>物理攻击面</h3><p>攻击需要物理接触设备，虽然大部分物理攻击可防御，但仍很严重因为有些攻击会在瞬间完成。</p>
-<h4 id="拆解设备"><a href="#拆解设备" class="headerlink" title="拆解设备"></a>拆解设备</h4><p>打开一个硬件设备通常能发现：  </p>
-<ul>
-<li>暴露的串口，允许接收调试信息，或者在某些情况下，提供设备的shell访问</li>
-<li>暴露的JTAG调试端口，允许对设备的固件进行调试、重刷或访问</li>
-</ul>
-<p>极少数情况下，攻击者无法找到这些通用接口，但是其他攻击仍然是可能的。一个非常实用和真实的攻击是物理性地移除闪存或核心CPU（通常包含着内部内存）。一旦被移除，攻击者可以轻易地从设备中读取引导装载程序、启动配置和完整的闪存文件系统。攻击者完全占有设备后，能够实施许多攻击，这些只是其中的一部分。</p>
-<h4 id="USB"><a href="#USB" class="headerlink" title="USB"></a>USB</h4><h5 id="枚举USB攻击面"><a href="#枚举USB攻击面" class="headerlink" title="枚举USB攻击面"></a>枚举USB攻击面</h5><p>USB暴露的攻击面取决于设备支持哪些USB模式（ADB、存储、MTP等）。</p>
-<h5 id="ADB"><a href="#ADB" class="headerlink" title="ADB"></a>ADB</h5><p>通常使用adb shell，4.2.2之前 ADB shell不需要认证，之后需要。<br>攻击场景：Juice Jacking 假充电站攻击  </p>
-<h4 id="其他物理攻击面"><a href="#其他物理攻击面" class="headerlink" title="其他物理攻击面"></a>其他物理攻击面</h4><p>尽管USB是Android设备上最普遍存在的物理攻击面，但它并不是唯一的一个，其他物理攻击面包括手机SIM卡、SD卡、HDMI、暴露的测试点和对接连接器等。。</p>
-<h3 id="第三方修改"><a href="#第三方修改" class="headerlink" title="第三方修改"></a>第三方修改</h3><p>所有的第三方修改都可能会扩大设备的攻击面，而这种情况确实经常发生，主要包括：  </p>
-<ul>
-<li>OEM厂家定制的预装应用</li>
-<li>遗留的开发调测工具</li>
-<li>对Framework层的修改引入的新功能、API、JNI</li>
-<li>驱动层新增的驱动节点</li>
-</ul>
-<h2 id="Rom安全"><a href="#Rom安全" class="headerlink" title="Rom安全"></a>Rom安全</h2><h3 id="Rom攻击面"><a href="#Rom攻击面" class="headerlink" title="Rom攻击面"></a>Rom攻击面</h3><p>由于这里所说的ROM主要是指代手机系统，根据前面对Android设备的攻击面整理，从系统层面对ROM安全进行分析，梳理如下：<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/4.png" alt="ROM安全攻击面梳理"></p>
-<h3 id="安全现状"><a href="#安全现状" class="headerlink" title="安全现状"></a>安全现状</h3><p>下面我们将结合这两年的安全事件，从案例的角度对ROM安全的当前现状作简单介绍。。<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/14.png"></p>
-<h4 id="解锁BootLoader"><a href="#解锁BootLoader" class="headerlink" title="解锁BootLoader"></a>解锁BootLoader</h4><p>一般而言，通过在引导加载程序层次上实现一些限制，对引导加载程序进行锁定，可以防止终端用户修改设备固件，而这些限制取决于制造商的具体决策，可能会有所不同。解锁BootLoader能带来严重的安全隐患，如果这个设备丢失或者被盗，设备上的所有数据可以被攻击者轻易的恢复窃取。<br>PS：事实上在解锁BootLoader时，会执行一次恢复出厂设置，用以确保终端用户数据安全。尽管如此，对于一些设备，仍然有可能通过取证手段恢复被删数据，所以解锁BootLoader本身仍然带来了安全风险。。</p>
-<h5 id="老罗羞愧！盘古团队成功破解锤子手机Bootloader"><a href="#老罗羞愧！盘古团队成功破解锤子手机Bootloader" class="headerlink" title="老罗羞愧！盘古团队成功破解锤子手机Bootloader"></a>老罗羞愧！盘古团队成功破解锤子手机Bootloader</h5><p>2017年2月近日，国内著名的技术团队盘古团队发布长文称：可以利用bootloader里的两个漏洞对锤子T1&#x2F;2的bootloader进行解锁。<br>盘古团队在文章中称，和很多高通芯片的手机一样，T2的bootloader是基于高通开源的lk。所以参考源码可以很快梳理出bootloader的执行流程，并且进行后续的分析和多步的调试后完成了对bootloader的解锁。<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/5.png" alt="破解Blootloader">最后，盘古团队也对此次破解进行了说明：对于T1和T2，锤子OS v2.6.7是最后一个可以解锁的ROM版本号，v2.6.8后由于大部分指令的被阉，盘古团队提供的方法就无法解锁锤子手机的bootloader。从这里也可以看出锤子在2016年8月推出的v2.6.8的时候应该是发现了此问题并对此进行了修复。</p>
-<h4 id="Root提权"><a href="#Root提权" class="headerlink" title="Root提权"></a>Root提权</h4><h5 id="Linux-全版本提权漏洞-Dirty-COW"><a href="#Linux-全版本提权漏洞-Dirty-COW" class="headerlink" title="Linux 全版本提权漏洞 Dirty COW"></a>Linux 全版本提权漏洞 Dirty COW</h5><h6 id="漏洞概要"><a href="#漏洞概要" class="headerlink" title="漏洞概要"></a>漏洞概要</h6><ul>
-<li>漏洞编号：CVE-2016-5195</li>
-<li>漏洞类型：内核竞态条件漏洞</li>
-<li>漏洞危害：本地提权</li>
-<li>影响范围：Linux kernel&gt;2.6.22 (released in 2007)</li>
-</ul>
-<p>这个漏洞是在2016年10月18号被Phil Oester提交，被Linux的创始人Linus亲自修复。同年10月20号，漏洞的发现者Phil Oester将漏洞的部分细节提交到github上。当天朋友圈就被这个漏洞刷屏了，毕竟是几乎是通杀全版本linux的本地提权的神洞，这种漏洞还是很少见的。</p>
-<h4 id="预装应用"><a href="#预装应用" class="headerlink" title="预装应用"></a>预装应用</h4><h5 id="安卓曝ROM木马万蓝-超10万部手机受影响"><a href="#安卓曝ROM木马万蓝-超10万部手机受影响" class="headerlink" title="安卓曝ROM木马万蓝 超10万部手机受影响"></a>安卓曝ROM木马万蓝 超10万部手机受影响</h5><p>2015年5月中旬，360手机安全中心收到用户反馈称自己的手机经常自动安装新的游戏应用，经分析排查发现，该用户中招的是一个名为“万蓝”的ROM级别手机木马，该木马主要通过联网下载shell脚本文件进行静默安装推广应用，并可以实现自身升级。<br>传播方式主要是通过植入ROM，利用刷机网站进行传播。到目前为止，恶意样本主要是植入为夏新、联想、小采等手机开发的三方ROM进行传播，受影响用户达10万以上。已知的ROM下载渠道有：<br>ROM基地 <a target="_blank" rel="noopener" href="http://www.romjd.com/Rom/Detail/16229">http://www.romjd.com/Rom/Detail/16229</a><br>ROM之家 <a target="_blank" rel="noopener" href="http://www.romzj.com/rom/10300.htm">http://www.romzj.com/rom/10300.htm</a><br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/12.png"><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/13.png">用户手机刷入被感染的ROM后，木马便疯狂地开始推广传播各种应用。<br>从后台挖掘出的脚本发现被推广的应用至少有近百个，以下是部分推广软件的包名（包名是Android软件一个标识），可以看到包括UC浏览器、百度浏览器、QQ浏览器、豌豆荚、100tv播放器、百度团购、折800、腾讯新闻等知名应用也在推广的名单内。</p>
-<h5 id="来自中国的秘密：预装木马的安卓平板正在销往全世界"><a href="#来自中国的秘密：预装木马的安卓平板正在销往全世界" class="headerlink" title="来自中国的秘密：预装木马的安卓平板正在销往全世界"></a>来自中国的秘密：预装木马的安卓平板正在销往全世界</h5><p>2015年双十一来临之际，猎豹移动安全实验室发现了一个危险系数较高的木马，该木马被称为Cloudsota。研究发现该木马是被预装在一些Android平板上的，而从当时的情况来看，遭受该木马感染的平板依然放置在亚马逊的购物架上，并且处于销售状态。</p>
-<h6 id="发现之路：起于受害用户的抱怨"><a href="#发现之路：起于受害用户的抱怨" class="headerlink" title="发现之路：起于受害用户的抱怨"></a>发现之路：起于受害用户的抱怨</h6><p>通过对收集的信息进行分析，该木马其实已经存在有一段时间了，而其间也有不少受害用户一直在 XDA、TechKnow等网上交流论坛上寻求帮助。<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/6.png">而在亚马逊上也发现了一些购买了平板的用户的抱怨。<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/7.png"></p>
-<h6 id="恶意行径：Cloudsota木马伸出了恶魔之手"><a href="#恶意行径：Cloudsota木马伸出了恶魔之手" class="headerlink" title="恶意行径：Cloudsota木马伸出了恶魔之手"></a>恶意行径：Cloudsota木马伸出了恶魔之手</h6><p>经过分析发现，Cloudsota木马能够远程控制受感染的设备，可在在未经用户允许的情况下，进行带有目的性的恶意操作。以下为该木马的主要行为轨迹：<br>首先，它可以直接将恶意广告软件或者其他的恶意软件安装到设备上。同时在初始阶段，该木马会先将杀毒应用卸载掉，从而方便进行其他的恶意操作。我们也发现，在root权限下，它不但能够自动打开所有安装在设备上的应用，而且经过检测，该木马会将开机动画和壁纸都替换成广告。和众多恶意广告软件一样，Cloudsota还会将浏览器的默认主页篡改，并重定向到一个广告页面上，绑定用户进行浏览。</p>
-<h6 id="影响：超过153个国家地区的用户受到影响"><a href="#影响：超过153个国家地区的用户受到影响" class="headerlink" title="影响：超过153个国家地区的用户受到影响"></a>影响：超过153个国家地区的用户受到影响</h6><p>根据初步的估算，至少有17,233台受感染的平板被线下的用户购买，并已经通过物流交付到用户手中。此外，由于目前许多平板是不受杀毒应用的保护，实际上感染设备的数量可能比我们预计要多得多。<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/8.png">其中最令人担心的是，这些平板电脑在许多电商平台都有出售，不乏零售巨头，如亚马逊。从当前的情况来看，显然大多数人都不知道cloudsota的潜在风险和破坏性，而在这里，必须提醒广大用户，可以说，这是一个定时炸弹，随时都有可能威胁个人隐私和财产安全。根据跟踪研究发现，目前有超过30个品牌的平板被预装了该木马，相对于大型品牌的平板电脑，影响最大的是一些小众品牌的平板。据统计，超过4000台受影响的小众品牌平板已经被出售到全球各地。<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/9.png">在遭受该木马感染的超过153个国家和地区中，美国、墨西哥和土耳其的情况是最为严重的。<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/10.png">我们可以在网上看到许多用户纷纷在亚马逊上评论，抱怨设备经常出现广告和弹窗。根据对收集到的信息进行统计，发现这些预装该木马的平板都有一定的相同之处，就是所有的这些平板，它们的价格都是比较廉价的，并且可以追溯到它们的制造商其实出自于一些不知名的小型车间。下面是一个不完整统计的在亚马逊上疑似预装木马的品牌列表：<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/11.png"></p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1109,7 +745,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">Edited on</span>
-      <time title="Modified: 2019-02-02 17:44:49" itemprop="dateModified" datetime="2019-02-02T17:44:49+08:00">2019-02-02</time>
+      <time title="Modified: 2022-06-13 11:41:53" itemprop="dateModified" datetime="2022-06-13T11:41:53+08:00">2022-06-13</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1131,140 +767,15 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="BLE概述"><a href="#BLE概述" class="headerlink" title="BLE概述"></a>BLE概述</h2><p>“蓝牙”，即Bluetooth，是斯堪的纳维亚语中 Blåtand &#x2F; Blåtann 的英化版本。该词是十世纪的一位国王Harald Bluetooth的绰号，相传他将纷争不断的丹麦部落统一为一个王国，并引入了基督教。蓝牙技术开发者Jim Kardach于1997年提出用Bluetooth这个名词，据说他当时正在读一本名为The Long Ships的小说，讲述的就是维京人和Harald Bluetooth国王的故事。他认为蓝牙可以把各种不同的通信协议统一在一起，诚如这位国王做的事情一样。至于蓝牙的logo，取自国王Harald Bluetooth名字中的【H】和【B】两个字母的组合，用古北欧文字来表示：<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/1.png" alt="蓝牙起源">蓝牙技术发展至今衍生出了多个版本，“低功耗蓝牙”（Bluetooth Low Energy）是演化过程当中的一次颠覆性改变。与前面几代不同的是，蓝牙4.0版引入的BLE协议更注重功耗问题，而非通信速率的提升。这也使得低功耗蓝牙更加节能，能使设备的电池维持很长时间，因此在很多可穿戴设备中得到了应用。</p>
-<h2 id="BLE协议栈"><a href="#BLE协议栈" class="headerlink" title="BLE协议栈"></a>BLE协议栈</h2><p>BLE协议栈的结构图如下所示，详细可参考<a target="_blank" rel="noopener" href="https://www.bluetooth.com/specifications">蓝牙4.2官方文档</a><br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/2.png" alt="BLE协议栈"></p>
-<h3 id="Physical-Layer"><a href="#Physical-Layer" class="headerlink" title="Physical Layer"></a>Physical Layer</h3><p>任何一个通信系统，首先要确定的就是通信介质（物理通道，Physical Channel），BLE也不例外。在BLE协议中，“通信介质”的定义是由Physical Layer（其它通信协议也类似）负责。<br>Physical Layer是这样描述BLE的通信介质的：</p>
-<blockquote>
-</blockquote>
-<p>由于BLE属于无线通信，则其通信介质是一定频率范围下的频带资源（Frequency Band）；<br>BLE的市场定位是个体和民用，因此使用免费的ISM频段（频率范围是2.400-2.4835 GHz）；<br>为了同时支持多个设备，将整个频带分为40份，每份的带宽为2MHz，称作RF Channel。</p>
-<p>经过上面的定义之后，BLE的物理通道已经出来了，即“频道分别是‘f&#x3D;2402 +k * 2 MHz, k&#x3D;0, … ,39’，带宽为2MHz”的40个RF Channel。其中，有3个信道是advertising channel（广播通道），分别是37、38、39，用于发现设备（Scanning devices）、初始化连接（initiating a connection）和广播数据（broadcasting date）；剩下的37个信道为data channel（数据通道），用于两个连接的设备间的通讯。<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/3.png" alt="信道"></p>
-<h3 id="Link-Layer"><a href="#Link-Layer" class="headerlink" title="Link Layer"></a>Link Layer</h3><p>Link Layer用于控制设备的射频状态，设备将处于Standby（待机）、Advertising（通告）、Scanning（扫描）、Initiating（初始化）、Connection（连接）这五种状态中的一种。<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/4.png" alt="设备状态"></p>
-<ul>
-<li>待机状态（Standby State）：此时即不发送数据，也不接收数据，对设备来所也是最节能的状态；</li>
-<li>通告状态（Advertising State）：通告状态下的设备一般也被称为“通告者”（Advertiser），它会通过advertising channel（广播通道）周期性发送数据，广播的数据可以由处于Scanning state或Initiating state的实体接收；</li>
-<li>扫描状态（Scanning State）：可以通过advertising channel（广播通道）接收数据的状态，该状态下的设备又被称为“扫描者”（Scanner）。此外，根据advertiser所广播的数据类型，有些Scanner还可以主动向Advertiser请求一些额外数据；</li>
-<li>初始化状态（Initiating State）：和Scanning State类似，不过是一种特殊的状态。Scanner会侦听所有的advertising channel，而Initator（初始化者）则只侦听某个特定设备的的广播，并在接收到数据后，发送连接请求，以便和Advertiser建立连接；</li>
-<li>连接状态（Connection State）：由Initiating State或Advertising State自动切换而来，处于Connection State的双方，分别有两种角色。其中，Initiater方被称为Mater（主设备），Advertiser方则称作Slave（从设备）。</li>
-</ul>
-<h3 id="HCI"><a href="#HCI" class="headerlink" title="HCI"></a>HCI</h3><p>主机控制接口层（Host Controller Interface，简写 HCI）：定义Host（主机）和Controller（控制器）之间的通信协议，这一层可以是软件或者硬件接口，如UART、SPI、USB等。</p>
-<h3 id="Generic-Access-Profile（GAP）"><a href="#Generic-Access-Profile（GAP）" class="headerlink" title="Generic Access Profile（GAP）"></a>Generic Access Profile（GAP）</h3><p>前面Link Layer虽然对连接建立的过程做了定义，但它并没有体现到Application（或者Profile）层面，而GAP则是直接与应用程序或配置文件通信的接口，它实现了如下功能：</p>
-<ul>
-<li><p>定义GAP层的蓝牙设备角色（role）</p>
-<blockquote>
-</blockquote>
-<ul>
-<li>Broadcaster（广播者）：设备正在发送advertising events  </li>
-<li>Observer（观察者）：设备正在接收advertising events  </li>
-<li>Peripheral（外设）：设备接受Link Layer连接（对应Link Layer的slave角色）  </li>
-<li>Central（主机）：设备发起Link Layer连接（对应Link Layer的master角色）</li>
-</ul>
-</li>
-<li><p>定义GAP层的用于实现各种通信的操作模式（Operational Mode）和过程（Procedures）</p>
-<blockquote>
-</blockquote>
-<ul>
-<li>Broadcast mode and observation procedure，实现单向的、无连接的通信方式  </li>
-<li>Discovery modes and procedures，实现蓝牙设备的发现操作  </li>
-<li>Connection modes and procedures，实现蓝牙设备的连接操作  </li>
-<li>Bonding modes and procedures，实现蓝牙设备的配对操作</li>
-</ul>
-</li>
-<li><p>定义User Interface有关的蓝牙参数，包括蓝牙地址、蓝牙名称、蓝牙的PIN码等</p>
-</li>
-<li><p>Security相关的定义。。</p>
-</li>
-</ul>
-<h3 id="L2CAP-Protocol"><a href="#L2CAP-Protocol" class="headerlink" title="L2CAP Protocol"></a>L2CAP Protocol</h3><p>逻辑链路控制及自适应协议层（Logical Link Control and Adaptation Protocol）：为上层提供数据封装服务，允许逻辑上的点对点数据通信。</p>
-<h3 id="Attribute-protocol（ATT）"><a href="#Attribute-protocol（ATT）" class="headerlink" title="Attribute protocol（ATT）"></a>Attribute protocol（ATT）</h3><p>在BLE协议栈中，Physical Layer负责提供一系列的Physical Channel；基于这些Physical Channel，Link Layer可在两个设备之间建立用于点对点通信的Logical Channel；而L2CAP则将这个Logical Channel换分为一个个的L2CAP Channel，以便提供应用程序级别的通道复用。到此之后，基本协议栈已经构建完毕，应用程序已经可以基于L2CAP欢快的run起来了。<br>谈起应用程序，就不得不说BLE的初衷—-物联网。物联网中传输的数据和传统的互联网有什么区别呢？抛开其它不谈，物联网中最重要、最广泛的一类应用是：信息的采集。</p>
-<blockquote>
-</blockquote>
-<p>这些信息往往都很简单，如温度、湿度、速度、位置信息、电量、水压、等等。<br>采集的过程也很简单，节点设备定时的向中心设备汇报信息数据，或者，中心设备在需要的时候主动查询。</p>
-<p>基于信息采集的需求，BLE抽象出一个协议：Attribute protocol，该协议将这些“信息”以“Attribute（属性）”的形式抽象出来，并提供一些方法，供远端设备（remote device）读取、修改这些属性的值（Attribute value）。<br>Attribute Protocol的主要思路包括：</p>
-<ol>
-<li><p>基于L2CAP，使用固定的Channel ID</p>
-</li>
-<li><p>采用client-server的形式。提供信息（以后都将其称为Attribute）的一方称作ATT server（一般是那些传感器节点），访问信息的一方称作ATT client。</p>
-</li>
-<li><p>一个Attribute由Attribute Type、Attribute Handle和Attribute Value组成。</p>
-<blockquote>
-</blockquote>
-<ul>
-<li>Attribute Type用以标示Attribute的类型，类似于我们常说的“温度”、“湿度”等人类可识别的术语，通过UUID进行区分。</li>
-<li>Attribute Handle是一个16-bit的数值，用作唯一识别Attribute server上的所有Attribute。Attribute Handle的存在有如下意义：<ul>
-<li>一个server上可能存在多个相同type的Attribute，显然，client有区分这些Attribute的需要。</li>
-<li>同一类型的多个Attribute，可以组成一个Group，client可以通过这个Group中的起、始handle访问所有的Attributes。</li>
-</ul>
-</li>
-<li>Attribute Value代表Attribute的值，可以是任何固定长度或者可变长度的octet array。</li>
-</ul>
-</li>
-<li><p>Attribute能够定义一些权限（Permissions），以便server控制client的访问行为，包括：</p>
-<blockquote>
-</blockquote>
-<ul>
-<li>访问有关的权限（access permissions），Readable、Writeable以及Readable and writable；  </li>
-<li>加密有关的权限（encryption permissions），Encryption required和No encryption required；  </li>
-<li>认证有关的权限（authentication permissions），Authentication Required和No Authentication Required；  </li>
-<li>授权有关的权限（authorization permissions），Authorization Required和No Authorization Required。</li>
-</ul>
-</li>
-<li><p>根据所定义的Attribute PDU的不同，client可以对server有多种访问方式，包括：</p>
-<blockquote>
-</blockquote>
-<ul>
-<li>Find Information，获取Attribute type和Attribute Handle的对应关系；  </li>
-<li>Reading Attributes，有Read by type、Read by handle、Read by blob（只读取部分信息）、Read Multiple（读取多个handle的value）等方式；  </li>
-<li>Writing Attributes，包括需要应答的writing、不需要应答的writing等。</li>
-</ul>
-</li>
-</ol>
-<h3 id="Generic-Attribute-profile（GATT）"><a href="#Generic-Attribute-profile（GATT）" class="headerlink" title="Generic Attribute profile（GATT）"></a>Generic Attribute profile（GATT）</h3><p>ATT之所以称作“protocol”，是因为它还比较抽象，仅仅定义了一套机制，允许client和server通过Attribute的形式共享信息。至于具体共享哪些信息，ATT并不关心，这是GATT（Generic Attribute Profile）的主场。GATT相对ATT只多了一个‘G‘，然含义却大不同，因为GATT是一个profile（更准确的说是profile framework）。<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/5.png" alt="GATT">由上图可知，GATT中的三个要素Profile、Service、Characteristic以及他们的层级关系。值得注意的是，“Profile”是基于GATT所派生出的真正的Profile，乃SIG蓝牙技术联盟对一些同范畴内的Service打包后的集合，如电池、心率、血压等，可参照<a target="_blank" rel="noopener" href="https://www.bluetooth.com/specifications/gatt">官方Profiles Overview</a>，对我们的分析并无大用。<br>Service和Characteristic则是比较重要的，Service可以理解为PHP中的“类”、功能对象的集合。Characteristic可以理解为PHP的“函数”，是GATT中具体的功能对象，每个Service都可以包含一个或多个Characteristic（特征）。Characteristic是GATT profile中最基本的数据单位，由一个Properties、一个Value、一个或者多个Descriptor组成。<br>以上除“Profile”外的每一个定义，Service、Characteristic、Characteristic Properties、Characteristic Value、Characteristic Descriptor等等，都是作为一个Attribute存在的，具备前面所描述的Attribute的所有特征：Attribute Handle、Attribute Types、Attribute Value和Attribute Permissions。<br>在理解了GATT后，就已经能够分析或是“黑掉”一些BLE设备了。这里拿小米手环做例子，当LightBlue连上小米手环后，可以看到一个名为FEE7的UUID，如下所示：<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/6.png" alt="LightBlue">其中，FEE7是一个私有Service的UUID，里面的0xFE**则是私有Characteristic的UUID。下面的Immediate Alert 显示出了名称，代表其不是小米私有的Service，而是官方公开定义的Service。点击进入这个Characteristic，看到它的UUID为2A06。然后我们到蓝牙官网定义的列表<a target="_blank" rel="noopener" href="https://www.bluetooth.com/specifications/gatt/characteristics">Characteristics</a>搜索2A06，进入Characteristic的详情页面。<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/7.png" alt="Alert Level">于是，该Characteristic操作定义非常明确了。点击“Write new value”，可以写入新的值。若写入1或2，则可以引起手环的震动。。</p>
-<h3 id="Security-Manager（SM）"><a href="#Security-Manager（SM）" class="headerlink" title="Security Manager（SM）"></a>Security Manager（SM）</h3><p>Security Manager负责BLE通信中有关安全的内容，包括配对（pairing,）、认证（authentication）和加密（encryption）等过程。</p>
-<h2 id="BLE数据包格式"><a href="#BLE数据包格式" class="headerlink" title="BLE数据包格式"></a>BLE数据包格式</h2><p>在低功耗蓝牙规范中，分广播报文和数据报文这两种。设备利用广播报文发现、连接其它设备，而在连接建立之后，便开始使用数据报文。无论是广播报文还是数据报文，链路层只使用一种数据包格式，它由“前导码”（preamble）、“访问码”（access code）、”有效载荷“和”循环冗余校验“（Cyclical Redundancy Check，CRC）校验码组成。其中，”访问码“有时又称为”访问地址“（access address）。<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/8.png" alt="BLE数据包格式"></p>
-<ol>
-<li>Preamble<br>1个字节长度，接受中用于频率同步、数据速率同步、自动增益控制调整，固定为01010101或者10101010序列</li>
-<li>Access Address<br>4个字节长度，广播报文接入地址为：0x8E89BED6，数据报文接入地址为：32bits随机数</li>
-<li>PDU  <ul>
-<li>广播报文（见协议BLUETOOTH SPECIFICATION Version 4.0 [Vol 6] Part B 2.3）<br> <img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/9.png" alt="广播报文"><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/10.png" alt="广播报文"><ul>
-<li>PDU Type：有效载荷内容的类型，通过这一字段确定该数据包是一个”通告“还是”扫描请求“或”响应“等<br>  <img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/11.png" alt="PDU Type"></li>
-<li>RFU 保留位</li>
-<li>TxAdd：发送地址字段</li>
-<li>RxAdd：接收地址字段</li>
-<li>Payload Length：用来表示”有效载荷数据“（payload data）的长度，不包括头部内容</li>
-</ul>
-</li>
-<li>数据报文（见协议BLUETOOTH SPECIFICATION Version 4.0 [Vol 6] Part B 2.4）<br> <img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/12.png" alt="数据报文"><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/13.png" alt="数据报文"><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/14.png" alt="数据报文"><ul>
-<li>LLID（逻辑链路ID）：0x01表示该数据包是一个帧的延续内容，或者这是一个空的“逻辑链路控制及适配协议”数据包；0x02表示一个“逻辑链路控制及适配协议”数据包的开始；0x03表示这是一个“逻辑链路控制”数据包的内容</li>
-<li>NESN：下一个期望的序列号，用于对接收到的数据包进行确认</li>
-<li>MD：更多数据字段，主要是为了说明发送方是否还有要发给接收者的数据</li>
-<li>RFU 保留位</li>
-<li>Payload Length：用以表示包含“信息完整性校验码”（Message Integrity Check，MIC）在内的“有效载荷数据”的长度</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>CRC<br>3个字节长度，“循环冗余校验”（Cyclical Redundancy Check，CRC），可检查数据的正确性</li>
-</ol>
-<h2 id="BLE通信协议分析"><a href="#BLE通信协议分析" class="headerlink" title="BLE通信协议分析"></a>BLE通信协议分析</h2><h3 id="逆向思路"><a href="#逆向思路" class="headerlink" title="逆向思路"></a>逆向思路</h3><p>Android系统自4.3版本开始，引入了对BLE的支持，详见Bluetooth Low Energy。通过浏览当中的信息，我们可以得知在app开发环节，需要做到如下几件事情：  </p>
-<ol>
-<li>BLE相关权限声明<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/15.png" alt="BLE权限声明"></li>
-<li>操作蓝牙之前，判断系统是否支持BLE<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/16.png" alt="BLE支持判断"></li>
-<li>获取本机的蓝牙适配器，BluetoothAdapter的获取依赖于bluetoothManager.getAdapter()实现<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/17.png" alt="获取蓝牙适配"></li>
-<li>发intent通知系统打开蓝牙<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/18.png" alt="打开蓝牙"></li>
-<li>使用startLeScan()函数获取外围设备，并实现BluetoothAdapter.LeScanCallback方法接受扫描结果<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/19.png" alt="扫描外围设备"><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/20.png" alt="扫描外围设备"></li>
-<li>调用connectGatt方法对设备进行连接，里面的BluetoothGattCallback对象用于交付操作结果给客户端。如果连接成功将返回BluetoothGatt实例，该实例是进行蓝牙控制的基础<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/21.png" alt="返回BluetoothGatt实例"></li>
-<li>成功建立连接后，便可对attributes（属性，参考前面的BLE协议栈）进行读写。利用getService、getCharacteristics获取外围设备的service和characteristic，对于其中支持写的characteristic在写入相应的数据，可实现外围设备的控制<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/22.png" alt="操作attributes属性">了解BLE app的开发步骤后，进行逆向时思路也就清晰了许多。首先，可以通过startLeScan、LeScanCallback等方法定位到扫描BLE外围设备的相关代码段；然后，根据connectGatt、BluetoothGattCallback等api锁定设备连接的相关函数，并找到指令交互部分，最后梳理出整个控制流程。。</li>
-</ol>
-<h3 id="BLE嗅探"><a href="#BLE嗅探" class="headerlink" title="BLE嗅探"></a>BLE嗅探</h3><p>除去静态分析外，我们还需要一些嗅探蓝牙通信的手段。目前，个人选用的是CC2540 USB Dongle配合官方的packet Sniffer程序，安装及使用方法详见<a target="_blank" rel="noopener" href="http://processors.wiki.ti.com/index.php/BLE_sniffer_guide">BLE sniffer guide</a>（要求Windows环境）。<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/23.png" alt="BLE嗅探"><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/24.png" alt="BLE嗅探"><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/25.png" alt="BLE嗅探">此外，需要注意的是，设备连接建立前，它会在3个信道发送广播（37、38、39），而sniffer只能监听三个频道中的任意一个，所以每次能抓到包的概率是三分之一。<br><img src="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/26.png" alt="BLE嗅探"></p>
-<h2 id="实战"><a href="#实战" class="headerlink" title="实战"></a>实战</h2><p>关于这部分内容，可详见之前的文章：<a target="_blank" rel="noopener" href="http://www.wireghost.cn/2016/07/07/%E7%88%B1%E6%97%A0%E6%83%A7%E8%B7%9D%E7%A6%BB%EF%BC%8C%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%AF%B9%E6%99%BA%E8%83%BD%E8%B7%B3%E8%9B%8B%E7%9A%84%E5%85%A5%E4%BE%B5/">爱无惧距离，记一次对智能跳蛋的入侵</a></p>
-<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><ol>
-<li><a target="_blank" rel="noopener" href="http://www.wowotech.net/bluetooth/ble_stack_overview.html">蓝牙低功耗(BLE)协议栈介绍</a></li>
-<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/eker_ch/article/details/50607683">蓝牙学习之旅——低功耗蓝牙之报文（广播报文&amp;数据报文）</a></li>
-<li><a target="_blank" rel="noopener" href="https://developer.android.com/guide/topics/connectivity/bluetooth-le.html#read">Bluetooth开发指南</a></li>
-<li><a target="_blank" rel="noopener" href="http://drops.wooyun.org/tips/10109">物联网安全拔“牙”实战——低功耗蓝牙（BLE）初探</a></li>
-<li>BLUETOOTH SPECIFICATION Version 4.0</li>
-</ol>
-
+          <h2 id="BLE概述"><a href="#BLE概述" class="headerlink" title="BLE概述"></a>BLE概述</h2><p>“蓝牙”，即Bluetooth，是斯堪的纳维亚语中 Blåtand &#x2F; Blåtann 的英化版本。该词是十世纪的一位国王Harald Bluetooth的绰号，相传他将纷争不断的丹麦部落统一为一个王国，并引入了基督教。蓝牙技术开发者Jim Kardach于1997年提出用Bluetooth这个名词，据说他当时正在读一本名为The Long Ships的小说，讲述的就是维京人和Harald Bluetooth国王的故事。他认为蓝牙可以把各种不同的通信协议统一在一起，诚如这位国王做的事情一样。至于蓝牙的logo，取自国王Harald Bluetooth名字中的【H】和【B】两个字母的组合，用古北欧文字来表示：  </p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1326,7 +837,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">Edited on</span>
-      <time title="Modified: 2019-02-02 17:48:50" itemprop="dateModified" datetime="2019-02-02T17:48:50+08:00">2019-02-02</time>
+      <time title="Modified: 2022-06-13 11:42:54" itemprop="dateModified" datetime="2022-06-13T11:42:54+08:00">2022-06-13</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1348,18 +859,15 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="拥尔智能跳蛋"><a href="#拥尔智能跳蛋" class="headerlink" title="拥尔智能跳蛋"></a>拥尔智能跳蛋</h2><p>该产品就不多做介绍了，大家知道就好，详见<a target="_blank" rel="noopener" href="http://www.1024online.com/">官网</a><br><img src="/2016/07/07/%E7%88%B1%E6%97%A0%E6%83%A7%E8%B7%9D%E7%A6%BB%EF%BC%8C%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%AF%B9%E6%99%BA%E8%83%BD%E8%B7%B3%E8%9B%8B%E7%9A%84%E5%85%A5%E4%BE%B5/1.png" alt="介绍"><img src="/2016/07/07/%E7%88%B1%E6%97%A0%E6%83%A7%E8%B7%9D%E7%A6%BB%EF%BC%8C%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%AF%B9%E6%99%BA%E8%83%BD%E8%B7%B3%E8%9B%8B%E7%9A%84%E5%85%A5%E4%BE%B5/2.png" alt="介绍"></p>
-<h2 id="研究目的"><a href="#研究目的" class="headerlink" title="研究目的"></a>研究目的</h2><p>通过脚本实现对跳蛋的远程控制。</p>
-<h2 id="分析过程"><a href="#分析过程" class="headerlink" title="分析过程"></a>分析过程</h2><p>该跳蛋的“玩法”如下，并预设了6种震动模式：<br><img src="/2016/07/07/%E7%88%B1%E6%97%A0%E6%83%A7%E8%B7%9D%E7%A6%BB%EF%BC%8C%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%AF%B9%E6%99%BA%E8%83%BD%E8%B7%B3%E8%9B%8B%E7%9A%84%E5%85%A5%E4%BE%B5/3.png" alt="APP_Gui"><img src="/2016/07/07/%E7%88%B1%E6%97%A0%E6%83%A7%E8%B7%9D%E7%A6%BB%EF%BC%8C%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%AF%B9%E6%99%BA%E8%83%BD%E8%B7%B3%E8%9B%8B%E7%9A%84%E5%85%A5%E4%BE%B5/4.png" alt="APP_Gui">定位到com&#x2F;makerx&#x2F;toy&#x2F;activity&#x2F;ShakeActivity类的相应代码段。<br><img src="/2016/07/07/%E7%88%B1%E6%97%A0%E6%83%A7%E8%B7%9D%E7%A6%BB%EF%BC%8C%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%AF%B9%E6%99%BA%E8%83%BD%E8%B7%B3%E8%9B%8B%E7%9A%84%E5%85%A5%E4%BE%B5/5.png" alt="反编译"><img src="/2016/07/07/%E7%88%B1%E6%97%A0%E6%83%A7%E8%B7%9D%E7%A6%BB%EF%BC%8C%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%AF%B9%E6%99%BA%E8%83%BD%E8%B7%B3%E8%9B%8B%E7%9A%84%E5%85%A5%E4%BE%B5/6.png" alt="反编译">进一步逆向，可拿到各模式所对应的震动指令。以“自动模式”为例，它的控制指令为{91,127,48,-113,48,-97,48,-81,48,-65,48,-49,48,-33,48,-17,48}字符数组，换算成16进制即“5b 7F 30 8F 30 9F 30 AF 30 BF 30 CF 30 DF 30 EF 30”，抓取的BLE包也验证了这一点。<br><img src="/2016/07/07/%E7%88%B1%E6%97%A0%E6%83%A7%E8%B7%9D%E7%A6%BB%EF%BC%8C%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%AF%B9%E6%99%BA%E8%83%BD%E8%B7%B3%E8%9B%8B%E7%9A%84%E5%85%A5%E4%BE%B5/7.png" alt="反编译"><img src="/2016/07/07/%E7%88%B1%E6%97%A0%E6%83%A7%E8%B7%9D%E7%A6%BB%EF%BC%8C%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%AF%B9%E6%99%BA%E8%83%BD%E8%B7%B3%E8%9B%8B%E7%9A%84%E5%85%A5%E4%BE%B5/8.png" alt="反编译"><img src="/2016/07/07/%E7%88%B1%E6%97%A0%E6%83%A7%E8%B7%9D%E7%A6%BB%EF%BC%8C%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%AF%B9%E6%99%BA%E8%83%BD%E8%B7%B3%E8%9B%8B%E7%9A%84%E5%85%A5%E4%BE%B5/9.png" alt="对应关系">在理解它的震动原理后，尝试直接向Handle  0x000B 发送{5b，7F，30，8F，30，9F，30，AF，30，BF，30，CF，30，DF，30，EF，30}字节数组，进行重放，看是否能够震动起来。</p>
-<ol>
-<li>通过kali linux 和蓝牙适配器，模拟蓝牙栈，连接智能跳蛋；<br><img src="/2016/07/07/%E7%88%B1%E6%97%A0%E6%83%A7%E8%B7%9D%E7%A6%BB%EF%BC%8C%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%AF%B9%E6%99%BA%E8%83%BD%E8%B7%B3%E8%9B%8B%E7%9A%84%E5%85%A5%E4%BE%B5/10.png" alt="bluez"><img src="/2016/07/07/%E7%88%B1%E6%97%A0%E6%83%A7%E8%B7%9D%E7%A6%BB%EF%BC%8C%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%AF%B9%E6%99%BA%E8%83%BD%E8%B7%B3%E8%9B%8B%E7%9A%84%E5%85%A5%E4%BE%B5/11.png" alt="bluez"></li>
-<li>使用char-write-req命令，向0x000B  AttHandle发送相关震动命令，然而却并没有任何反应。这里猜测在前面存在一个绑定的过程，于是需要把这个环节也弄清楚；<br><img src="/2016/07/07/%E7%88%B1%E6%97%A0%E6%83%A7%E8%B7%9D%E7%A6%BB%EF%BC%8C%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%AF%B9%E6%99%BA%E8%83%BD%E8%B7%B3%E8%9B%8B%E7%9A%84%E5%85%A5%E4%BE%B5/12.png" alt="char-write-req"></li>
-<li>重新对蓝牙的数据包进行分析，注意到是在写入以下信息后，才有Notify返回；<br><img src="/2016/07/07/%E7%88%B1%E6%97%A0%E6%83%A7%E8%B7%9D%E7%A6%BB%EF%BC%8C%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%AF%B9%E6%99%BA%E8%83%BD%E8%B7%B3%E8%9B%8B%E7%9A%84%E5%85%A5%E4%BE%B5/13.png" alt="BLE数据包"><img src="/2016/07/07/%E7%88%B1%E6%97%A0%E6%83%A7%E8%B7%9D%E7%A6%BB%EF%BC%8C%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%AF%B9%E6%99%BA%E8%83%BD%E8%B7%B3%E8%9B%8B%E7%9A%84%E5%85%A5%E4%BE%B5/14.png" alt="BLE数据包"><img src="/2016/07/07/%E7%88%B1%E6%97%A0%E6%83%A7%E8%B7%9D%E7%A6%BB%EF%BC%8C%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%AF%B9%E6%99%BA%E8%83%BD%E8%B7%B3%E8%9B%8B%E7%9A%84%E5%85%A5%E4%BE%B5/15.png" alt="BLE数据包"></li>
-<li>于是，进行重放时，还需要将这些信息也一起写入。否则，跳蛋设备不会响应我们所发送的控制指令。找到<a target="_blank" rel="noopener" href="https://github.com/IanHarvey/bluepy">bluepy</a>这个项目并安装，根据其下的btle.py脚本做简单修改，即可实现一个小程序，实现对跳蛋的远程控制；<br><img src="/2016/07/07/%E7%88%B1%E6%97%A0%E6%83%A7%E8%B7%9D%E7%A6%BB%EF%BC%8C%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%AF%B9%E6%99%BA%E8%83%BD%E8%B7%B3%E8%9B%8B%E7%9A%84%E5%85%A5%E4%BE%B5/16.png" alt="bluepy项目"></li>
-<li>运行该脚本，成功控制跳蛋震动（通过更换指令，还由其他模式可以选择）。<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">hackFlow</span>(<span class="params">conn, address</span>):</span><br><span class="line">    conn.waitForNotifications(<span class="number">2</span>)</span><br><span class="line">    conn.writeCharacteristic(<span class="number">0x000B</span>, <span class="string">&quot;\x01\x03\x02\x04\x06\x05&quot;</span>, <span class="literal">True</span>)</span><br><span class="line">    conn.writeCharacteristic(<span class="number">0x000B</span>,<span class="string">&quot;\x5F\x0A&quot;</span>,<span class="literal">True</span>)</span><br><span class="line">    conn.writeCharacteristic(<span class="number">0x000B</span>,<span class="string">&quot;\x6C&quot;</span>,<span class="literal">True</span>)</span><br><span class="line">    conn.waitForNotifications(<span class="number">2</span>)</span><br><span class="line">    conn.writeCharacteristic(<span class="number">0x000B</span>,<span class="string">&quot;\x5b\x7F\x30\x8F\x30\x9F\x30\xAF\x30\xBF\x30\xCF\x30\xDF\x30\xEF\x30&quot;</span>,<span class="literal">True</span>)</span><br><span class="line"> </span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    <span class="comment">#if len(sys.argv) &lt; 2:</span></span><br><span class="line">    <span class="comment">#    sys.exit(&quot;Usage:\n  %s &lt;mac-address&gt; [random]&quot; % sys.argv[0])</span></span><br><span class="line">    <span class="comment">#if not os.path.isfile(helperExe):</span></span><br><span class="line">    <span class="comment">#   raise ImportError(&quot;Cannot find required executable &#x27;%s&#x27;&quot; % helperExe)</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;connecting...&quot;</span>)</span><br><span class="line">    devAddr = getAddress() <span class="comment">#sys.argv[1]</span></span><br><span class="line">    addrType = ADDR_TYPE_PUBLIC</span><br><span class="line">    time.sleep(<span class="number">1</span>)</span><br><span class="line">    conn = Peripheral(devAddr, addrType)</span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        hackFlow(conn,devAddr)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;vibering...&quot;</span>)</span><br><span class="line">    <span class="keyword">finally</span>:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;disconnect...&quot;</span>)</span><br><span class="line">        conn.disconnect()</span><br></pre></td></tr></table></figure></li>
-</ol>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>以上便是对拥尔智能跳蛋的一次重放攻击的完整过程，虽然只有10米左右的覆盖范围，但个人还是觉得蛮有意思的，希望能够建立伙伴们对物联网安全的兴趣。。</p>
-
+          <h2 id="拥尔智能跳蛋"><a href="#拥尔智能跳蛋" class="headerlink" title="拥尔智能跳蛋"></a>拥尔智能跳蛋</h2><p>该产品就不多做介绍了，大家知道就好，详见<a target="_blank" rel="noopener" href="http://www.1024online.com/">官网</a>：</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2016/07/07/%E7%88%B1%E6%97%A0%E6%83%A7%E8%B7%9D%E7%A6%BB%EF%BC%8C%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%AF%B9%E6%99%BA%E8%83%BD%E8%B7%B3%E8%9B%8B%E7%9A%84%E5%85%A5%E4%BE%B5/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1421,7 +929,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">Edited on</span>
-      <time title="Modified: 2019-02-02 17:52:40" itemprop="dateModified" datetime="2019-02-02T17:52:40+08:00">2019-02-02</time>
+      <time title="Modified: 2022-06-13 11:43:21" itemprop="dateModified" datetime="2022-06-13T11:43:21+08:00">2022-06-13</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1443,75 +951,15 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p>VR（虚拟现实）火起来了，不论是资本市场的表现，还是一场接一场的发布会，甚至是微信推送相关话题的数量，都在展示着VR已经开始从Geek的兴趣爱好，逐步走进主流消费者市场。国外，行业巨头跑马圈地，Facebook收购Oculus VR、索尼投入Morpheus设备、HTC携手三星共探VR；国内，各家积极布局，腾讯推出整套VR方案，3Glasses、DeePoon大朋头盔、蜂镜K1等公司体量虽小却毫不示弱。那么虚拟现实究竟是什么？会不会是下一个风口？<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/1.png" alt="vr"></p>
-<h2 id="虚拟现实定义"><a href="#虚拟现实定义" class="headerlink" title="虚拟现实定义"></a>虚拟现实定义</h2><p>虚拟现实（Virtual Reality，简称VR），指的是利用计算机技术模拟产生三维的虚拟世界，让使用者及时、没有限制地感知虚拟空间内的事物，利用视觉、听觉、触觉等对人体进行全方位欺骗，达到让使用者“身临其境”的效果，形成良好的沉浸感。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/2.png" alt="vr"></p>
-<h2 id="虚拟现实发展史"><a href="#虚拟现实发展史" class="headerlink" title="虚拟现实发展史"></a>虚拟现实发展史</h2><p>虚拟现实？不是最新的技术么？Yes and No。事实上，虚拟现实技术的第一个原型设备出现于1968年秋，距今已经将近半个世纪了，在这个意义上，虚拟现实并不新。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/3.png" alt="vr">上世纪50年代，斯坦利•G•温鲍姆（Stanley G. Weinbaum）的短篇小说《皮格马利翁的眼镜》中，作者开篇便提出了和《黑客帝国》中墨菲斯一样的问题：“那什么是现实呢？一切都是梦境，全是假象；我是你眼中的幻象，就像你也是我眼中的幻象一样！”。在这篇小说中，温鲍姆首次提出一种类似于头盔的虚拟现实设备，它能为佩戴者提供包括视觉、听觉、嗅觉、触觉和味觉在内的几乎所有感觉的模拟信号，让佩戴者进入一个全新的环境。后来，它被认为是首次提出虚拟现实概念的作品。<br>或许是受到了温鲍姆小说的启发，美国电影放映员莫尔顿•海利希（Morton Heilig）在1957年发明了名为Sensorama的仿真模拟器，并在5年后为这项技术申请了专利。这款设备通过三面显示屏来实现空间感，使用者需要坐在座位上，将头伸入一个类似于早期照相机的幕布中，观看事先准备好的短片。从本质上来说，Sensorama只是一款简单的3D显示工具，不仅无比巨大，还需坐在椅子上将头探入设备内部，才可体验到沉浸感。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/4.png" alt="vr"><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/5.png" alt="vr">与此同时，美国计算机学者道格拉斯•恩格尔巴特（Douglas Engelbart）改进了海利希的发明，他使用计算机屏幕让这个初级的虚拟现实装置变得可以接受信号，让使用者转移目光时也能看到相应的影响。1966 年，这套改进后的虚拟现实装置被美国空军引进作为模拟训练系统。<br>1968年，经过多次改进，美国计算机科学家伊凡•苏泽兰（Ivan Sutherland）设计了一款更类似于现代VR设备的虚拟现实头盔，它被公认是第一款真正意义上的虚拟现实设备。虽然是头戴式显示器，但由于当时的技术限制，这款VR头盔体积相当庞大和沉重，根本无法独立穿戴，必须要从天花板上引下一根支撑杆来将其固定住才可供人使用，所以也被戏称为悬在头上“达摩克利斯之剑”。但不管怎样，它都标志着头戴式虚拟现实设备与头部位置追踪系统的诞生，为现今的虚拟技术奠定了坚实基础，Ivan Sutherland也因此被称为虚拟现实之父。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/6.png" alt="vr">上世纪七十到八十年代，是整个虚拟技术理论和概念形成的时期，组成虚拟头盔的各种组件在技术上已十分成熟，市面上都可以买到了。当时的显卡已经能够实现每秒渲染上千个三角面，能够展示比较复杂的三维图像模型，索尼生产的便携式LCD显示器也能将画面完整的呈现出来。Polhemus公司开发出了6个自由度的头部追踪设备，比起Sutherland机械连杆，精准度已经大大提升，同时还省去了许多束缚。此外，带关节传感器的手套实现了体感操作，技术的成熟使得虚拟技术在航天、模拟飞行等领域得到了比较广泛的应用，虚拟现实的概念也最终在80年代被正式提出。<br>1989年，集计算机科学家、哲学家和音乐家三种身份于一身的天才，美国VPL Research公司创始人杰伦•拉尼尔（Jaron Lanier）提出了“Virtual Reality”的概念。而他本人也利用各种组件“拼凑”出第一款真正投放市场的VR商业产品，因年代久远这款头盔的造型已经找不到了，但10万美元的天价阻碍了其普及之路。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/7.png" alt="vr">九十年代，虚拟技术的理论已经非常成熟，但对应的VR头盔依旧是概念性产品。1991年一款名为“Virtuality 1000CS”的虚拟现实设备充分地为当时的人们展现了VR产品的缺陷——外形笨重、功能单一、价格昂贵，虽然被赋予希望，却仍是概念性的存在。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/8.png" alt="vr">不过，VR游戏的火种也在这个时期被种下，任天堂推出的”Virtual Boy”（简称“VB”）主机被《时代周刊》评为“史上最差的50个发明”之一，仅在市场上生存了六个月就销声匿迹，VR游戏的首次尝试也随之烟消云散，但还是为VR硬件进军To C市场打开了一扇门。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/9.png" alt="vr"><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/10.png" alt="vr">21世纪以来，军事等领域已经有了类似设备，但都面临着造价昂贵、体积庞大、重量较重等问题，因此普通消费者很难接触到。2012年8月，一家新成立的公司在众筹网站Kickstarter开启了名为Oculus的VR设备众筹计划，该计划的目标是给大众带来广角、低延迟且低成本的沉浸式虚拟体验设备。300美元的售价远低于过往动辄上千美元的VR设备（约合人民币1900余元，同期的索尼头戴式显示器HMZ-T3高达6000元左右），最终它筹集到了250万美元并拿得了1600万的A轮融资。Id Software的创始人之一、“FPS游戏之父”约翰卡马克大神，于2013年加盟更令Oculus名声大造。2014年，Oculus以20亿美元的价格被Facebook收购，则彻底引爆了用户对虚拟现实的关注。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/11.png" alt="vr"></p>
-<h2 id="虚拟现实类型"><a href="#虚拟现实类型" class="headerlink" title="虚拟现实类型"></a>虚拟现实类型</h2><p>在实际应用中，根据“沉浸感”和“交互性”程度的不同，VR又可分为四种类型：桌面式VR系统、沉浸式VR系统、增强式VR系统、分布式VR系统。</p>
-<h3 id="桌面式虚拟现实"><a href="#桌面式虚拟现实" class="headerlink" title="桌面式虚拟现实"></a>桌面式虚拟现实</h3><p>桌面式VR系统（Desktop VR），也称窗口VR，基本上是一套基于普通PC平台的小型桌面虚拟现实系统。如下图，它使用个人计算机（PC）或初级图形PC工作站等设备，采用立体图形、自然交互等技术，产生三维立体空间的交互场景，利用计算机屏幕作为观察虚拟世界的一个窗口，通过各种输入设备实现和虚拟世界的交互。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/12.png" alt="vr">在桌面式VR系统中，计算机屏幕是用户观察虚拟世界的窗口，在一些VR工具软件的帮助下，参与者可在仿真过程中进行各种设计。使用的硬件设备主要是立体眼镜和一些交互设备（如数据手套、空间位置跟踪定位设备等）。立体眼镜用来观看计算机屏幕中虚拟三维场景的立体效果，它所带来的立体视觉能使用户产生一定程度的沉浸感。有时为了增强桌面式VR系统的效果，在桌面式VR系统中还会加入专业的投影设备（RGB），以达到增大屏幕观看范围的目的。<br>桌面式VR系统具有以下主要特点：  </p>
-<ol>
-<li>对硬件要求极低，有时只需要计算机或是增加数据手套、空间位置跟踪定位设备等</li>
-<li>缺少完全沉浸感，参与者不完全沉浸，因为即使戴上立体眼镜，仍然会受到周围现实世界的干扰</li>
-<li>因成本相对较低，并且也具备了沉浸式VR系统的一些技术要求，所以目前应用较为广泛。例如，高考结束的学生在家里便可以参观未来大学里的基础设施（学校里的虚拟校园、虚拟教室和虚拟实验室等）</li>
-</ol>
-<h3 id="沉浸式虚拟现实"><a href="#沉浸式虚拟现实" class="headerlink" title="沉浸式虚拟现实"></a>沉浸式虚拟现实</h3><p>沉浸式VR系统（Immersive VR）即我们现在提及的虚拟现实，如下图所示，提供参与者完全的沉浸体验，使用户有一种置身于虚拟世界之中的感觉。它通常采用头盔式显示器、洞穴式立体显示等设备，把参与者的视觉、听觉和其他感觉封闭起来，并提供一个新的、虚拟的感觉空间，利用空间位置跟踪定位设备、数据手套、其他手控输入设备、声音设备等使得参与者产生一种完全投入并沉浸于其中的感觉，是一种较理想的VR系统。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/13.png" alt="vr">沉浸式VR系统的主要特点：  </p>
-<ol>
-<li>高度的沉浸感。沉浸式VR系统采用多种输入与输出设备来营造一个虚拟的世界，并使用户沉浸其中，同时还可以使用户与真实世界完全隔离，不受外面真实世界的影响。</li>
-<li>高度实时性。在虚拟世界中要达到与真实世界相同的感觉，如当人运动时，空间位置跟踪定位设备需及时检测到，并且经过计算机运算，输出相应的场景变化，并且这个变化必需是及时的，延迟时间要很小。</li>
-<li>系统设备尤其是硬件价格相对较高，尚未大规模普及推广。</li>
-</ol>
-<h4 id="沉浸式VR系统的分类"><a href="#沉浸式VR系统的分类" class="headerlink" title="沉浸式VR系统的分类"></a>沉浸式VR系统的分类</h4><p>常见的沉浸式VR系统有：基于头盔式显示器的VR系统、投影式虚拟现实系统及遥在系统。<br>基于头盔式显示器和投影式VR系统是采用头盔式显示器或投影式显示系统来实现完全投入，它把现实世界与之隔离，使参与者从听觉到视觉都能投入到虚拟环境中去。<br>遥在系统则是一种远程控制形式，常用于VR系统与机器人技术相结合的系统。在网络中，当某处的操作人员操作一个VR系统时，其结果却在很远的另一个地方发生，这种系统需要一个立体显示器和两台摄像机以生成三维图像，这种环境使得操作人员有一种深度沉浸的感觉，因而在观看虚拟世界时更清晰。有时候操作人员可以戴一个头盔式显示器，它与远程网络平台上的摄像机相连接，输入设备中的空间位置跟踪定位设备可以控制摄像机的方向、运动，甚至可以控制自动操纵臂或机械手，自动操纵臂可以将远程状态反馈给操作员，使得他可以精确地定位和操纵该自动操纵臂。</p>
-<h3 id="增强式虚拟现实"><a href="#增强式虚拟现实" class="headerlink" title="增强式虚拟现实"></a>增强式虚拟现实</h3><p>在沉浸式VR系统中强调人的沉浸感，即沉浸在虚拟世界中，人所处的虚拟世界与真实世界相隔离，感觉不到真实世界的存在。而增强式VR系统，即增强现实（Augmented Reality）简称AR，它既允许用户看到真实世界，同时也能看到叠加在真实世界上的虚拟对象，是一种将真实世界信息和虚拟世界信息“无缝”集成的新技术。它将计算机生成的虚拟物体、场景或系统提示信息叠加到真实场景中，从而达到超越现实的感官体验，如图所示：<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/14.png" alt="vr">增强式VR系统具有以下三个突出特点：</p>
-<ol>
-<li>真实世界和虚拟世界的信息集成</li>
-<li>具有实时人机交互功能</li>
-<li>是在三维尺度空间中增添定位虚拟物体</li>
-</ol>
-<h3 id="分布式虚拟现实"><a href="#分布式虚拟现实" class="headerlink" title="分布式虚拟现实"></a>分布式虚拟现实</h3><p>分布式VR系统（Distributed VR）简称DVR，是VR技术和网络技术发展和结合的产物，是一个在网络的虚拟世界中，位于不同物理位置的多个用户或多个虚拟世界，通过网络连接成共享信息的系统。DVR系统的目标是在沉浸式VR系统的基础上，将地理上分布的多个用户或多个虚拟世界通过网络连接在一起，使每个用户同时加入到一个虚拟空间里（真实感三维立体图形、立体声），透过联网的计算机和其他用户进行交互，共同体验虚拟经历，以达到协同工作的目的，它将虚拟提升到了一个更高的境界。<br>VR系统运行在分布式世界中有两方面的原因：一方面是充分利用分布式计算机系统所提供的强大计算能力；另一方面是有些应用本身就具有分布特性，如多人通过网络进行游戏和虚拟战争模拟等。<br>分布式VR系统的主要特点：  </p>
-<ol>
-<li>各用户具有共享的虚拟工作空间</li>
-<li>伪实体的行为真实感</li>
-<li>支持实时交互，共享时钟</li>
-<li>多个用户可用各自不同的方式相互通信</li>
-<li>资源信息共享以及允许用户自然操作环境中对象</li>
-</ol>
-<p>目前，最典型的应用是SIMNET系统，SIMNET由坦克仿真器通过网络连接而成，用于部队的联合训练。通过SIMNET ，位于德国的仿真器可以和位于美国的仿真器运行在同一个虚拟世界中，参与同一场作战演习。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/15.png" alt="vr"></p>
-<h2 id="虚拟现实市场分析"><a href="#虚拟现实市场分析" class="headerlink" title="虚拟现实市场分析"></a>虚拟现实市场分析</h2><p>虚拟现实的出现和应用将会改变许多领域现有运行模式，在很多应用领域可以提高参与度和观看角度，给人一种全新的感受，以及来自嗅觉、听觉、视觉等方面的立体式互动。从整个产业链来看，投资机会将会出现在设备、内容、渠道、平台、应用等各个环节。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/16.png" alt="vr"></p>
-<h2 id="VR硬件设备"><a href="#VR硬件设备" class="headerlink" title="VR硬件设备"></a>VR硬件设备</h2><p>VR硬件方面，主要包括输出设备（如PC端头显，移动端头显、一体机）和输入设备（如手柄，跑步机，动作捕捉识别设备，全景相机等）。</p>
-<h3 id="输出设备"><a href="#输出设备" class="headerlink" title="输出设备"></a>输出设备</h3><h4 id="PC端显示头戴"><a href="#PC端显示头戴" class="headerlink" title="PC端显示头戴"></a>PC端显示头戴</h4><p>2015年，Oculus推出“Oculus Ready”PC认证计划，以8GB RAM、Intel i5处理器和NVIDIA GTX970&#x2F;AMD 290 GPU做为基准线。一方面能让开发者有个保证VR性能的参考目标；另一方面则是和电脑制造商合作，在符合标准的电脑上贴上“Oculus Ready”的贴纸，以供消费者选择。电脑制造商方面，第一步合作的厂商有华硕、Dell 和 Alienware（外星人，其实也是戴尔旗下的）。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/17.png" alt="vr">鉴于目前台式电脑受到智能手机、平板、笔记本电脑的冲击，整体市场销量并不乐观，各个品牌急需找到新的宣传点来刺激消费者的购买欲，而虚拟现实无疑是目前最高大上的热点，更多的品牌可能会主动向Oculus 或者其他VR头戴厂商抛出橄榄枝，希望被认证，增加自身产品卖点。夕阳西下的产品线也可以摇身一变，成为未来技术发展的基石。同时，台式电脑也能助力VR，为了带起VR，台式电脑的发展速度也会变快，这和当初游戏推动了硬件市场的发展是一个道理，VR会带动整个市场环境。<br>目前，PC端显示头戴以Facebook的Oculus Rift、Sony的PlayStationVR和HTC Vive为代表，预计都会在2016年上市。此类设备的原理是通过PC来计算，并将计算结果传递给头戴式设备中的显示屏进行显示，进而让用户产生沉浸式的VR体验。就目前而言，该类设备可以提供给用户最好的沉浸感，但缺点是必须要通过USB&#x2F;HDMI线与PC相连，通常只能在室内使用。此外，设备本身价格也比较昂贵。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/18.png" alt="vr"><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/19.png" alt="vr"></p>
-<h4 id="移动端显示头戴"><a href="#移动端显示头戴" class="headerlink" title="移动端显示头戴"></a>移动端显示头戴</h4><p>2014年，Google发布了Google CardBoard，让消费者能以非常低廉的成本来通过手机体验VR世界，直接点燃了今日的”Mobile VR”超级大战。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/20.png" alt="vr"><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/21.png" alt="vr">Mobile VR，使用时需要将手机插入到设备中，因此也被称为“手机盒子”。这类产品对智能机的依赖性很强，需借助手机屏幕和应用才能实现VR内容的输出。目前市面上有许多相关产品，比较有代表性的有三星Gear VR、谷歌Cardboard、VRone蔡司、VirGlass、暴风魔镜、灵境小白等。其中，当属三星的Gear VR公认体验效果最好，但问题是只能适配部分三星手机。国内厂商也有推出了类似产品，不过都无法达到Gear VR的水平。<br>此类设备的原理是通过在移动端进行场景的渲染和计算，并直接作为屏幕来进行显示。优点是避免了繁琐的电线连接、成本低廉、易于携带，开发应用的流程也是手游开发者所熟悉的。但缺点同样突出，在显示效果、交互性上没有PC端头显那么好，且随着体验时间的增加，移动设备的发热程度会迅速上升，从而迫使其降低频率来进行计算，进而造成更大的画面卡顿和延迟，大大降低VR体验的舒适感。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/22.png" alt="vr"><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/23.png" alt="vr"></p>
-<h4 id="VR一体机"><a href="#VR一体机" class="headerlink" title="VR一体机"></a>VR一体机</h4><p>随着VR技术的发展，相较于移动端的手机盒子和PC端头显，一体机可能会更接近人们理想中的虚拟现实产品形态，代表产品有：AuraVisor、Gameface、BOSSNEL X1、IDEALENS VR等。它和其他VR产品的最大区别是：具备了独立处理器并同时支持HDMI输入的头戴式显示，拥有独立运算、输入、输出的功能。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/24.png" alt="vr"><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/25.png" alt="vr">根据成像原理，一体机又可分为单屏一体机和双屏一体机。单屏一体机，原理和手机盒子相同，仍是采取单屏分屏技术，用简单的凸透镜放大显示。说得通俗点，就是给智能手机去掉通信模块，增加了显示处理单元的能力，加强位置感应，将其做成头戴式设备；双屏一体机，则是单屏一体机的升级。采用一块主板支持两个显示屏并分屏输出的方法，双屏通过复杂的光学反射独立成像，在人眼中合成图像，并根据4块2组凹凸镜片的特殊算法，大幅消除了色散和畸变，是目前较领先的VR显示技术。<br>这类产品的特点是使用起来灵活度较高，用户沉浸感适中，位于VR盒子和PC端显示头戴之间。只是眼下最不成熟，难以做到轻便和性能兼顾，待消费级市场形成后，未来有望成为主流。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/26.png" alt="vr"></p>
-<h3 id="输入设备"><a href="#输入设备" class="headerlink" title="输入设备"></a>输入设备</h3><p>输入设备方面，控制手柄是游戏过程中不可或缺的配置，自然是各厂商十分看重的领域；而体感输入设备，在去年已有不少，今年主要在迭代，正向应用层面推进。体感跑步机一类设备配合VR头显可以实现完整的运动体验，玩过的朋友表示玩一会儿就会感觉到疲惫。受到使用空间等多方面的限制，预计未来普及起来还有难度。动作捕捉识别设备，也是VR体验不可或缺的部分，目前商业化程度不高，许多专业厂商都在进行潜心研发中。全景拍摄设备是今年一个新的发力点，今年的CES也有不少全景相机亮相。拍摄全景主要方式是多摄像头拍摄和拼接，在VR视频出现前，一些拍摄全景的团队已经有不少相关技术积累。</p>
-<h4 id="数据手套"><a href="#数据手套" class="headerlink" title="数据手套"></a>数据手套</h4><p>数据手套是虚拟现实系统的重要组成，它集成了传感器技术和光纤技术等，可实时获取人手的动作姿态，感知手指关节的弯曲状态，精确定位，产生力反馈，在虚拟现实环境中再现人手动作，已达到人机交互的目的。目前，虚拟现实数据手套主要有5DT、Cyber Glove、DGTech等公司生产，根据使用者的需求，提供不同配置、精确度的版本选择，价格在几千元到几万元间不等。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/27.png" alt="vr"></p>
-<h4 id="全方位跑步机"><a href="#全方位跑步机" class="headerlink" title="全方位跑步机"></a>全方位跑步机</h4><p>虚拟现实跑步机，不同于一般的跑步机，它底部是一个平面光滑平台，基本是由三根支架固定，中间的腰环来固定人体的位置，可能需要特殊的鞋子，实现走、跑、坐、下蹲、跳跃、小幅度平移等动作。目前，Cyberith公司推出了Virtualizer，Virtuix公司推出了Omni等产品，国外的消费者们已经可以购买到了。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/28.png" alt="vr">以Virtuix Omni虚拟现实跑步机为例，其需要与Oculus Rift虚拟现实头戴装置或PC控制器来配合使用，无法独立运行。在配备了专用的跑鞋、游戏枪之后，就可以用第一人称的视角来进行FPS射击游戏，模拟在游戏中的场景，根据自己的自由意志进行自然的移动，真正的做到“跑起来”的感觉。Virtuix Omni专用的跑步鞋可以通过与跑步机地盘上的传感器同步数据，并且在佩戴Oculus Rift之类的虚拟现实设备之后，玩家转头、侧身等动作都可以在游戏中同步，带来身临其境的感受。可以说整套系统最大程度的整合了视觉、听觉、动作等因素，给人以极大的逼真感，彻底模糊了虚拟与现实的界限。</p>
-<h4 id="全景相机"><a href="#全景相机" class="headerlink" title="全景相机"></a>全景相机</h4><p>目前，VR存在的最大问题之一便是缺乏内容，而全景相机拍摄的内容适合给VR使用（这里主要指的是3D定焦全景）。以三星的Project Beyond为例，其配备16个高清摄像头，能每秒捕获10亿像素的3D画面。利用Project Beyond，Gear VR用户可以“瞬间移动至某些地点，观看想要观看的活动”。不过，Project Beyond尚处于测试阶段，画面质量无法达到预期。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/29.png" alt="vr"><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/30.png" alt="vr"></p>
-<h2 id="VR操作系统"><a href="#VR操作系统" class="headerlink" title="VR操作系统"></a>VR操作系统</h2><p>有了硬件，那么平台呢？VR需要操作系统么？当然！根据在输出设备上的分类，我们能够看到支持的操作系统大概可分为Windows、Android和一些第三方所研发的OS。不过，好像唯独缺了苹果？<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/31.png" alt="vr">近日，一向对VR讳莫如深的苹果终于发声了。著名苹果概念设计师Martin Hajek通过视频发布了他设想的苹果公司创作的未来虚拟现实设备的样子。按照Hajek的设想，苹果虚拟现实头显包括两个高分辨率的AMOLED显示器，可以放置在前额，用于增强现实的立体摄像机，支持耳机和Lightning数据线，同时结合了苹果手表的材料和设计，其跟踪传感器和绑带将与苹果手表完全一致。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/32.png" alt="vr">据可靠消息，苹果公司现有一个数百人的团队正在研发虚拟现实产品，并准备和Facebook的Oculus Rift以及微软的Hololens相抗衡，但其虚拟现实头显产品可能还需要两年的时间才会发布。不管苹果最终的虚拟现实设备与Hajek的设想是否吻合，重要的是Hajek的设想传递出一个非常明显的信号—-苹果杀入VR领域已经毫无悬念。<br>虽然目前软件巨头如Google和Microsoft都在研发兼容VR的操作系统，但是在VR消费级产品销量达到一定数量之前，操作系统层面很难有统一的标准：</p>
-<ul>
-<li>2015年1月，雷蛇在CES展会上联合Sensics发布了开源虚拟现实系统 OSVR（Open-Source Virtual Reality），希望能把OSVR打造成虚拟现实领域的Android。准确来说，OSVR不是一个操作系统，而是一个开发系统，目前已经有了不少合作伙伴，如博世、Razer、Sixense 以及 Leap Motion。OSVR开发工具包拥有自己的开发软件，可以对设备的3D、虚幻引擎、手势控制进行相应的调用，它不仅与Oculus公司DK2级开发套件、软件兼容，而且完全适用于Linux和Android系统。</li>
-<li>2015年3月，谷歌宣布正在开发VR版安卓操作系统（据说在Facebook以20亿美元收购Oculus VR之后Google就组建了这只团队~）。团队负责人此前曾负责Google Cardboard的项目开发，在未来虚拟现实版的Android系统也将继续沿袭Android的免费策略。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/33.png" alt="vr"></li>
-<li>微软则是通过和主流VR设备商合作开发操作系统，其合作条件是让主流VR厂商的设备能够在Windows 10下运行，而自身拿出XBOX内容资源让主流厂商的VR设备可以在Windows 10 下运行并体验这些内容。Oculus已经宣布明年推出的消费级产品将兼容Windows 10。</li>
-</ul>
-<h3 id="VR应用"><a href="#VR应用" class="headerlink" title="VR应用"></a>VR应用</h3><p>软件应用方面，主要包括VR游戏、影视以及内容分发平台等。<br>由于VR打破了很多传统影视和游戏的体验，究竟什么形式的影视或游戏最适合VR，是目前全行业仍在探索的问题。VR游戏和传统游戏交互方式不同，但开发的工作流程基本相同。不少团队很早就开始从事相关探索和开发。由于国外有硬件厂商以及渠道的扶持，今年更多的团队开始加入，但总体来讲，VR游戏依然还没有很成熟的模式，尚缺少杀手级游戏。影视方面，大概分成影片、直播和交互式视频三类。受到上游拍摄设备和下游分发渠道的局限，目前影视的参与者仍偏少。但VR影视应是何种表现形式，包括好莱坞以及各种顶尖科技团队在内的所有制作团队都还处于探索中。总的来说，VR在软件及内容方面的实力、资源还比较薄弱和匮乏。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/34.png" alt="vr"></p>
-<h3 id="VR分发渠道"><a href="#VR分发渠道" class="headerlink" title="VR分发渠道"></a>VR分发渠道</h3><p>渠道方面，包括线下体验店、VR主题乐园等。<br>国外已经建成了线下体验店、主题公园，基于The Void的大型主题公园视频曾在网络上热传，国内多家厂商也在研发类似方案。这类方案要求场地空间大，参与感强，适用于集体活动，主题公园等。目前参与的厂商还不多，很多业内人士比较看好。今年全球将会有更多成熟产品和体验馆面世，国内也有可能出现类似的体验场馆。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/35.png" alt="vr"></p>
-<h3 id="VR市场格局"><a href="#VR市场格局" class="headerlink" title="VR市场格局"></a>VR市场格局</h3><p>数据显示， 2015年中国虚拟现实行业市场规模为15.4亿元，预计2016年将达到56.6亿元，2020年市场规模预计将超过550亿元。目前国内的虚拟现实产业还处于启动期，自2015年以来，参与到虚拟现实领域的企业大幅增加。未来一段时间，在资本的推动下，将会有越来越多的企业涉足虚拟现实领域，大量头戴眼镜盒子、外接式头戴显示器等VR设备将进一步向消费级市场拓展，中国虚拟现实的市场规模将逐渐迎来爆发。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/36.png" alt="vr"><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/37.png" alt="vr">我国VR技术的研究起步于20世纪90年代初，随着计算机图形学、计算机系统工程等技术的高速发展，VR技术得到相当的重视。科技部和国防科工委已将VR技术的研究列为重点攻关项目，国内众多机构都有在进行VR的研究和应用，取得了一系列研究成果。<br>除了国际科技巨头大力投入外，中国本土厂商也不甘落后，VR参与者众多。目前在国内做虚拟现实的大公司可粗略分为两类：一类是成熟行业依据老业务的软硬件优势向VR复制，另一类是新型VR产业公司（包括生态型平台型公司和初创型公司）。<br>在技术突破、市值空间的预期刺激下，国内互联网巨头公司更以跑马圈地的方式将这场狂欢推向了新的高潮。2015年12月4日，百度视频宣布进军虚拟现实，隆重上线VR频道，成为国内VR内容聚合平台的先驱；12月21日，腾讯在开发者沙龙上推出了整套VR方案，宣布将从设备方案、开发SDK、开发者扶持分成计划等一系列入手布局；12月23日，乐视也在北京发布了VR战略，宣布会以价值链垂直整合的理念改造VR行业，并发布了其首款终端硬件产品——手机式VR头盔LeVR COOL1，售价仅为149元。</p>
-<h3 id="VR行业跨界影响"><a href="#VR行业跨界影响" class="headerlink" title="VR行业跨界影响"></a>VR行业跨界影响</h3><p>到目前为止，虚拟现实产业获得的大部分资金都在投向游戏开发。不过，事实上通过“VR+”的模式，与传统行业相结合，也能很好地发挥出虚拟现实的作用，比如军事、教育、娱乐、社交、设计、医疗、旅游、展览、工业、旅游等领域。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/38.png" alt="虚拟现实跨界">在法国，一位外科医生在髋关节手术中佩戴虚拟现实设备，用来给其它实习医生进行手术视频体验教学，医学生和住院实习医生可以通过手术操刀医生的视角去观看做手术的过程。VR还可作为治疗方案，其优势体现在神经心理学、心脏移植、耳鼻喉科、脊柱骨科、儿科等专业领域。特别在协助病人康复训练以及医护人员诊断互动和沟通技巧训练上的优势尤为突出。  </p>
-<h4 id="虚拟现实-医疗"><a href="#虚拟现实-医疗" class="headerlink" title="虚拟现实+医疗"></a>虚拟现实+医疗</h4><p>在法国，一位外科医生在髋关节手术中佩戴虚拟现实设备，用来给其它实习医生进行手术视频体验教学，医学生和住院实习医生可以通过手术操刀医生的视角去观看做手术的过程。VR还可作为治疗方案，其优势体现在神经心理学、心脏移植、耳鼻喉科、脊柱骨科、儿科等专业领域。特别在协助病人康复训练以及医护人员诊断互动和沟通技巧训练上的优势尤为突出。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/39.png" alt="vr"></p>
-<h4 id="虚拟现实-社交"><a href="#虚拟现实-社交" class="headerlink" title="虚拟现实+社交"></a>虚拟现实+社交</h4><p>AltspaceVR公司的目标是把人们在现实世界中的社交体验搬到虚拟现实环境中。AltspaceVR利用VR设备将不同的人组织到共同的虚拟环境中，让一群人在虚拟的影院、健身房、会议室里一起看电影、练瑜伽、开会等，并且通过利用虚拟现实头戴设备和动作捕捉技术，人们进行有文字、语音或视频的交流，甚至虚拟世界真正感知或者“触摸”到对方。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/40.png" alt="vr"></p>
-<h4 id="虚拟现实-教育"><a href="#虚拟现实-教育" class="headerlink" title="虚拟现实+教育"></a>虚拟现实+教育</h4><p>国内很多的企业都注意到了高校课堂中对于3D立体展示和实践性的需求，比如曼恒数字于2015年9月18日宣布，正式针对高校市场推出“3D互动教学系统”。该系统由虚拟现实硬件环境和核心课件两大部分组成：硬件环境主要包含立体投影机、人机交互等虚拟现实设备，用于构建高度沉浸感的专业环境；软件部分则特指3D教学课件。该系统曼恒数字与名校名师联合高校共同开发，将紧密贴合教学大纲，支持课堂的3D展示和交互，增加教学的实践性和真实感。<br><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/41.png" alt="vr"><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/42.png" alt="vr"></p>
-<h4 id="虚拟现实-汽车业"><a href="#虚拟现实-汽车业" class="headerlink" title="虚拟现实+汽车业"></a>虚拟现实+汽车业</h4><ul>
-<li>福特汽车公司目前使用VR帮助客户实现驾车体验，利用Oculus Rift 头戴设备可高分辨率地观察汽车内饰和外饰效果。</li>
-<li>奥迪也宣布将使用VR让潜在购车者深入体验座驾，并且体验者可以自定义车辆颜色、电子系统、镶嵌材料以及内饰的皮革。</li>
-<li>丰田汽车将VR用于TeenDrive365活动，对青少年及其父母进行所谓的“分心驾驶教育”。分心驾驶模拟器包括传感器，负责采集传送用户使用踏板及方向盘等信息。还有提前设定好的“分心考验”，比如手机振铃或是坐在后排聒噪不休的乘客。</li>
-<li>VR在汽车业的应用也使得产品的研发速度得以提升，无需等待模型车的实际制造，对汽车的改进更加方便。</li>
-</ul>
-<p><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/44.png" alt="vr"><img src="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/43.png" alt="vr"></p>
-<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>虽然笔者被要求从安全角度调研虚拟现实可能存在的攻击面，但事实上VR的本质不过就是个更高级的显示装置而已。非要说的话，以下是些个人建议：</p>
-<ol>
-<li>目前，虚拟现实的市场和生态都还不是很成熟，尚处在快速发展阶段。这个时期，无论是操作系统、内容应用，包括硬件设备都缺少个统一的标准。在这种背景下，不建议花大精力投入，但可以持续保持关注，在情报收集这部分引入对VR的相关整理；</li>
-<li>VR硬件设备上，主要的产品形态还是头显，本质其实就是一个“显示器”。站在这个角度，内置独立处理器的一体机可能更应该是我们的研究对象，建议可加强在这一块的信息收集；</li>
-<li>当前主流的OS仍然是win和android，但未来有可能出现针对VR的操作系统，如VR版Android这类有关操作系统的情报也需留意；</li>
-<li>PC端头戴基本都是有线连接，从攻击的角度来看，可能会比较困难。倒是移动端手机盒子和一体机，可以注意下这些使用无线连接方式的设备，可尝试从蓝牙等环节进行入手看是否有被攻击劫持的可能。。</li>
-</ol>
-
+          <p>VR（虚拟现实）火起来了，不论是资本市场的表现，还是一场接一场的发布会，甚至是微信推送相关话题的数量，都在展示着VR已经开始从Geek的兴趣爱好，逐步走进主流消费者市场。国外，行业巨头跑马圈地，Facebook收购Oculus VR、索尼投入Morpheus设备、HTC携手三星共探VR；国内，各家积极布局，腾讯推出整套VR方案，3Glasses、DeePoon大朋头盔、蜂镜K1等公司体量虽小却毫不示弱。那么虚拟现实究竟是什么？会不会是下一个风口？</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2016/03/10/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E%E8%B0%83%E7%A0%94%E6%8A%A5%E5%91%8A/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1573,7 +1021,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">Edited on</span>
-      <time title="Modified: 2018-04-30 00:44:26" itemprop="dateModified" datetime="2018-04-30T00:44:26+08:00">2018-04-30</time>
+      <time title="Modified: 2022-06-13 11:32:10" itemprop="dateModified" datetime="2022-06-13T11:32:10+08:00">2022-06-13</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1601,107 +1049,14 @@
 <li>监听键盘输入，用户所有敲入的字符都会被窃取，包括银行账号密码、社交APP账号密码等；</li>
 <li>接收云端指令，执行模块更新、删除指定文件等操作，给系统安全带来极大安全隐患。</li>
 </ul>
-<h2 id="木马执行流程"><a href="#木马执行流程" class="headerlink" title="木马执行流程"></a>木马执行流程</h2><p>该木马的执行流程如下：<br><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/2.png" alt="执行流程"></p>
-<h3 id="本地进程间通信协议"><a href="#本地进程间通信协议" class="headerlink" title="本地进程间通信协议"></a>本地进程间通信协议</h3><p>运行在com.sec.android.service.powerManager进程的libnativeLoad.so、libPowerDetect.cy.so，会创建大量的服务监听。当接收到来自detect进程中的插件模块发来的socket通信请求时，通过判断buffer的前2个字节作为魔术字进行匹配，执行相应操作。<br><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/26.png" alt="本地进程间通信协议"></p>
-<h2 id="详细分析"><a href="#详细分析" class="headerlink" title="详细分析"></a>详细分析</h2><h3 id="申请root权限，运行cInstall可执行文件"><a href="#申请root权限，运行cInstall可执行文件" class="headerlink" title="申请root权限，运行cInstall可执行文件"></a>申请root权限，运行cInstall可执行文件</h3><ol>
-<li>cInstall文件会在应用的私有路径下创建工作目录与数据存储目录，将cache缓存中detect、plugin.dat、dtl.dat、glp.uin拷贝到指定的目录下。</li>
-<li>读取plugin.dat，解析获取指定id模块对应的插件名称，据此改名写入”&#x2F;data&#x2F;data&#x2F;com.sec.android.service.powerManager&#x2F;cores&#x2F;Users&#x2F;All Users&#x2F;Intel”目录。</li>
-</ol>
-<p>以上目录与文件均被赋予可读可写可执行权限，为之后各种恶意行为做好铺垫。<br>将cache缓存下的super拷贝到&#x2F;system&#x2F;bin&#x2F;目录，并提权。之后将libPowerDetect.cy.so、libnativeLoad.so等文件拷贝到指定目录，并静默安装substrate hook框架。<br><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/1.png"></p>
-<center><font size="3" face="黑体">**cInstall文件执行流程**</font></center>
-![](Sadstrot木马分析报告/27.png)
-<center><font size="3" face="黑体">**将super拷贝到/system/bin目录下，并提权**</font></center>
-![](Sadstrot木马分析报告/28.png)
-<center><font size="3" face="黑体">**静默安装substrate框架**</font></center>
-
-<h3 id="调用Substrate框架，hook键盘输入"><a href="#调用Substrate框架，hook键盘输入" class="headerlink" title="调用Substrate框架，hook键盘输入"></a>调用Substrate框架，hook键盘输入</h3><p>运行substrate框架，libPowerDetect.cy.so在init_array段进行初始化时，便会调用Substrate框架提供的api，对输入法操作中的字符输入、结束输入、隐藏键盘等方法进行hook，并发送至detect进程。<br><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/3.png"><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/4.png"><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/5.png"><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/6.png"></p>
-<h3 id="创建大量的监听服务，运行detect可执行文件"><a href="#创建大量的监听服务，运行detect可执行文件" class="headerlink" title="创建大量的监听服务，运行detect可执行文件"></a>创建大量的监听服务，运行detect可执行文件</h3><p>libnativeLoad.so会调用以下jni方法，创建大量的监听服务，并运行detect可执行文件。<br><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/7.png"><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/8.png"><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/9.png"><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/10.png"></p>
-<h3 id="初始化主插件"><a href="#初始化主插件" class="headerlink" title="初始化主插件"></a>初始化主插件</h3><p>detect可执行文件查找主插件下Initialplugin、NetWorkStateChanged这两个符号，并调用进行初始化。<br><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/11.png"><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/12.png"><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/13.png"></p>
-<h3 id="主插件加载调用其他模块"><a href="#主插件加载调用其他模块" class="headerlink" title="主插件加载调用其他模块"></a>主插件加载调用其他模块</h3><p>WSDMoo.dat会调用执行其他模块下的SetCallbackInterface方法，并将一组函数指针作为参数传入，使其能够通过回调相应函数获取工作目录、插件配置等信息，且能为主插件添加一个上传任务。<br><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/14.png"><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/15.png"><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/16.png">获取winbrrnd.dat、sxwreg.dat插件中以下符号的地址，并调用。<br><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/17.png"></p>
-<h3 id="收集QQ账户、好友等隐私信息"><a href="#收集QQ账户、好友等隐私信息" class="headerlink" title="收集QQ账户、好友等隐私信息"></a>收集QQ账户、好友等隐私信息</h3><p>winbrrnd.dat插件的SetCallbackInterface方法会创建startListernQQMsgThread线程，获取QQ和微信账户、好友列表、消息记录等信息，输出到指定文件，并回调主插件的CbAddUploadFileTask函数添加一个上传任务。<br><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/18.png"><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/19.png"><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/20.png"><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/21.png"></p>
-<h3 id="Socket联网上传，获取指令，执行相应远控操作"><a href="#Socket联网上传，获取指令，执行相应远控操作" class="headerlink" title="Socket联网上传，获取指令，执行相应远控操作"></a>Socket联网上传，获取指令，执行相应远控操作</h3><p>Socket联网58.221.44.198:36895发送手机固件、插件信息、记录了从其他模块收集的隐私信息的文件。接收从服务器发来的消息，解析指令，执行相应操作。。<br><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/22.png"><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/23.png"><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/24.png"><img src="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/25.png"></p>
-<h2 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h2><h3 id="附录1：指定ID模块对应的插件名"><a href="#附录1：指定ID模块对应的插件名" class="headerlink" title="附录1：指定ID模块对应的插件名"></a>附录1：指定ID模块对应的插件名</h3><p>解析plugin.dat文件，获取assets目录下指定ID模块对应的插件名称，并将其改名写入到应用的工作目录。</p>
-<table>
-<thead>
-<tr>
-<th>pluginId</th>
-<th>PluginName</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>0</td>
-<td>reltdy.dat</td>
-</tr>
-<tr>
-<td>1</td>
-<td>WSDMoo.dat</td>
-</tr>
-<tr>
-<td>2</td>
-<td>winbrrnd.dat</td>
-</tr>
-<tr>
-<td>3</td>
-<td>zipflldr.dat</td>
-</tr>
-<tr>
-<td>4</td>
-<td>sxwreg.dat</td>
-</tr>
-</tbody></table>
-<h3 id="附录2：远控指令列表"><a href="#附录2：远控指令列表" class="headerlink" title="附录2：远控指令列表"></a>附录2：远控指令列表</h3><table>
-<thead>
-<tr>
-<th>远程指令</th>
-<th>功能</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>“UPL”</td>
-<td>更新插件模块</td>
-</tr>
-<tr>
-<td>“PLI”</td>
-<td>对插件模块进行初始化</td>
-</tr>
-<tr>
-<td>“DIR”</td>
-<td>查询指定目录下的信息</td>
-</tr>
-<tr>
-<td>“DTK”</td>
-<td>上传指定目录列表</td>
-</tr>
-<tr>
-<td>“OSC”</td>
-<td>在指定目录下进行检索操作</td>
-</tr>
-<tr>
-<td>“OSF”</td>
-<td>结束掉一个检索操作</td>
-</tr>
-<tr>
-<td>“DEL”</td>
-<td>删除指定文件</td>
-</tr>
-<tr>
-<td>“SCP”</td>
-<td>全屏截图</td>
-</tr>
-<tr>
-<td>“BGS”</td>
-<td>进行环境录音</td>
-</tr>
-<tr>
-<td>“GPRS”</td>
-<td>发送地理位置信息</td>
-</tr>
-<tr>
-<td>…</td>
-<td>…</td>
-</tr>
-</tbody></table>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2015/08/08/Sadstrot%E6%9C%A8%E9%A9%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 

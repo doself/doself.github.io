@@ -35,7 +35,7 @@
 <meta property="og:image" content="http://example.com/2015/04/28/ELF-Hook%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/6.png">
 <meta property="og:image" content="http://example.com/2015/04/28/ELF-Hook%E6%80%BB%E7%BB%93%E4%B8%8E%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/7.png">
 <meta property="article:published_time" content="2015-04-28T02:07:12.000Z">
-<meta property="article:modified_time" content="2019-02-28T02:35:58.870Z">
+<meta property="article:modified_time" content="2022-06-13T03:35:06.441Z">
 <meta property="article:author" content="John Doe">
 <meta property="article:tag" content="ELF">
 <meta property="article:tag" content="源码分析">
@@ -215,7 +215,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">Edited on</span>
-      <time title="Modified: 2019-02-28 10:35:58" itemprop="dateModified" datetime="2019-02-28T10:35:58+08:00">2019-02-28</time>
+      <time title="Modified: 2022-06-13 11:35:06" itemprop="dateModified" datetime="2022-06-13T11:35:06+08:00">2022-06-13</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -238,6 +238,8 @@
     
     <div class="post-body" itemprop="articleBody">
         <h2 id="什么是Hook"><a href="#什么是Hook" class="headerlink" title="什么是Hook"></a>什么是Hook</h2><p>Hook，中文又译为“挂钩”或“钩子”。这里可以首先从字面上做了解，钩子是干什么的呢？日常生活中，我们的钩子是用来钩住某种东西的，比如说，鱼钩是用来钓鱼的，一旦鱼咬了钩，钩子就一直钩住鱼了，任凭鱼在水里怎么游，也逃不出鱼钩的控制。同样的，Android、IOS中的钩子Hook也是用来钩东西的，比较抽象的是它是用来钩函数或者变量的。举个例子，Hook钩子钩住键盘事件相关的函数，那么当有任何相应的键盘操作时，通过Hook就能知道用户都输入了些什么，多么形象啊，把老鼠Mouse钩住了，不管你干什么，都逃不过我钩子Hook的手掌心。</p>
+<span id="more"></span>
+
 <h2 id="Native-Hook"><a href="#Native-Hook" class="headerlink" title="Native Hook"></a>Native Hook</h2><p>掌握ELF Hook，有必要先了解下ELF文件格式，特别是对于符号表、GOT（全局偏移表）、PLT（过程链接表）、重定位表需要有个清晰的认识。至于这部分在之前的博文中就已做了详细介绍。。</p>
 <h3 id="Hook-方式"><a href="#Hook-方式" class="headerlink" title="Hook 方式"></a>Hook 方式</h3><p>So的Hook手法大体来说，一共有3种方式：导入表、导出表及Inline Hook。</p>
 <h4 id="导入表Hook"><a href="#导入表Hook" class="headerlink" title="导入表Hook"></a>导入表Hook</h4><p>前面已经提到过“.rel.dyn”和“.rel.plt”两个段中分别保存了该模块所需要导入的变量、函数符号以及其所在模块等信息，而“.got”和“.got.plt”则是保存着这些变量和函数的真正地址。所以，导入表hook的原理主要就是替换.GOT表中外部函数地址（还有一部分被保存在data数据段，比如使用全局函数指针调用外部函数时）</p>

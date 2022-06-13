@@ -20,17 +20,17 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"example.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
 
-    <meta name="description" content="本文主要解决了ARM64位指令的兼容性问题，并通过进程间通信杜绝了崩溃现象，让这部分的检测代码更具有可操作性。。 ARM和X86目前，绝大部分手机都是基于ARM架构，其他CPU架构给忽略不计，模拟器全部运行在PC的X86架构上。因此，可以利用ARM与X86的区别来判断是否为真机。从上图我们可以看出，在CPU和内存之间，可以存在几级Cache，这里是L1和L2。Cache的作用是加速，把特定地址的数">
+    <meta name="description" content="本文主要解决了ARM64位指令的兼容性问题，并通过进程间通信杜绝了崩溃现象，让这部分的检测代码更具有可操作性。。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="基于Cache的Android模拟器检测">
 <meta property="og:url" content="http://example.com/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/index.html">
 <meta property="og:site_name" content="Hexo">
-<meta property="og:description" content="本文主要解决了ARM64位指令的兼容性问题，并通过进程间通信杜绝了崩溃现象，让这部分的检测代码更具有可操作性。。 ARM和X86目前，绝大部分手机都是基于ARM架构，其他CPU架构给忽略不计，模拟器全部运行在PC的X86架构上。因此，可以利用ARM与X86的区别来判断是否为真机。从上图我们可以看出，在CPU和内存之间，可以存在几级Cache，这里是L1和L2。Cache的作用是加速，把特定地址的数">
+<meta property="og:description" content="本文主要解决了ARM64位指令的兼容性问题，并通过进程间通信杜绝了崩溃现象，让这部分的检测代码更具有可操作性。。">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://example.com/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/1.png">
 <meta property="og:image" content="http://example.com/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/2.png">
 <meta property="article:published_time" content="2018-03-10T04:53:28.000Z">
-<meta property="article:modified_time" content="2019-02-02T09:21:16.850Z">
+<meta property="article:modified_time" content="2022-06-13T03:28:11.689Z">
 <meta property="article:author" content="John Doe">
 <meta property="article:tag" content="模拟器检测">
 <meta name="twitter:card" content="summary">
@@ -209,7 +209,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">Edited on</span>
-      <time title="Modified: 2019-02-02 17:21:16" itemprop="dateModified" datetime="2019-02-02T17:21:16+08:00">2019-02-02</time>
+      <time title="Modified: 2022-06-13 11:28:11" itemprop="dateModified" datetime="2022-06-13T11:28:11+08:00">2022-06-13</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -232,6 +232,8 @@
     
     <div class="post-body" itemprop="articleBody">
         <p>本文主要解决了ARM64位指令的兼容性问题，并通过进程间通信杜绝了崩溃现象，让这部分的检测代码更具有可操作性。。</p>
+<span id="more"></span>
+
 <h2 id="ARM和X86"><a href="#ARM和X86" class="headerlink" title="ARM和X86"></a>ARM和X86</h2><p>目前，绝大部分手机都是基于ARM架构，其他CPU架构给忽略不计，模拟器全部运行在PC的X86架构上。因此，可以利用ARM与X86的区别来判断是否为真机。<br><img src="/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/1.png" alt="ELF"><br>从上图我们可以看出，在CPU和内存之间，可以存在几级Cache，这里是L1和L2。Cache的作用是加速，把特定地址的数据值缓存起来，这样就不用到低速的内存中去取了。其中，ARM采用的是将指令存储与数据存储分开的哈佛架构，L1 Cache（一级缓存）被分成了平行的两块，即I-Cache（指令缓存）和D-Cache（数据缓存），而X86采用的是将指令存储和数据存储合并在一起的冯•诺伊曼结构，L1 Cache是连续的一块缓存。<br>因此，如果我们通过读写地址指令的方式对一段可执行代码进行动态修改，那么在执行的时候，X86架构上的指令缓存会被同步修改，而对ARM架构而言，这种数据读写操作修改的只是D-Cahce中的内容，此时I-Cache中的指令并不会被更新。</p>
 <h2 id="设计思路"><a href="#设计思路" class="headerlink" title="设计思路"></a>设计思路</h2><p>先看下思路的流程图：<br><img src="/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/2.png" alt="ELF"><br>左边的是真机上发生的情况，右边是模拟器发生的情况，下面详述一下操作过程。  </p>
 <blockquote>
