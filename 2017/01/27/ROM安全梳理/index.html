@@ -1,12 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  
-  
-  <title>ROM安全梳理 | Hexo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="定义智能手机配置中的ROM指的是EEProm（电擦除可写只读存储器），类似于计算机的硬盘，而一般手机刷机的过程，就是将只读内存镜像（ROM image）写入到只读内存（ROM）的过程。常见的ROM image有img、zip等格式，前者通常用fastboot程序通过数据线刷入（线刷），后者通常用recovery模式从SD卡刷入（卡刷），故img镜像也被称为线刷包，zip镜像被称为卡刷包。此外，因为">
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha256-DfWjNxDkM94fVBWx1H5BMMp0Zq7luBlV8QRcSES7s+0=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"example.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.12.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="定义智能手机配置中的ROM指的是EEProm（电擦除可写只读存储器），类似于计算机的硬盘，而一般手机刷机的过程，就是将只读内存镜像（ROM image）写入到只读内存（ROM）的过程。常见的ROM image有img、zip等格式，前者通常用fastboot程序通过数据线刷入（线刷），后者通常用recovery模式从SD卡刷入（卡刷），故img镜像也被称为线刷包，zip镜像被称为卡刷包。此外，因为">
 <meta property="og:type" content="article">
 <meta property="og:title" content="ROM安全梳理">
 <meta property="og:url" content="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/index.html">
@@ -34,88 +48,202 @@
 <meta property="article:tag" content="ROM">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/1.png">
-  
-    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
-  
-  
-    <link rel="shortcut icon" href="/favicon.png">
-  
-  
-    
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
 
-  
-  
-<link rel="stylesheet" href="/css/style.css">
 
-  
-    
-<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+<link rel="canonical" href="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/">
 
-  
-<meta name="generator" content="Hexo 6.2.0"></head>
 
-<body>
-  <div id="container">
-    <div id="wrap">
-      <header id="header">
-  <div id="banner"></div>
-  <div id="header-outer" class="outer">
-    <div id="header-title" class="inner">
-      <h1 id="logo-wrap">
-        <a href="/" id="logo">Hexo</a>
-      </h1>
-      
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/","path":"2017/01/27/ROM安全梳理/","title":"ROM安全梳理"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>ROM安全梳理 | Hexo</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
     </div>
-    <div id="header-inner" class="inner">
-      <nav id="main-nav">
-        <a id="main-nav-toggle" class="nav-icon"></a>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Hexo</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+</div>
         
-          <a class="main-nav-link" href="/">Home</a>
-        
-          <a class="main-nav-link" href="/archives">Archives</a>
-        
-      </nav>
-      <nav id="sub-nav">
-        
-          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
-        
-        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
-      </nav>
-      <div id="search-form-wrap">
-        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89"><span class="nav-number">1.</span> <span class="nav-text">定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E7%B1%BB"><span class="nav-number">2.</span> <span class="nav-text">分类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F"><span class="nav-number">3.</span> <span class="nav-text">文件格式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#boot-img-amp-amp-recovery-img"><span class="nav-number">3.1.</span> <span class="nav-text">boot.img&amp;&amp;recovery.img</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#system-img"><span class="nav-number">3.2.</span> <span class="nav-text">system.img</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ramdisk-img"><span class="nav-number">3.3.</span> <span class="nav-text">ramdisk.img</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#userdata-img"><span class="nav-number">3.4.</span> <span class="nav-text">userdata.img</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#cache-img"><span class="nav-number">3.5.</span> <span class="nav-text">cache.img</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E6%97%B6%E7%9A%84%E6%8C%82%E8%BD%BD%E9%A1%BA%E5%BA%8F"><span class="nav-number">4.</span> <span class="nav-text">运行时的挂载顺序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Android%E6%94%BB%E5%87%BB%E9%9D%A2"><span class="nav-number">5.</span> <span class="nav-text">Android攻击面</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9C%E7%A8%8B%E6%94%BB%E5%87%BB%E9%9D%A2"><span class="nav-number">5.1.</span> <span class="nav-text">远程攻击面</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E6%A0%88"><span class="nav-number">5.1.1.</span> <span class="nav-text">网络协议栈</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9A%B4%E9%9C%B2%E7%9A%84%E7%BD%91%E7%BB%9C%E6%9C%8D%E5%8A%A1"><span class="nav-number">5.1.2.</span> <span class="nav-text">暴露的网络服务</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A7%BB%E5%8A%A8%E6%8A%80%E6%9C%AF"><span class="nav-number">5.1.3.</span> <span class="nav-text">移动技术</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%94%BB%E5%87%BB%E9%9D%A2"><span class="nav-number">5.1.4.</span> <span class="nav-text">客户端攻击面</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%B0%B7%E6%AD%8C%E7%9A%84%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD"><span class="nav-number">5.1.5.</span> <span class="nav-text">谷歌的基础设施</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%89%A9%E7%90%86%E9%82%BB%E6%8E%A5%E6%94%BB%E5%87%BB"><span class="nav-number">5.2.</span> <span class="nav-text">物理邻接攻击</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%97%A0%E7%BA%BF%E9%80%9A%E4%BF%A1"><span class="nav-number">5.2.1.</span> <span class="nav-text">无线通信</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF"><span class="nav-number">5.2.2.</span> <span class="nav-text">其他技术</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%AC%E5%9C%B0%E6%94%BB%E5%87%BB%E9%9D%A2"><span class="nav-number">5.3.</span> <span class="nav-text">本地攻击面</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8E%A2%E7%B4%A2%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F"><span class="nav-number">5.3.1.</span> <span class="nav-text">探索文件系统</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="nav-number">5.3.2.</span> <span class="nav-text">应用生命周期</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#install"><span class="nav-number">5.3.2.1.</span> <span class="nav-text">install</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Application-run"><span class="nav-number">5.3.2.2.</span> <span class="nav-text">Application run</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#backup"><span class="nav-number">5.3.2.3.</span> <span class="nav-text">backup</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%89%BE%E5%88%B0%E5%85%B6%E4%BB%96%E7%9A%84%E6%9C%AC%E5%9C%B0%E6%94%BB%E5%87%BB%E9%9D%A2"><span class="nav-number">5.3.3.</span> <span class="nav-text">找到其他的本地攻击面</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%89%A9%E7%90%86%E6%94%BB%E5%87%BB%E9%9D%A2"><span class="nav-number">5.4.</span> <span class="nav-text">物理攻击面</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8B%86%E8%A7%A3%E8%AE%BE%E5%A4%87"><span class="nav-number">5.4.1.</span> <span class="nav-text">拆解设备</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#USB"><span class="nav-number">5.4.2.</span> <span class="nav-text">USB</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%9E%9A%E4%B8%BEUSB%E6%94%BB%E5%87%BB%E9%9D%A2"><span class="nav-number">5.4.2.1.</span> <span class="nav-text">枚举USB攻击面</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ADB"><span class="nav-number">5.4.2.2.</span> <span class="nav-text">ADB</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E7%89%A9%E7%90%86%E6%94%BB%E5%87%BB%E9%9D%A2"><span class="nav-number">5.4.3.</span> <span class="nav-text">其他物理攻击面</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%B8%89%E6%96%B9%E4%BF%AE%E6%94%B9"><span class="nav-number">5.5.</span> <span class="nav-text">第三方修改</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Rom%E5%AE%89%E5%85%A8"><span class="nav-number">6.</span> <span class="nav-text">Rom安全</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Rom%E6%94%BB%E5%87%BB%E9%9D%A2"><span class="nav-number">6.1.</span> <span class="nav-text">Rom攻击面</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E5%85%A8%E7%8E%B0%E7%8A%B6"><span class="nav-number">6.2.</span> <span class="nav-text">安全现状</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A7%A3%E9%94%81BootLoader"><span class="nav-number">6.2.1.</span> <span class="nav-text">解锁BootLoader</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E8%80%81%E7%BD%97%E7%BE%9E%E6%84%A7%EF%BC%81%E7%9B%98%E5%8F%A4%E5%9B%A2%E9%98%9F%E6%88%90%E5%8A%9F%E7%A0%B4%E8%A7%A3%E9%94%A4%E5%AD%90%E6%89%8B%E6%9C%BABootloader"><span class="nav-number">6.2.1.1.</span> <span class="nav-text">老罗羞愧！盘古团队成功破解锤子手机Bootloader</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Root%E6%8F%90%E6%9D%83"><span class="nav-number">6.2.2.</span> <span class="nav-text">Root提权</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Linux-%E5%85%A8%E7%89%88%E6%9C%AC%E6%8F%90%E6%9D%83%E6%BC%8F%E6%B4%9E-Dirty-COW"><span class="nav-number">6.2.2.1.</span> <span class="nav-text">Linux 全版本提权漏洞 Dirty COW</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#%E6%BC%8F%E6%B4%9E%E6%A6%82%E8%A6%81"><span class="nav-number">6.2.2.1.1.</span> <span class="nav-text">漏洞概要</span></a></li></ol></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%A2%84%E8%A3%85%E5%BA%94%E7%94%A8"><span class="nav-number">6.2.3.</span> <span class="nav-text">预装应用</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%AE%89%E5%8D%93%E6%9B%9DROM%E6%9C%A8%E9%A9%AC%E4%B8%87%E8%93%9D-%E8%B6%8510%E4%B8%87%E9%83%A8%E6%89%8B%E6%9C%BA%E5%8F%97%E5%BD%B1%E5%93%8D"><span class="nav-number">6.2.3.1.</span> <span class="nav-text">安卓曝ROM木马万蓝 超10万部手机受影响</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%9D%A5%E8%87%AA%E4%B8%AD%E5%9B%BD%E7%9A%84%E7%A7%98%E5%AF%86%EF%BC%9A%E9%A2%84%E8%A3%85%E6%9C%A8%E9%A9%AC%E7%9A%84%E5%AE%89%E5%8D%93%E5%B9%B3%E6%9D%BF%E6%AD%A3%E5%9C%A8%E9%94%80%E5%BE%80%E5%85%A8%E4%B8%96%E7%95%8C"><span class="nav-number">6.2.3.2.</span> <span class="nav-text">来自中国的秘密：预装木马的安卓平板正在销往全世界</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#%E5%8F%91%E7%8E%B0%E4%B9%8B%E8%B7%AF%EF%BC%9A%E8%B5%B7%E4%BA%8E%E5%8F%97%E5%AE%B3%E7%94%A8%E6%88%B7%E7%9A%84%E6%8A%B1%E6%80%A8"><span class="nav-number">6.2.3.2.1.</span> <span class="nav-text">发现之路：起于受害用户的抱怨</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E6%81%B6%E6%84%8F%E8%A1%8C%E5%BE%84%EF%BC%9ACloudsota%E6%9C%A8%E9%A9%AC%E4%BC%B8%E5%87%BA%E4%BA%86%E6%81%B6%E9%AD%94%E4%B9%8B%E6%89%8B"><span class="nav-number">6.2.3.2.2.</span> <span class="nav-text">恶意行径：Cloudsota木马伸出了恶魔之手</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E5%BD%B1%E5%93%8D%EF%BC%9A%E8%B6%85%E8%BF%87153%E4%B8%AA%E5%9B%BD%E5%AE%B6%E5%9C%B0%E5%8C%BA%E7%9A%84%E7%94%A8%E6%88%B7%E5%8F%97%E5%88%B0%E5%BD%B1%E5%93%8D"><span class="nav-number">6.2.3.2.3.</span> <span class="nav-text">影响：超过153个国家地区的用户受到影响</span></a></li></ol></li></ol></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">John Doe</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">tags</span>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
       </div>
     </div>
-  </div>
-</header>
+  </aside>
+  <div class="sidebar-dimmer"></div>
 
-      <div class="outer">
-        <section id="main"><article id="post-ROM安全梳理" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/" class="article-date">
-  <time class="dt-published" datetime="2017-01-27T05:43:15.000Z" itemprop="datePublished">2017-01-27</time>
-</a>
+
+    </header>
+
     
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/Android/">Android</a>
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
   </div>
 
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="p-name article-title" itemprop="headline name">
-      ROM安全梳理
-    </h1>
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
   
 
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="John Doe">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="ROM安全梳理 | Hexo">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ROM安全梳理
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2017-01-27 13:43:15" itemprop="dateCreated datePublished" datetime="2017-01-27T13:43:15+08:00">2017-01-27</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2019-02-02 17:39:41" itemprop="dateModified" datetime="2019-02-02T17:39:41+08:00">2019-02-02</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
       </header>
+
     
-    <div class="e-content article-entry" itemprop="articleBody">
-      
+    
+    
+    <div class="post-body" itemprop="articleBody">
         <h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>智能手机配置中的ROM指的是EEProm（电擦除可写只读存储器），类似于计算机的硬盘，而一般手机刷机的过程，就是将只读内存镜像（ROM image）写入到只读内存（ROM）的过程。常见的ROM image有img、zip等格式，前者通常用fastboot程序通过数据线刷入（线刷），后者通常用recovery模式从SD卡刷入（卡刷），故img镜像也被称为线刷包，zip镜像被称为卡刷包。<br>此外，因为ROM image是定制系统最常见的发布形式，所以ROM这个词有时也会被用来指代手机的操作系统。</p>
 <h2 id="分类"><a href="#分类" class="headerlink" title="分类"></a>分类</h2><p>因为Android系统的开放性，大多数情况下ROM都是指代Android系统的各种发行版，可将其分为两大类：</p>
 <ol>
@@ -251,157 +379,77 @@
 <h6 id="恶意行径：Cloudsota木马伸出了恶魔之手"><a href="#恶意行径：Cloudsota木马伸出了恶魔之手" class="headerlink" title="恶意行径：Cloudsota木马伸出了恶魔之手"></a>恶意行径：Cloudsota木马伸出了恶魔之手</h6><p>经过分析发现，Cloudsota木马能够远程控制受感染的设备，可在在未经用户允许的情况下，进行带有目的性的恶意操作。以下为该木马的主要行为轨迹：<br>首先，它可以直接将恶意广告软件或者其他的恶意软件安装到设备上。同时在初始阶段，该木马会先将杀毒应用卸载掉，从而方便进行其他的恶意操作。我们也发现，在root权限下，它不但能够自动打开所有安装在设备上的应用，而且经过检测，该木马会将开机动画和壁纸都替换成广告。和众多恶意广告软件一样，Cloudsota还会将浏览器的默认主页篡改，并重定向到一个广告页面上，绑定用户进行浏览。</p>
 <h6 id="影响：超过153个国家地区的用户受到影响"><a href="#影响：超过153个国家地区的用户受到影响" class="headerlink" title="影响：超过153个国家地区的用户受到影响"></a>影响：超过153个国家地区的用户受到影响</h6><p>根据初步的估算，至少有17,233台受感染的平板被线下的用户购买，并已经通过物流交付到用户手中。此外，由于目前许多平板是不受杀毒应用的保护，实际上感染设备的数量可能比我们预计要多得多。<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/8.png">其中最令人担心的是，这些平板电脑在许多电商平台都有出售，不乏零售巨头，如亚马逊。从当前的情况来看，显然大多数人都不知道cloudsota的潜在风险和破坏性，而在这里，必须提醒广大用户，可以说，这是一个定时炸弹，随时都有可能威胁个人隐私和财产安全。根据跟踪研究发现，目前有超过30个品牌的平板被预装了该木马，相对于大型品牌的平板电脑，影响最大的是一些小众品牌的平板。据统计，超过4000台受影响的小众品牌平板已经被出售到全球各地。<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/9.png">在遭受该木马感染的超过153个国家和地区中，美国、墨西哥和土耳其的情况是最为严重的。<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/10.png">我们可以在网上看到许多用户纷纷在亚马逊上评论，抱怨设备经常出现广告和弹窗。根据对收集到的信息进行统计，发现这些预装该木马的平板都有一定的相同之处，就是所有的这些平板，它们的价格都是比较廉价的，并且可以追溯到它们的制造商其实出自于一些不知名的小型车间。下面是一个不完整统计的在亚马逊上疑似预装木马的品牌列表：<br><img src="/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/11.png"></p>
 
-      
     </div>
-    <footer class="article-footer">
-      <a data-url="http://example.com/2017/01/27/ROM%E5%AE%89%E5%85%A8%E6%A2%B3%E7%90%86/" data-id="cl4c3fki8000bpcw1233a3sl8" data-title="ROM安全梳理" class="article-share-link">Share</a>
-      
-      
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ROM/" rel="tag">ROM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E6%A2%B3%E7%90%86/" rel="tag">知识梳理</a></li></ul>
 
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E7%9F%A5%E8%AF%86%E6%A2%B3%E7%90%86/" rel="tag"># 知识梳理</a>
+              <a href="/tags/ROM/" rel="tag"># ROM</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/" rel="prev" title="低功耗蓝牙（BLE）安全初探">
+                  <i class="fa fa-chevron-left"></i> 低功耗蓝牙（BLE）安全初探
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/" rel="next" title="六间房直播刷人气">
+                  六间房直播刷人气 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
     </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">John Doe</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
   </div>
-  
-    
-<nav id="article-nav">
-  
-    <a href="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Newer</strong>
-      <div class="article-nav-title">
-        
-          六间房直播刷人气
-        
-      </div>
-    </a>
-  
-  
-    <a href="/2016/07/25/%E4%BD%8E%E5%8A%9F%E8%80%97%E8%93%9D%E7%89%99%EF%BC%88BLE%EF%BC%89%E5%AE%89%E5%85%A8%E5%88%9D%E6%8E%A2/" id="article-nav-older" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Older</strong>
-      <div class="article-nav-title">低功耗蓝牙（BLE）安全初探</div>
-    </a>
-  
-</nav>
-
-  
-</article>
-
-
-</section>
-        
-          <aside id="sidebar">
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Categories</h3>
-    <div class="widget">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Android/">Android</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Web/">Web</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%99%BA%E8%83%BD%E8%AE%BE%E5%A4%87/">智能设备</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%89%A9%E8%81%94%E7%BD%91/">物联网</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%99%9A%E6%8B%9F%E7%8E%B0%E5%AE%9E/">虚拟现实</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%BB%91%E4%BA%A7%E7%A0%94%E7%A9%B6/">黑产研究</a></li></ul>
-    </div>
-  </div>
-
-
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Tags</h3>
-    <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/BLE/" rel="tag">BLE</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ELF/" rel="tag">ELF</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ROM/" rel="tag">ROM</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%9A%E5%8A%A1%E5%AE%89%E5%85%A8/" rel="tag">业务安全</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8F%8D%E6%B7%B7%E6%B7%86/" rel="tag">反混淆</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" rel="tag">学习总结</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%81%B6%E6%84%8F%E4%BB%A3%E7%A0%81/" rel="tag">恶意代码</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" rel="tag">文件格式</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/" rel="tag">模拟器检测</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" rel="tag">源码分析</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9B%B4%E6%92%AD%E4%BA%BA%E6%B0%94/" rel="tag">直播人气</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E6%A2%B3%E7%90%86/" rel="tag">知识梳理</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%B0%83%E7%A0%94/" rel="tag">调研</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%80%86%E5%90%91/" rel="tag">逆向</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%87%8D%E6%94%BE%E6%94%BB%E5%87%BB/" rel="tag">重放攻击</a></li></ul>
-    </div>
-  </div>
-
-
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Tag Cloud</h3>
-    <div class="widget tagcloud">
-      <a href="/tags/BLE/" style="font-size: 13.33px;">BLE</a> <a href="/tags/ELF/" style="font-size: 20px;">ELF</a> <a href="/tags/ROM/" style="font-size: 10px;">ROM</a> <a href="/tags/%E4%B8%9A%E5%8A%A1%E5%AE%89%E5%85%A8/" style="font-size: 10px;">业务安全</a> <a href="/tags/%E5%8F%8D%E6%B7%B7%E6%B7%86/" style="font-size: 10px;">反混淆</a> <a href="/tags/%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" style="font-size: 10px;">学习总结</a> <a href="/tags/%E6%81%B6%E6%84%8F%E4%BB%A3%E7%A0%81/" style="font-size: 10px;">恶意代码</a> <a href="/tags/%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" style="font-size: 10px;">文件格式</a> <a href="/tags/%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/" style="font-size: 13.33px;">模拟器检测</a> <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" style="font-size: 16.67px;">源码分析</a> <a href="/tags/%E7%9B%B4%E6%92%AD%E4%BA%BA%E6%B0%94/" style="font-size: 10px;">直播人气</a> <a href="/tags/%E7%9F%A5%E8%AF%86%E6%A2%B3%E7%90%86/" style="font-size: 13.33px;">知识梳理</a> <a href="/tags/%E8%B0%83%E7%A0%94/" style="font-size: 13.33px;">调研</a> <a href="/tags/%E9%80%86%E5%90%91/" style="font-size: 13.33px;">逆向</a> <a href="/tags/%E9%87%8D%E6%94%BE%E6%94%BB%E5%87%BB/" style="font-size: 10px;">重放攻击</a>
-    </div>
-  </div>
-
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Archives</h3>
-    <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">August 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/05/">May 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/04/">April 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">March 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/02/">February 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/07/">July 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">March 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">August 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">June 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">April 2015</a></li></ul>
-    </div>
-  </div>
-
-
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Recent Posts</h3>
-    <div class="widget">
-      <ul>
-        
-          <li>
-            <a href="/2020/08/28/OLLVM%E9%80%9A%E7%94%A8%E5%8F%8D%E5%B9%B3%E5%9D%A6%E5%8C%96%E7%A0%94%E7%A9%B6/">OLLVM通用反平坦化研究</a>
-          </li>
-        
-          <li>
-            <a href="/2018/05/10/Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B%E4%BD%93%E7%B3%BB%E6%A2%B3%E7%90%86/">Android模拟器检测体系梳理</a>
-          </li>
-        
-          <li>
-            <a href="/2018/04/21/%E8%B5%B7%E5%BA%95%E8%96%85%E7%BE%8A%E6%AF%9B%E7%81%B0%E8%89%B2%E4%BA%A7%E4%B8%9A%E9%93%BE/">起底薅羊毛灰色产业链</a>
-          </li>
-        
-          <li>
-            <a href="/2018/03/10/%E5%9F%BA%E4%BA%8ECache%E7%9A%84Android%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%A3%80%E6%B5%8B/">基于Cache的Android模拟器检测</a>
-          </li>
-        
-          <li>
-            <a href="/2018/02/26/%E5%85%AD%E9%97%B4%E6%88%BF%E7%9B%B4%E6%92%AD%E5%88%B7%E4%BA%BA%E6%B0%94/">六间房直播刷人气</a>
-          </li>
-        
-      </ul>
-    </div>
-  </div>
-
-  
-</aside>
-        
-      </div>
-      <footer id="footer">
-  
-  <div class="outer">
-    <div id="footer-info" class="inner">
-      
-      &copy; 2022 John Doe<br>
-      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
-    </div>
-  </div>
-</footer>
 
     </div>
-    <nav id="mobile-nav">
+  </footer>
+
   
-    <a href="/" class="mobile-nav-link">Home</a>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
   
-    <a href="/archives" class="mobile-nav-link">Archives</a>
-  
-</nav>
-    
 
 
-<script src="/js/jquery-3.4.1.min.js"></script>
 
 
 
   
-<script src="/fancybox/jquery.fancybox.min.js"></script>
-
-
-
-
-<script src="/js/script.js"></script>
 
 
 
 
 
-  </div>
 </body>
 </html>
